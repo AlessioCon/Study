@@ -44,6 +44,7 @@ const signRouter = require('./app/routes/sign');
 const userRouter = require('./app/routes/user');
 const corsiRouter = require('./app/routes/corsi');
 const lessonRouter = require('./app/routes/lesson');
+const stripeRouter = require('./app/routes/stripe');
 
 /* MIDDLEWARE*/
 const checkUserLogin = require('./app/middleware/check-user-login');
@@ -52,7 +53,7 @@ app.use(signRouter);
 app.use('/api/corsi', corsiRouter);
 app.use('/api/lesson', lessonRouter)
 app.use('/user', checkUserLogin() ,userRouter);
-
+app.use('/api/stripe' , stripeRouter);
 
 
 
@@ -67,5 +68,7 @@ app.post('/api/download' , (req,res) => {
     return res.json({url:base64Image})
 
     res.static()
-    
 })
+
+//----------------------------------------------------
+

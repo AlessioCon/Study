@@ -6,7 +6,8 @@ const corsoSchema = new Schema({
     d: {type: String, alias:'description'},
     sale: {
         p: {type: Number , required: true , default: 0, alias:'sale.price'},
-        o: {type: Number , default: 0, alias:'sale.outlet'}
+        o: {type: Number , default: 0, alias:'sale.outlet'},
+        e: {type: Boolean , default: false , alias:'sale.end'}
     },
     //per la modifica del corso chi avra l'accesso
     access:{
@@ -26,14 +27,15 @@ const corsoSchema = new Schema({
         u: {type:Number  , alias:'unlock'}, //a quante stelle si potra sbloccare
 
     }],
-    vendite:{
-        n: {type:Number, alias:'vendite.number'},
-        ne:{type:Number, alias:'vendite.netto'}
+    ven:{
+        n: {type:Number, alias:'vendite'} ,
+        ul:[{type:String, alias:'userList'}],
     },
 
     sl :{type:String, alias:'slug'},
     img:{type:String},
     s: {type:String, alias:'status'},
+    idStripe: {type:String},
 })
 
 let Course = mongoose.model('Course' , corsoSchema);

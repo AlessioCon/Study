@@ -50,8 +50,8 @@ async function save(req, res){
     
             fs.writeFile(pathComplite , dati.file.file ,{ flag: 'a+' } , err => {
                 if(err) console.log('file non inviato '+ err)
-                dati.pathDati = `/public/upload/lesson/${dati.access.creator}/${dati.ltitle.replaceAll(' ','-')}/${dati.file.name.replaceAll(' ','-')}`
             })
+            dati.pathDati = `/public/upload/lesson/${dati.access.creator}/${dati.ltitle.replaceAll(' ','-')}/${dati.file.name.replaceAll(' ','-')}`;
         }
 
         //eccezioni dati 
@@ -136,6 +136,8 @@ async function save(req, res){
             file: dati.pathDati ?? '',
             point: dati.point
         })
+
+        console.log(dati.pathDati)
 
         await lesson.save();
         return res.json({success:true , data:'lesson is live'})

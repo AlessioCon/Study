@@ -22,6 +22,26 @@ const userSchema = new Schema({
         cap: {type: Number, reuired:true }
     },
     grade: [{type: String, default: 'user'}],
+    idStripe: {type: String},
+    idSS: {type: String , alias:'isStripeSeller'},
+
+
+    /*gestione corsi*/
+    CourseBuy: [{
+        _id: false,
+        courseId: {type:String},
+        sub: {type:String},
+        lesson:[
+            {_id:false,
+             idL: {type:String},//idLesson
+             an: {type:Array},//risposte date nel caso fosse un quiz (answere)
+             p: {type:Number , alias:'point'},
+            }
+        ],
+        
+    }
+        
+    ],
 
 })
 

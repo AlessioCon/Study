@@ -18,38 +18,6 @@ function stringToArrayBuffer( string, encoding, callback ) {
 
 //------------------------------------------
 
-
-
-/*
-function Sezioni(props){
-    let [posto , setPosto]  = useState(1);
-    let divisione = (props.divisione) ? props.divisione : 10;
-    let elementi = (props.elementi) ? props.elementi : [];
-
-
-
-    let navDivisione = []
-    for (let x = 1 ; x <= (Math.ceil(elementi.length/divisione)) ; x++){
-        navDivisione.push(
-            <li key={"list"+x}>   
-                <button onClick={(e) => {e.preventDefault() ; setPosto(x)}}>{x}</button>
-            </li>
-        )
-    }
-  
-    let sliceElement   = elementi.slice((posto-1)*divisione, posto*divisione);
-
-    return (
-        <div>
-            <ul>{navDivisione}</ul>
-            <ul>{sliceElement}</ul>
-            {(props.down) ? <ul>{navDivisione}</ul> : null}
-        </div>
-    )
-}
-<Sezioni divisione={3} elementi={element} down={true} />
-
-*/
 function alertConfirm(msg){
     let alertConfirm = prompt(msg);
     if(alertConfirm === 'si') return true;
@@ -300,7 +268,6 @@ function Lesson(props){
     let element = contList[actualElement];
     let [listFile , setListFile] = props.listFile;
 
-
     let inputFile = [
         <div key='file'>
             <label htmlFor='files'>risorse esterne</label>
@@ -340,8 +307,20 @@ function Lesson(props){
                     setListFile('');
                 }}
             >X</button>
+            <div style={{display: 'inline'}}
+                    onMouseLeave={() => {
+                        document.getElementById('msgRisorseEsterne').style.display = "none";
+                    }}
+                    onMouseEnter={() => {
+                        document.getElementById('msgRisorseEsterne').style.display = "block";
+                    }}>
+                        info
+                        <div id="msgRisorseEsterne">
+                            se inserisci un file e la lezione contiene dei quiz , questi verranno eliminati
+                        </div>
+                    
+                </div>
         </div>]
-
 
     let video= [
         <div key="video">
@@ -386,7 +365,7 @@ function Lesson(props){
                     onChange={(e) => {
                         let newValue = Object.values(contList);
                         newValue[actualElement].type = e.target.checked;
-                        newValue[actualElement].quiz = [];
+                        if(!newValue[actualElement].quiz) newValue[actualElement].quiz = [];
                         setContList(newValue)}}
                 />
             </div>
@@ -445,6 +424,27 @@ function Lesson(props){
                         newValue[actualElement].point = e.target.value;
                         setContList(newValue)}}
                 />
+                <div style={{display: 'inline'}}
+                    onMouseLeave={() => {
+                        document.getElementById('msgPunti').style.display = "none";
+                    }}
+                    onMouseEnter={() => {
+                        document.getElementById('msgPunti').style.display = "block";
+                    }}>
+                        info
+                        <div id="msgPunti">
+                            se la lezione è un quiz i punti saranno assegnati in base alla percentuale di risposte esatte date<br/>
+                            es.<br/>
+                            punteggio massimo = 3<br/>
+                            percentuale di risposte esatte  maggiore dell' 80% verranno dati 3 punti<br/>
+                            percentuale di risposte esatte  maggiore del 60% verranno dati 2 punti<br/>
+                            percentuale di rispostre esatte maggiore del 40% verrà dato 1 punto   <br/>
+                            da notare che il calcolo verrà sempre approssimato per eccesso 
+                        </div>
+                    
+                </div>
+                    
+                
             </div>
             
             
@@ -602,6 +602,11 @@ const [actualElement , setActualElement] = useState(0);
 const [elBigNum , setElBigNum] = useState(0);
 
     useEffect(()=>{
+        if(!Cookie.getCookie('user').grade.find(e => e === 'seller' ) && !Cookie.getCookie('nawSeller')?.seller){
+            return window.location.href = '/dashbord'
+        }
+
+
         let getLesson = async () =>{
             try {
             let response = await fetch('/api/lesson/', {
@@ -661,10 +666,21 @@ const [elBigNum , setElBigNum] = useState(0);
 
     }, [])
 
-
-
     async function saveLesson(lesson){
 
+        //elliminare video
+        if(lesson.type){
+            lesson.link = '';
+            lesson.file = [];
+        }else{
+            lesson.quiz = [];
+            lesson.file = [];
+        }
+
+        if(Boolean(lesson.file.length)){
+            lesson.link = '';
+            lesson.quiz = [];
+        }
 
         let dati = JSON.parse(JSON.stringify(lesson));
 

@@ -8,9 +8,9 @@ class NavBarHeadre extends Component{
         return(
             <nav>
                 <ol>
-                    <NavLink to='/contatti'>Contatti</NavLink>
-                    <NavLink to='/corsi'>Corsi</NavLink>
-                    <NavLink to='/test'>Test</NavLink>
+                    <li><NavLink to='/contatti'>Contatti</NavLink></li>
+                    <li><NavLink to='/corsi'>Corsi</NavLink></li>
+                    <li><NavLink to='/test'>Test</NavLink></li>
                 </ol>
             </nav>
         )
@@ -28,7 +28,7 @@ function UserLog(){
     }
 
     return(
-        <div>
+        <div className="header-user">
             <NavLink to={redirect}>{valueLink}</NavLink>
         </div>
     )

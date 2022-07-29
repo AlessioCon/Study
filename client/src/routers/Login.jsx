@@ -3,8 +3,8 @@ import { Link } from 'react-router-dom';
 
 
 function Login(){
-    let [username, setUsername] = useState('ale@gmail.com');
-    let [password, setPassword] = useState('Pa23d%eu');
+    let [username, setUsername] = useState('ales@gmail.com');
+    let [password, setPassword] = useState('Pa23d%eust');
     let [stato , setStato]      = useState({error: {class: '' , msg:''}});
     
 
@@ -60,9 +60,7 @@ function Login(){
                 <button formAction='submit'>SignIn</button>
                 <Link to="/register">SignUp</Link>
             </div>
-            
-
-
+        
         </form>
     )
 }

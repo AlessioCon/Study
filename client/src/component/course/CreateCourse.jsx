@@ -2,6 +2,9 @@ import {useState , useEffect} from 'react';
 import Cookie from "../../customHook/cookie"
 
 
+import Section from '../Section'
+
+
 function alertConfirm(msg){
     let alertConfirm = prompt(msg);
     if(alertConfirm === 'si') return true;
@@ -94,13 +97,10 @@ function CreateList(props){
 
     let list = [];
 
-    let key = 0
+    
     let dataList=[
         <datalist key="list" id="list">
-            {listLesson.map(e=>{
-                key++
-                return <option key={e+'-'+key} value={e}/>
-            })}
+            {listLesson.map(e=>{ return <option key={e._id} value={e.n}/>})}
         </datalist> 
     ];
 
@@ -142,10 +142,11 @@ function CreateList(props){
         list.push(  
             <div key={"list"+capitolo.t+x}>
                 <input list="list" id={"list"+capitolo.t+x}
-                    value={capitolo.lesson[x] ?? ''}
+                    value={capitolo.lesson[x][0] ?? ''}
                     onChange={(e)=>{
                         let newValue = Object.values(contList);
-                        newValue[actualElement].chapter[nCapitolo].lesson[x] = e.target.value;
+                        let id = listLesson.find(le => le.n == e.target.value )?._id;
+                        newValue[actualElement].chapter[nCapitolo].lesson[x] = [e.target.value, id];
                         setContList(newValue);
                     }}
                 />
@@ -365,6 +366,18 @@ function Course(props){
                         
                 />
             </div>
+            <div>
+                <label htmlFor="endPay">attivare pagamento a rate (3 mesi) </label>
+                <input type="checkbox" id="endPay" name="endPay" 
+                    checked={element.sale?.e ?? false}
+                    onChange={(e)=>{
+                        let newValue = Object.values(contList);
+                        if(! newValue[actualElement].sale)  newValue[actualElement].sale = {};
+                        newValue[actualElement].sale.e = e.target.checked;
+                        setContList(newValue)
+                    }}
+                />
+            </div>
     
             <div>
                 <label htmlFor="sconto">Sconto €</label>
@@ -449,11 +462,11 @@ function ContentCourse(props){
     }, [])
     
 //da cambiare e reindirizzare all'eliminazione del corso
-    async function deliteElementOnServer(id){
+    async function deliteElementOnServer(id, idStripe){
         let response = await fetch(`/api/corsi/${id}` , {
             method:'DELETE',
             credentials: "include",
-            body: JSON.stringify({userId:Cookie.getCookie('user')._id}),
+            body: JSON.stringify({userId:Cookie.getCookie('user')._id , idStripe: idStripe}),
             headers: {
                 Accept: "application/json",
                         "Content-Type": "application/json",
@@ -529,7 +542,7 @@ function ContentCourse(props){
                                         let confirm = alertConfirm('confermi eliminazione corso (digita si)');
                                         if(confirm){
                                             if(contList[b]._id){
-                                                let response = await deliteElementOnServer(contList[b]._id);
+                                                let response = await deliteElementOnServer(contList[b]._id , contList[b].idStripe);
                                                 if(response.success !== true){
                                                     alert('abbiamo riscontrato un problema aggiorna la pagina')
                                                 }
@@ -553,14 +566,81 @@ function ContentCourse(props){
     )
 }
 
+function ListUserBuyCourse(props){
+    let [listUser, setListUser] = useState('');
+    const [postoSezioni, setPostoSezioni] = useState(1); //per far funzionare section
+    
+    
+    let userList = props.userList;
+
+
+    async function fromIdToUser(list){
+        let response = await fetch('/user/fromIdToUser' , {
+            method: 'POST',
+            headers:{
+                Accept: "application/json",
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Credentials": true,
+            },
+            body: JSON.stringify({listId: list})
+        })
+        let data = await response.json()
+        if(!data.success) return userList = undefined;
+        setListUser(data.userList)
+    }
+
+    if(userList && !Boolean(listUser)){
+        fromIdToUser(userList);
+        return(
+            <ul>
+                caricamento lista...
+            </ul>
+        )
+    }else if(userList && Boolean(listUser)){
+        let user = []
+        for(let x = 0 ; x < listUser.length ; x++){
+            user.push(
+                <p key={listUser[x].user} title={userList[x]}>{listUser[x].user}</p>
+            )
+        }
+        return(
+            <div>
+                lista utenti
+                <Section 
+                    elementi={user} 
+                    divisione={10} 
+                    down={true}
+                    postoSezioni={[postoSezioni, setPostoSezioni]}
+                />
+            </div>
+        )
+
+    }else{ return null}
+
+}
+
+
+
+
+
 function CreateCourse(){
 const [contList, setContList] = useState([])
 const [actualElement , setActualElement] = useState(0);
 const [elBigNum , setElBigNum] = useState(0);
 const [listLesson, setListLesson] = useState([])
+const [regalaCorso, setRegalaCorso] = useState("");
+const [ msgRegalo ,setMsgRegalo] = useState('');
+const [stripeAmount, setStripeAmount] = useState(0);
 
 
     useEffect(()=>{
+
+        if(!Cookie.getCookie('user')?.grade.find(e => e === 'seller' ) && !Cookie.getCookie('nawSeller')?.seller){
+            return window.location.href = '/dashbord'
+        }
+
+
+
         let getCourse = async () =>{
             try {
             let response = await fetch('/api/corsi/modifica', {
@@ -575,10 +655,9 @@ const [listLesson, setListLesson] = useState([])
             })
             let resData = await response.json();
             
-
             if(resData.lesson){
                 let newlessonList = [];
-                for(let e in resData.lesson){ newlessonList.push(resData.lesson[e].n)}
+                for(let e in resData.lesson){ newlessonList.push(resData.lesson[e])}
                 setListLesson(newlessonList);
             }
             
@@ -657,22 +736,98 @@ const [listLesson, setListLesson] = useState([])
         window.location.reload();
     }
 
+    async function saveRegalaCorso(e){
+        e.preventDefault()
 
+        let btn = document.getElementById('btnRegalo');
+        btn.classList.add('btn-pending')
+        let btnText= btn.innerText
+        btn.innerText = ''
+
+
+        let response = await fetch('/user/payCourse', {
+            method: 'POST',
+            headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Credentials": true,
+            },
+            body: JSON.stringify({
+                idCourse: contList?.[actualElement]?._id,
+                user:  regalaCorso,
+                subId: 'regalo'
+            })
+        })
+        let data = await response.json();
+
+        if(!data.success){ 
+            setMsgRegalo(data.msg);
+        }else{
+            setMsgRegalo('corso inviato correttamente');
+        }
+            btn.classList.remove('btn-pending')
+            btn.innerText = btnText
+
+        
+    }
+
+  
+    async function getStripeAmount(){
+
+        let response = await fetch('/api/stripe/amount_product' , {
+            method: 'POST',
+            headers:{
+                Accept: "application/json",
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Credentials": true,
+            },
+            body: JSON.stringify({idStripe: contList[actualElement].idStripe})
+        })
+        let data = await response.json();
+        if(data.success)  setStripeAmount(data.amount);
+    }
+    if(Boolean(contList[actualElement])) getStripeAmount();
 
     return (
-        <form onSubmit={(e)=>{
-            e.preventDefault();
-            saveLesson(contList[actualElement]);
-        }}>
-            <ContentCourse 
-                contList={[contList, setContList]} 
-                actualElement={[actualElement, setActualElement]} 
-                elBigNum={[elBigNum, setElBigNum]}
-                listLesson={listLesson}
-            />
-        </form>
+        <div>
+            <form onSubmit={(e)=>{
+                e.preventDefault();
+                saveLesson(contList[actualElement]);
+            }}>
+                <ContentCourse 
+                    contList={[contList, setContList]} 
+                    actualElement={[actualElement, setActualElement]} 
+                    elBigNum={[elBigNum, setElBigNum]}
+                    listLesson={listLesson}
+                />
+            </form>
+            <div>
+                <p>statistiche corso</p>
+                    <p>corsi venduti : {contList?.[actualElement]?.ven?.n ?? 0}</p>
+                    <p>ricavo stripe: {stripeAmount}</p>
+                    <p>ricavo paypal: 0</p>
+                    <p>totale: 0</p>
+                <form onSubmit={(e) => saveRegalaCorso(e)}>
+                    <div>
+                        <label htmlFor='regalaCorso'>inserisci nome utenti a cui vuoi regalare il corso</label>
+                        <input type="text" name="regalaCorso" id="regalacorso" required
+                            value={regalaCorso}
+                            onChange={(e) => {
+                                setRegalaCorso(e.target.value);
+                                if(Boolean(msgRegalo)) setMsgRegalo('')
+                            }}
+                        />
+                    </div>
+                    <button type='submit' id="btnRegalo">invia corso</button>
+                    {(Boolean(msgRegalo)) ? <p>{msgRegalo}</p> : null}
+                </form>
+
+                <ListUserBuyCourse userList={contList?.[actualElement]?.ven?.ul}/>
+            </div>
+        </div>
+        
     )
 }
-    
+
 
 export default CreateCourse;

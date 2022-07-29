@@ -13,11 +13,15 @@ import Corsi    from './routers/Corsi';
 import Corso    from './routers/Corso';
 
 import Header   from './component/Header';
-import Payments from './routers/Payments';
 
 import UserDashbord from './component/dashbord/UserDashbord';
 import CreateCourse from './component/course/CreateCourse';
 import CreateLesson from './component/course/CreateLesson';
+import UserSeller from './component/dashbord/UserSeller';
+
+import Status from './routers/Status';
+
+import UserCorso from './routers/UserCorso';
 
 
 function App (){
@@ -39,7 +43,7 @@ function App (){
             let data = await response.json();
             if(data.success) { 
                 if (user !== undefined && user['_id'] === data.data['_id']) return ;
-                
+
                 Cookie.setCookie('user', data.data , 1);
                 return setUser(data.data)
             };
@@ -55,6 +59,14 @@ function App (){
     });
 
     
+
+
+
+
+
+
+
+
     return(
         <BrowserRouter>
             <Header/>
@@ -67,6 +79,7 @@ function App (){
                 <Route path="dashbord"  element={user ? <Dashbord/> : <Navigate to="/login"/>}>
                     <Route path="utente" element={<UserDashbord />}/>
                     <Route path="impostazioni" element={<h1>impostazioni</h1>}/>
+                    <Route path="venditore" element={<UserSeller/>}/>
                 </Route>
                 <Route path="dashbord/lezioni" element={<CreateLesson/>}/>
                 <Route path="dashbord/crea-corso" element={<CreateCourse/>}/>
@@ -74,7 +87,11 @@ function App (){
 
                 <Route path="corsi"  element={<Corsi/>}/>
                 <Route path="corsi/:name" element={<Corso/>}/>
-                <Route path="pagamenti" element={<Payments/>}/>
+        
+
+                <Route path="stripe/status" element={<Status/>}/>
+
+                <Route path="user/corso/:idUser/:idCorso" element={user ? <UserCorso/> : <Navigate to="/login"/>}/>
 
                 <Route path="*"  element={<h1>page not found</h1>}/>
             </Routes>

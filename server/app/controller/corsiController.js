@@ -6,6 +6,7 @@ const Validator = require('../../private_modules/validator');
 const userModel = require('../model/userModel');
 const courseModel = require('../model/corsiModel');
 const lessonModel = require('../model/lezioniModel')
+const stripeController = require('./stripeController')
 
 async function getAllCourse(req,res){
     try{
@@ -40,10 +41,11 @@ async function updateCourse(req , res){
         let dati = req.body;
         
         dati.t = dati.t ?? '';
-        dati.d = dati.d ?? '';
+        dati.d = dati.d ?? 'un fantastico corso da non perdere';
         dati.sale = dati.sale ?? {};
         dati.sale.p = dati.sale.p ?? 0;
         dati.sale.o = dati.sale.o ?? 0;
+        dati.sale.e = dati.sale.e || false;
         sl= dati.sl.toLowerCase().replaceAll(' ','-') ?? '';
         dati.s = dati.s ?? false;
         dati.pathDati = dati.file?.name ?? '';
@@ -135,7 +137,17 @@ async function updateCourse(req , res){
             slug: dati.sl,
             s:dati.s,
             img: dati.pathDati,
+            idStripe: dati.idStripe
         }
+
+        //stripe implementation
+        let idStripe = await stripeController.StripeUpdateProduct(course);
+        if(!idStripe) res.json({success: false, dati:'corso non salvato per stripe'});
+
+
+        course.idStripe = idStripe.id
+
+//-------------------
 
 
         await courseModel.replaceOne({_id: dati._id}, course);
@@ -154,10 +166,11 @@ async function createCourse(req, res){
         let dati = req.body;
         
         dati.t = dati.t ?? '';
-        dati.d = dati.d ?? '';
+        dati.d = dati.d ?? 'un fantastico corso da non perdere';
         dati.sale = dati.sale ?? {};
         dati.sale.p = dati.sale.p ?? 0;
         dati.sale.o = dati.sale.o ?? 0;
+        dati.sale.e = dati.sale.e || false;
         sl= dati.sl.toLowerCase().replaceAll(' ','-') ?? '';
         dati.s = dati.s ?? false;
 
@@ -240,10 +253,16 @@ async function createCourse(req, res){
         })
 
 
-        await course.save();
-        return res.json({success:true , data:'course is live'})
+//stripe implementation
+        let idStripe = await stripeController.StripeCreateProduct(course);
+        if(!idStripe) res.json({success: false, dati:'corso non salvato per stripe'});
 
-        
+
+        course.idStripe = idStripe.id
+
+//-------------------
+        await course.save();  
+        return res.json({success:true , data:'course is live'})
 
 
     }catch(e){console.log(e) ; return res.json({success:'err'})}
@@ -262,6 +281,9 @@ async function deleteCourse(req, res){
         let filePrecedente = await courseModel.findOne({_id: req.params.id}).select('img');
         if(filePrecedente.img) await fs.unlink(path.join(__dirname , '../'+filePrecedente.img) , (err) => console.log(err));
 
+        //cancellazione da stripe
+        await stripeController.StripeDeleteProduct(req.body.idStripe);
+
 
         let resp = await courseModel.findByIdAndDelete(req.params.id)
         if(!resp) return res.json({success: false , date:'corso non trovato'});
@@ -270,13 +292,12 @@ async function deleteCourse(req, res){
     }catch(e){console.log(e); res.json({success:'err'})}
 }
 
-
 async function getModifyCourse(req, res){
     try{
         let courseAll = await courseModel.find({['access.c']: req.body.id});
         let courseProf = await courseModel.find({['access.prof.n']:req.body.id});
 
-        if(!courseAll && !courseProf) return res.json({success:false , data:'lezioni non disponibili'});
+        if(!courseAll && !courseProf) return res.json({success:false , data:'corsi non disponibili'});
 
         for(let y = 0 ; y < courseProf.length; y++ ){
             let course = courseProf[y]
@@ -291,7 +312,7 @@ async function getModifyCourse(req, res){
 
         };
         
-        let lessonUser = await lessonModel.find({s: {$nin:['bozza']} , $or: [{'access.c': req.body.id}, {'access.prof.n':req.body.id}]}).select('n -_id');
+        let lessonUser = await lessonModel.find({s: {$nin:['bozza']} , $or: [{'access.c': req.body.id}, {'access.prof.n':req.body.id}]}).select('n _id');
 
         return res.json({success:true, data:courseAll , lesson:lessonUser});
 
@@ -300,6 +321,104 @@ async function getModifyCourse(req, res){
     }
 }
 
+
+async function findLesson(req, res){
+try{
+
+    let lesson = await lessonModel.findById({_id: req.body.lezione})
+    if(!lesson) return res.json({success: false });
+
+    return  res.json({success:true , lesson: lesson })
+
+}catch(e){if(e) console.log(e)}
+
+   
+
+   
+}
+
+async function answersControl(req, res){
+    try{
+        let lesson = await lessonModel.findById({_id: req.body.idLesson});
+        if(!lesson) return res.json({success: false, msg:'corso non trovato'});
+        
+        let corrette = [];
+        
+        for(let x = 0 ; x < lesson.quiz.length; x++){
+            let answere = lesson.quiz[x].answere;
+        
+           answere.map((risposte , index) => {
+            if(risposte?.c)corrette[x] = index;
+           })
+        }
+    
+        return res.json({success: true , data: corrette})
+
+    }catch(e){if(e) console.log(e)}
+    
+}
+
+async function saveProgress(req, res){
+    try{
+        let user = await userModel.findById({_id: req.body.idUser});
+        if(!user) return res.json({success: false , msg:'user non trovato'});
+        let indexCourse;
+        let CourseBuy = user?.CourseBuy.find((e , index) => {
+            if(e.courseId === req.body.idCourse){
+                indexCourse = index;
+                return e
+            }});
+
+        let lesson = await lessonModel.findById({_id: req.body.idLesson}).select('p');
+
+        //controllo se è un quiz
+        let point = 0;
+        if(! Boolean(lesson?.quiz?.length)){point = lesson.p}
+        else{
+            let question = lesson.quiz.length
+            let trueAnswere = 0
+            lesson.quiz.map((dom , domIndex) =>{
+                let risposta = dom[req.body.answere[domIndex]]
+                if(risposta?.c) trueAnswere++
+            })
+
+            let perCent = parseInt(100*trueAnswere/question);
+
+            if(perCent >= 80){point = lesson.p}
+            else if(perCent >= 60){point = parseInt(lesson.p/2);}
+            else if(perCent >= 40){point = Math.round(lesson.p/3)}
+        };
+
+        if(!CourseBuy) return res.json({success: false , msg:'l\'utente non ha comprato il corso'});
+
+        let AllLesson = CourseBuy.lesson || [];
+        let lessonIndex;
+        AllLesson.find((el , index) => {if(el.idL == req.body.idLesson){ lessonIndex = index }})
+
+        if(lessonIndex){
+            AllLesson[lessonIndex] = {
+                    _id: false,
+                    idL: req.body.idLesson,
+                    an : req.body?.answere,
+                    p: point
+                }
+        }else{
+            AllLesson.push({
+                _id: false,
+                idL: req.body.idLesson,
+                an: req.body?.answere,
+                p: point
+            })
+        }
+
+        user.CourseBuy[indexCourse].lesson = AllLesson;
+        await user.save();
+        return res.json({success:true})
+
+    }catch(e){if(e) console.log(e)}
+    
+
+}
 
 
 
@@ -326,4 +445,9 @@ module.exports = {
     updateCourse,
     deleteCourse,
     getModifyCourse,   //corsi creati dall'utente
+
+    findLesson,
+    answersControl,
+    saveProgress,
+
 }
