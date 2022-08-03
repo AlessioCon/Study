@@ -19,6 +19,8 @@ router.post('/seller/stripe_login' , stripeController.stripeLogin)
 
 router.post('/fromIdToUser' , userController.fromIdToUser)
 
+router.put('/update' , userController.updateUser)
+
 
 
 router.get('/dashbord', (req, res) => {

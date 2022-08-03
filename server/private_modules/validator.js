@@ -1,13 +1,9 @@
-const { response } = require("express");
-
 class validator {
 
     res;
 
-
     //chiamata delle varie funzioni
     controll(inputs, options){
-    
         for(let input in inputs ){
             let allOption = options[input];
             let option = allOption.split('|');
@@ -83,10 +79,9 @@ class validator {
     length(input , option){
         let string = option[1];
         if (typeof option[1] == 'number') string.toString();
-
-        if (option[0] == '>' && string < option[1]) return {err: true, 'input': input, msg: '  lunghezza stringa insifficiente'}
-        if (option[0] == '<' && string > option[1]) return {err: true, 'input': input, msg: '  lunghezza stringa massima superata'}
-        if (option[0] == '=' && string != option[1]) return {err: true,'input': input, msg: '  lunghezza stringa non raggiunta'}
+        if (option[0] == '>' && input.length < option[1]) return {err: true, 'input': input, msg: '  lunghezza stringa insifficiente'}
+        if (option[0] == '<' && input.length > option[1]) return {err: true, 'input': input, msg: '  lunghezza stringa massima superata'}
+        if (option[0] == '=' && input.length != option[1]) return {err: true,'input': input, msg: '  lunghezza stringa non raggiunta'}
         
         return {err: false, msg: ''}
     }

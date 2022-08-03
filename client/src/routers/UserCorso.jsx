@@ -3,6 +3,7 @@ import {useParams} from 'react-router-dom';
 
 import Sezioni from '../component/Section';
 import Cookie from '../customHook/cookie'
+import Room from '../component/course/Room'
 
 
 async function downloadFile(href){
@@ -29,16 +30,6 @@ async function downloadFile(href){
  
  
      }catch(e){console.log(e)}
-         //.then(response => {
-         //  response.arrayBuffer().then(function(buffer) {
-         //    const url = window.URL.createObjectURL(new Blob([buffer]));
-         //    const link = document.createElement("a");
-         //    link.href = url;
-         //    link.setAttribute("download", "image.png"); //or any other extension
-         //    document.body.appendChild(link);
-         //    link.click();
-         //  });
-         //})
  };
 
 
@@ -135,7 +126,6 @@ let param = useParams();
                             onClick={(e) => {
                             
                             e.preventDefault()
-                            console.log()
                             if((cap?.u && cap?.u <= punti) || !cap?.u ){ findLesson(capIndex, lessIndex)};
                             }}
                         >
@@ -348,6 +338,7 @@ let param = useParams();
                     <p>{lezione.n}</p>
                     {tipo}
                     <p>{lezione.d}</p>
+                    <Room room={lezione.n}/>
                 </div>
             )
         }else{

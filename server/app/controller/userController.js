@@ -5,6 +5,7 @@ const Validator = require('../../private_modules/validator');
 const userModel = require('../model/userModel');
 const courseModel = require('../model/corsiModel');
 const stripeController = require('./stripeController');
+const stripe = require('stripe')(process.env.Secret_Key);
 
 async function userNew(req, res){
     try{
@@ -233,11 +234,202 @@ async function fromIdToUser(req, res){
     }catch(e){console.log(e); res.json({success: false, msg:'error server'})}
 }
 
+async function updateUser(req, res){
+    try{
+        let user = await userModel.findById({_id: req.body.userId});
+        if(!user) return res.json({success: false, msg:'utente non trovato'});
+    
+        switch(req.body.update){
+            case 'username':
+                //validazione dato
+                let validator = new Validator();
+                let input ={ user  : req.body.data }
+                let option = {user :"type:string|length:>:3|length:<:15"}
+    
+                let Var = validator.controll(input, option)
+                if (Var['err']) return res.json({success:false , msg: Var['msg']});
+        
+    
+                //controllo nome già in uso
+                let usernameDb = await userModel.find({user: req.body.data});
+                if(Boolean(usernameDb.length)) return res.json({success: false, msg:'nome utente già in uso'});
+    
+                user.user = req.body.data;
+                await user.save();
+    
+                return res.json({success: true, msg:'user cambiato'})
+                break;
+            
+            case 'cell':
+                //validazione dato
+                let validatorCell = new Validator();
+                let inputCell ={ cell  : req.body.data }
+                let optionCell = {cell :"type:numberOnly|length:>:9"}
+    
+                let VarCell = validatorCell.controll(inputCell, optionCell)
+                if (VarCell['err']) return res.json({success:false , msg: VarCell['msg']});
+
+               user.cell = {n:req.body.data, nv:false}
+               await user.save();
+
+
+               let uCS = await stripe.customers.retrieve(req.body.stipeId);
+               await stripe.customers.update( req.body.stipeId,
+                    {
+                        phone: req.body.data,
+                        shipping: {phone: req.body.data , name: uCS.name , address: uCS.shipping.address}
+                    }
+                );
+
+                return res.json({success: true, msg:'cell cambiato'})
+                break
+            case 'city':
+                //validazione dato
+                let validatorCity = new Validator();
+                let inputCity ={ City  : req.body.data }
+                let optionCity = {City :"type:textOnly"}
+    
+                let VarCity = validatorCity.controll(inputCity, optionCity)
+                if (VarCity['err']) return res.json({success:false , msg: VarCity['msg']});
+
+                user.address.c = req.body.data;
+                await user.save();
+
+                let uCSCity = await stripe.customers.retrieve(req.body.stipeId);
+                let addressCity = uCSCity.shipping.address;
+                addressCity.city = req.body.data
+                await stripe.customers.update( req.body.stipeId,
+                        {
+                            address: addressCity,
+                            shipping: {phone: uCSCity.phone , name: uCSCity.name , address: addressCity}
+                        }
+                    );
+
+                
+                return res.json({success: true, msg:'città cambiata'})
+                break
+            case 'address':
+                //validazione dato
+                let validatorAddress= new Validator();
+                let inputAddress ={ address  : req.body.data }
+                let optionAddress = {address :"type:string"}
+    
+                let VarAddress = validatorAddress.controll(inputAddress, optionAddress)
+                if (VarAddress['err']) return res.json({success:false , msg: VarAddress['msg']});
+
+                user.address.s = req.body.data;
+                await user.save();
+
+                let uCSAddress = await stripe.customers.retrieve(req.body.stipeId);
+                let addressAddress = uCSAddress.address;
+                addressAddress.line1 = req.body.data
+                await stripe.customers.update( req.body.stipeId,
+                        {
+                            address: addressAddress,
+                            shipping: {phone: uCSAddress.phone , name: uCSAddress.name , address: addressAddress}
+                        }
+                    );
+
+                
+                return res.json({success: true, msg:'via cambiata'});
+                break
+            case 'cap':
+                //validazione dato
+                let validatorCap= new Validator();
+                let inputCap ={ Cap  : req.body.data }
+                let optionCap = {Cap :"type:numberOnly"}
+    
+                let VarCap = validatorCap.controll(inputCap, optionCap)
+                if (VarCap['err']) return res.json({success:false , msg: VarCap['msg']});
+
+                user.address.cap = req.body.data;
+                await user.save();
+
+                let uCSCap = await stripe.customers.retrieve(req.body.stipeId);
+                let addressCap = uCSCap.address;
+                addressCap.postal_code = req.body.data
+                await stripe.customers.update( req.body.stipeId,
+                        {
+                            address: addressCap,
+                            shipping: {phone: uCSCap.phone , name: uCSCap.name , address: addressCap}
+                        }
+                    );
+
+                
+                return res.json({success: true, msg:'cap modificato'});
+            case 'email':
+                //validazione dato
+                let validatorEmail= new Validator();
+                let inputEmail ={ Email  : req.body.data }
+                let optionEmail = {Email :"type:email"}
+    
+                let VarEmail = validatorEmail.controll(inputEmail, optionEmail)
+                if (VarEmail['err']) return res.json({success:false , msg: VarEmail['msg']});
+
+                //controllo vecchia password
+                if(req.body.password){
+                    let resPassE = await bcrypt.compare(req.body.password, user.pass);
+                    if(!resPassE) return res.json({success: false, msg:'password sbagliata'});
+                }else{return res.json({success: false, msg:'password sbagliata'});}
+                
+
+                //controllo nome già in uso
+                let userEmail = await userModel.find({email: req.body.data});
+                if(Boolean(userEmail.length)) return res.json({success: false, msg:'email già in uso'});
+
+                user.email = req.body.data;
+                await user.save();
+
+                await stripe.customers.update( req.body.stipeId,
+                        { email: req.body.data }
+                    );
+
+                
+                return res.json({success: true, msg:'email modificata'});
+            case 'password':
+                //validazione dato
+                let validatorPass= new Validator();
+                let inputPass ={ Pass  : req.body.data }
+                let optionPass = {Pass :"type:password"}
+    
+                let VarPass = validatorPass.controll(inputPass, optionPass)
+                if (VarPass['err']) return res.json({success:false , msg: VarPass['msg']});
+
+                //controllo vecchia password
+                if(req.body.password){
+                    let resPass = await bcrypt.compare(req.body.password, user.pass);
+                    if(!resPass) return res.json({success: false, msg:'vecchia password sbagliata'});
+                }else{return res.json({success: false, msg:'password sbagliata'});}
+
+
+
+                /*CODIFICA PASSWORD*/
+                let passCrypt = await bcrypt.hash( req.body.data, 10);
+                user.pass = passCrypt;
+                await user.save();
+                
+                return res.json({success: true, msg:'password modificata'});
+            default:
+                break;
+        }
+    }catch(e){console.log(e)}
+
+    return res.json({success: false, msg:'errore al server'})
+   
+            
+    
+
+
+
+    
+}
+
 
 module.exports = {
     userNew,
     userLogin,
     getUser,
+    updateUser,
 
     haveCourse,
     payCourse,

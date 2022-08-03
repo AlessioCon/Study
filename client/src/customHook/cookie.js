@@ -16,7 +16,8 @@ class Cookie {
         let reg = new RegExp(`${xname}+{`, 'i')
         let filter = array.find(value => reg.test(value));
         if (filter !== undefined){
-            let str = filter.slice(xname.length);
+            
+            let str = filter.split('=')[1];
             return JSON.parse(str)
         }
         

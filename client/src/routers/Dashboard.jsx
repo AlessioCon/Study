@@ -62,12 +62,18 @@ function Dashbord(){
 
     let accessVenditore = user.grade.find(e => {if(e === 'seller' || e === 'sellerPending') return true});
     let accessCorsiVenditore = user.grade.find(e => e === 'seller' );
-    let cookieSeller = Cookie.getCookie('newSeller')?.seller
+    let cookieSeller = Cookie.getCookie('newSeller')?.seller;
+
+    let isMaster = user.grade.find(e => e === 'master');
 
     return (
         <main>
+            
             <nav className='nav-dashboard'>
                 <ul>
+                    {(Boolean(isMaster)) ? 
+                    <li><NavLink className={({ isActive }) => isActive ? "iconActive" : "iconNoActive"} to="master">Master</NavLink></li>
+                    : null}
                     <li><NavLink className={({ isActive }) => isActive ? "iconActive" : "iconNoActive"} to="utente">Utente</NavLink></li>
                     <li><NavLink className={({ isActive }) => isActive ? "iconActive" : "iconNoActive"} to="corsi">Corsi</NavLink></li>
                     {(accessCorsiVenditore || cookieSeller) ? 
@@ -79,15 +85,22 @@ function Dashbord(){
                             </ul>
                         </li> 
                         : null}
-                    
-                    <li><NavLink className={({ isActive }) => isActive ? "iconActive" : "iconNoActive"} to="impostazioni">Impostazioni</NavLink></li>
+                     <li>
+                            impostazioni
+                            <ul>
+                                <li><NavLink to="/impostazioni/utente">utente</NavLink></li>
+                            </ul>
+                        </li> 
                     {(accessVenditore) ? <li><NavLink className={({ isActive }) => isActive ? "iconActive" : "iconNoActive"} to="venditore">Venditore</NavLink></li> : null}
                 </ul>
             </nav>
-
-            <h1>Questa è una dashbord</h1>
-            <button className="btn" onClick={() => userLogOut()}>{stato.msg}</button>
             <Outlet/>
+            
+            <p>///////////</p>
+            <p>////////////</p>
+            <p>fine Outlet</p>
+            <button className="btn" onClick={() => userLogOut()}>{stato.msg}</button>
+            
             
         </main>
     )

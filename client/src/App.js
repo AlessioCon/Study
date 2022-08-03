@@ -18,11 +18,13 @@ import UserDashbord from './component/dashbord/UserDashbord';
 import CreateCourse from './component/course/CreateCourse';
 import CreateLesson from './component/course/CreateLesson';
 import UserSeller from './component/dashbord/UserSeller';
+import MasterDashbord from './component/dashbord/MasterDashbord';
+
+import SettingUser from './component/dashbord/SettingUser';
 
 import Status from './routers/Status';
 
 import UserCorso from './routers/UserCorso';
-
 
 function App (){
     const [user, setUser] = useState(Cookie.getCookie('user'));
@@ -42,21 +44,16 @@ function App (){
                         })
             let data = await response.json();
             if(data.success) { 
-                if (user !== undefined && user['_id'] === data.data['_id']) return ;
-
+                //if (user !== undefined && user['_id'] === data.data['_id']) return ;
                 Cookie.setCookie('user', data.data , 1);
                 return setUser(data.data)
-            };
+            }
             
-            Cookie.deliteCookie('user');
             //return setUser(false);
- 
-        }
-        catch(e){console.log(e)}
-        
+        }catch(e){console.log(e)}
     }
-    getUser()
-    });
+    if (!Boolean(user)) getUser();
+    }, [user]);
 
     
 
@@ -66,7 +63,7 @@ function App (){
 
 
 
-
+let isMaster = Boolean(user?.grade?.find(e => e === 'master'))
     return(
         <BrowserRouter>
             <Header/>
@@ -77,10 +74,12 @@ function App (){
 
 
                 <Route path="dashbord"  element={user ? <Dashbord/> : <Navigate to="/login"/>}>
+                    <Route path="master" element={isMaster ? <MasterDashbord /> : <Navigate to="/dashbord"/>}/>
                     <Route path="utente" element={<UserDashbord />}/>
                     <Route path="impostazioni" element={<h1>impostazioni</h1>}/>
                     <Route path="venditore" element={<UserSeller/>}/>
                 </Route>
+                <Route path="impostazioni/utente" element={user ? <SettingUser/> : <Navigate to="/login"/> }/>
                 <Route path="dashbord/lezioni" element={<CreateLesson/>}/>
                 <Route path="dashbord/crea-corso" element={<CreateCourse/>}/>
 

@@ -4,7 +4,7 @@ const session = require('express-session');
 const passport = require('passport');
 const fs = require('fs');
 
- 
+
 
 const app = express();
 
@@ -72,3 +72,50 @@ app.post('/api/download' , (req,res) => {
 
 //----------------------------------------------------
 
+const serverIo = require("http").createServer(app);
+const cors = require('cors');
+app.use(cors());
+
+const io = require("socket.io")(serverIo, {
+    cors: {
+        origin: process.env.DOMAIN,
+        methods: ["GET", "POST"],
+        credentials: true
+      }
+})
+
+const user = []; //tiene conto di tutti gli utenti di tutte le ROOM
+const lastMsg = [] //tiene conto dell' ultimo utente che ha inviato il msg nella relativa ROOM
+io.on("connection", (socket) => {
+    socket.join(socket.handshake.query.room);
+
+    if(socket.handshake.query.user === 'undefined') socket.handshake.query.user = undefined
+
+    user.push({idUser: socket.id , name: socket.handshake.query.user || 'User-'+socket.id});
+
+    socketUserOnline(user.length, socket.handshake.query.room)
+    
+    socket.on("disconnect", () => {
+        let index ;
+        user.map((e, indexE) => {
+            if(e.idUser === socket.id) return index = indexE;
+        })
+        user.splice(index , 1);
+
+        socketUserOnline(user.length, socket.handshake.query.room)
+    });
+
+    socket.on("send_msg", (data) => {
+        let userName = user.find(e => e.idUser === socket.id)
+        io.to(data.room).emit('new_msg', {msg: data.msg , user: userName.name })
+        lastMsg[data.room] = socket.id
+    });
+
+
+    //socket.onAny((event, ...args) => {
+    //    console.log(event, args);
+    //  });
+    function socketUserOnline(number, room){ io.to(room).emit('userOnline', number) }
+})
+
+serverIo.listen(process.env.PortIo, () => console.log(`SocketIo on port ${process.env.PortIo}`));
