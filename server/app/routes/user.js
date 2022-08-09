@@ -11,7 +11,6 @@ router.post('/getuser',  userController.getUser)
 router.post('/payCourse' , userController.payCourse);//utente ha pagato il corso con successo
 
 router.get('/haveCourse/:id/:idCourse' , userController.haveCourse); //controllare se ha il corso
-router.post('/newseller', userController.userSeller);
 router.post('/getseller' , userController.getUserSeller);
 
 router.post('/seller/strip_update_info' , stripeController.updateInfoSeller)

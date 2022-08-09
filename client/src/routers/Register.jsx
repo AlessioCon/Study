@@ -1,21 +1,25 @@
 import { useState } from 'react';
 import {Link}       from 'react-router-dom';
 
+
+//element
+import Input from '../component/form/Input'
+
 function Register(){
     let [stato , setStato]      = useState({error: {class: '' , msg:''}});
 
-    let [name, setName] = useState('Alessio');
-    let [surname, setSurName] = useState('Conforto');
-    let [username, setUserName] = useState('Ale12ssio');
-    let [dataAge, setDataAge] = useState('2003-09-17');
-    let [txc, setTxc] = useState('QQQQQQ12A12A123A');
-    let [cell, setCell] = useState('3293874651');
-    let [country, setCountry] = useState('Italia');
-    let [city, setCity] = useState('Napoli');
-    let [address, setAddress] = useState('via Ciubecca n29');
-    let [cap, setCap] = useState('80039');
-    let [email, setEmail] = useState('ale@gmail.com');
-    let [password, setPassword] = useState('Pa23d%eu');
+    let [name, setName] = useState();
+    let [surname, setSurName] = useState();
+    let [username, setUserName] = useState();
+    let [dataAge, setDataAge] = useState();
+    let [txc, setTxc] = useState();
+    let [cell, setCell] = useState();
+    let [country, setCountry] = useState();
+    let [city, setCity] = useState();
+    let [address, setAddress] = useState();
+    let [cap, setCap] = useState();
+    let [email, setEmail] = useState();
+    let [password, setPassword] = useState();
     
     async function handlSubmit(e){
         e.preventDefault();
@@ -52,99 +56,93 @@ function Register(){
 
 
     return(
-        <form action="/register" method="POST" onSubmit={(e) => handlSubmit(e)}> 
+        <form className={'form'} onSubmit={(e) => handlSubmit(e)}> 
 
-            <div>
-                <label htmlFor="name">Name</label>
-                <input type="text" name="name" id="name" minLength={3} maxLength={11} value={name} required 
-                     onChange={(e) => setName(e.target.value)}
-                />
-            </div>
-        
-            <div>
-                <label htmlFor="surname">Surname</label>
-                <input type="text" name="surname" id="surname" minLength={3} maxLength={11} value={surname} required
-                    onChange={(e) => setSurName(e.target.value)}
-                />
-            </div>
+            <Input 
+                nome='name'
+                label='Nome' 
+                variabile={[name, setName]} 
+                propInput={{type: 'text', required:true, minLength:3 , maxLength:11}}
+            />
 
-            <div>
-                <label htmlFor='username'>Username</label>
-                <input type="text" name="username" id="username" minLength={3} maxLength={15} value={username} required
-                    onChange={(e) => setUserName(e.target.value)}
-                />
-            </div>
+            <Input 
+                nome='surname'
+                label='Cognome' 
+                variabile={[surname, setSurName]} 
+                propInput={{type: 'text', required:true, minLength:3 , maxLength:11}}
+            />
 
-            <div>
-                <label htmlFor='username'>Data Di Nascita</label>
-                <input type="date" name="date" id="date"  value={dataAge} required
-                    onChange={(e) => setDataAge(e.target.value)}
-                />
-            </div>
+            <Input 
+                nome='username'
+                label='User' 
+                variabile={[username, setUserName]} 
+                propInput={{type: 'text', required:true, minLength:3 , maxLength:15}}
+            />
 
-            <div>
-                <label htmlFor='txc'>Codice Fiscale</label>
-                <input type="text" name="txc" id="txc" minLength={16} maxLength={16} value={txc} required
-                    onChange={(e) => setTxc(e.target.value)}
-                />
-            </div>
+            <Input 
+                nome='date'
+                label='Data Di Nascita' 
+                variabile={[dataAge, setDataAge]} 
+                propInput={{type: 'date', required:true}}
+            />
 
-            <div>
-                <label htmlFor='txc'>Numero Cellulare</label>
-                <input type="tel" name="cell" id="cell" value={cell} placeholder="es. 0123456789" required
-                    onChange={(e) => setCell(e.target.value)}
-                />
-            </div>
+            <Input 
+                nome='txc'
+                label='Codice Fiscale' 
+                variabile={[txc, setTxc]} 
+                propInput={{type: 'text', required:true , minLength:16 , maxLength:16}}
+            />
 
-            <div>
-                <label htmlFor='country'>Paese</label>
-                <input type="text" name="country" id="country" value={country} required
-                    onChange={(e) => setCountry(e.target.value)}
-                />
-            </div>
+            <Input 
+                nome='country'
+                label='Paese' 
+                variabile={[country, setCountry]} 
+                propInput={{type: 'text', required:true}}
+            />
 
-            <div>
-                <label htmlFor='city'>Città</label>
-                <input type="text" name="city" id="city" value={city} required
-                    onChange={(e) => setCity(e.target.value)}
-                />
-            </div>
+            <Input 
+                nome='city'
+                label='Città' 
+                variabile={[city, setCity]} 
+                propInput={{type: 'text', required:true}}
+            />
 
-            <div>
-                <label htmlFor='address'>Indirizzo</label>
-                <input type="text" name="address" id="address" placeholder="es. via Duomo 20" value={address} required
-                    onChange={(e) => setAddress(e.target.value)}
-                />
-            </div>
+            <Input 
+                nome='address'
+                label='Indirizzo' 
+                variabile={[address, setAddress]} 
+                propInput={{type: 'text', required:true}}
+            />
 
-            <div>
-                <label htmlFor='cap'>cap</label>
-                <input type="number" name="cap" id="cap" value={cap} required
-                    onChange={(e) => setCap(e.target.value)}
-                />
-            </div>
+            <Input 
+                nome='cap'
+                label='Cap' 
+                variabile={[cap, setCap]} 
+                propInput={{type: 'text', required:true}}
+            />
 
-            <div>
-                <label htmlFor='email'>email</label>
-                <input type="email" name="email" id="email" value={email} required
-                    onChange={(e) => setEmail(e.target.value)}
-                />
-            </div>
+            <Input 
+                nome='email'
+                label='Email' 
+                variabile={[email, setEmail]} 
+                propInput={{type: 'email', required:true}}
+            />
 
-            <div>
-                <label htmlFor='password'>password</label>
-                <input type="password" name="password" id="password" minLength={8}  value={password} required
-                    onChange={(e) => setPassword(e.target.value)}
-                />
-            </div>
+            <Input 
+                nome='password'
+                label='Password' 
+                variabile={[password, setPassword]} 
+                propInput={{type: 'password', required:true, minLength:8, autoComplete:'current-password'}}
+            />
+            
 
             <div className={stato.error.class}>
                 <p>{stato.error.msg}</p>
             </div>
 
-            <div>
-                <button formAction='submit'>SignUp</button>
-                <Link to="/login">SignIn</Link>
+            <div className={'form_container-btn'}>
+                <button className={'btn_form'} formAction='submit'>SignUp</button>
+                <Link className={'btn_form second'} to="/login">SignIn</Link>
             </div>
             
         </form>

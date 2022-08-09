@@ -13,7 +13,8 @@ async function StripeCreateProduct(item){
         const product = await stripe.products.create({
             name: item.t,
             description:  item.d,
-            active:(item.s == true) ? false : true,
+            active:(item.s == true) ? false : true ,
+            metadata: {block: false},
         })
 
 
@@ -50,7 +51,7 @@ async function StripeUpdateProduct(item){
         const product = await stripe.products.retrieve(
             priceFined.product
         )
-        
+
         const updateProduct = await stripe.products.update(
             product.id, {
                 name: item.title,
@@ -92,6 +93,38 @@ async function StripeDeleteProduct(id){
     
 }
 
+async function stripeBlockProduct(id){
+    try{
+        //trova il prodotto
+
+        const price = await stripe.prices.retrieve(id);
+        if(!price) return {success: false , msg: 'prezzo non trovato'}
+
+        const productFind = await stripe.products.retrieve(price.product);
+        if(!productFind) return {success: false , msg: 'prodotto non trovato'}
+        
+        
+        //sblocca corso
+        if(productFind.metadata?.block === 'true'){
+            await stripe.products.update(price.product,
+                {
+                    metadata: {block: false},
+                    active: true
+                }
+            );
+        }else{
+            await stripe.products.update(price.product,
+                {
+                    metadata: {block: true},
+                    active: false,
+                }
+            );
+        }
+
+        return {success: true}
+    }catch(e){console.log(e)}
+    
+}
 
 async function CreateSubscription(req, res){
     try{
@@ -288,9 +321,12 @@ async function stripeLogin(req, res){
 
 async function amountProduct(req, res){
     try{
-
+        //se è chiamato direttamente o tramite altro controller
+        let idStripe = req?.body?.idStripe || req
+ 
+        //id Corso?
         const price = await stripe.prices.retrieve(
-            req.body.idStripe
+            idStripe
         );
 
         const invoice = await stripe.invoices.search({
@@ -302,7 +338,12 @@ async function amountProduct(req, res){
             totalPrice += Number( x.metadata.amount)
         })
 
-        res.json({success: true , amount: totalPrice})
+        if(req.body?.idStripe){
+            return res.json({success: true , amount: totalPrice})
+        }else{
+            return {success: true , amount: totalPrice}
+        }
+        
 
 
     }catch(e){console.log(e)}
@@ -379,6 +420,7 @@ module.exports = {
     StripeCreateProduct,
     StripeUpdateProduct,
     StripeDeleteProduct,
+    stripeBlockProduct,
     amountProduct,
 
     CreateSubscription,

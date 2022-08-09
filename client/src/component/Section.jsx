@@ -18,10 +18,10 @@ export default function Sezioni(props){
     let sliceElement   = elementi.slice((posto-1)*divisione, posto*divisione);
 
     return (
-        <div>
-            <ul>{navDivisione}</ul>
-            <ul>{sliceElement}</ul>
-            {(down) ? <ul>{navDivisione}</ul> : null}
+        <div className='section'>
+            <ul className='count'>{navDivisione}</ul>
+            <ul className='element'>{sliceElement}</ul>
+            {(down) ? <ul className='count'>{navDivisione}</ul> : null}
         </div>
     )
 }

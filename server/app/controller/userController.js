@@ -10,6 +10,7 @@ const stripe = require('stripe')(process.env.Secret_Key);
 async function userNew(req, res){
     try{
         let validator = new Validator();
+        req.body.email = req.body.email.toLowerCase()
         let input ={
             name    :req.body.name ,
             surname :req.body.surname ,
@@ -103,29 +104,6 @@ async function userNew(req, res){
     
 }
 
-async function userSeller(req, res){
-
-
-    try{
-        let user = await userModel.findById({_id: req.body.id})
-        if(!user) return res.json({success: false , msg: 'user not found'});
-
-        let userSeller = user.grade.find(x => {if(x === 'seller' || x === 'sellerPending') return x});
-        if(userSeller) return res.json({success: false , msg: 'l\'utente è già venditore'})
-        
-    
-        let response = await stripeController.stripeNewConnect(user);
-        if(!response?.success) return res.json({success: false , msg: 'errore in stripe'});
-
-        user.idSS = response.id;
-        if(!user.grade.find(x => x === 'sellerPending')) user.grade.push('sellerPending');
-
-        await user.save();
-        return res.json({success: true});
-
-    }catch(e){if(e) console.log(e)}
-    
-}
 
 async function getUser(req, res){
     try{
@@ -137,13 +115,9 @@ async function getUser(req, res){
     }catch(e){console.log(e)}
 }
 
-//user in uso
-//--email   ale@gmail.com   ales@gmail.com
-//--pass    Pa23d%eu        Pa23d%eust
-
-
 async function userLogin(req, res, next){
     let validator = new Validator();
+    req.body.username = req.body.username.toLowerCase()
     let input={ username: req.body.username}
     let option={ username: 'type:email'}
 
@@ -337,7 +311,7 @@ async function updateUser(req, res){
                 //validazione dato
                 let validatorCap= new Validator();
                 let inputCap ={ Cap  : req.body.data }
-                let optionCap = {Cap :"type:numberOnly"}
+                let optionCap = {Cap :"type:numberOnly|length:>:5|length:<:5"}
     
                 let VarCap = validatorCap.controll(inputCap, optionCap)
                 if (VarCap['err']) return res.json({success:false , msg: VarCap['msg']});
@@ -358,9 +332,10 @@ async function updateUser(req, res){
                 
                 return res.json({success: true, msg:'cap modificato'});
             case 'email':
+                req.body.data = req.body.data.toLowerCase();
                 //validazione dato
                 let validatorEmail= new Validator();
-                let inputEmail ={ Email  : req.body.data }
+                let inputEmail ={ Email  : req.body.data}
                 let optionEmail = {Email :"type:email"}
     
                 let VarEmail = validatorEmail.controll(inputEmail, optionEmail)
@@ -433,7 +408,6 @@ module.exports = {
 
     haveCourse,
     payCourse,
-    userSeller,
     getUserSeller,
     fromIdToUser
 }

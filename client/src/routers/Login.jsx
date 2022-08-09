@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
+//element
+import Input from '../component/form/Input'
 
 function Login(){
-    let [username, setUsername] = useState('ales@gmail.com');
-    let [password, setPassword] = useState('Pa23d%eust');
+    let [username, setUsername] = useState();
+    let [password, setPassword] = useState();
     let [stato , setStato]      = useState({error: {class: '' , msg:''}});
     
 
@@ -36,29 +38,29 @@ function Login(){
     }
 
     return(
-        <form action='/login' method='POST' onSubmit={(e) => handleSubmit(e)}>
-            <div>
-                <label htmlFor="username">Email</label>
-                <input type="email" id="username" name="username" required autoComplete='email'
-                value={username}
-                onChange={(e) => setUsername(e.target.value)} 
-                />
-            </div>
-            <div>
-                <label htmlFor="password">Password</label>
-                <input type="password" id="password" name="password" autoComplete='current-password' required 
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                />
-            </div>
+        <form className={'form'} onSubmit={(e) => handleSubmit(e)}>
+
+            <Input 
+                nome='username'
+                label='Email' 
+                variabile={[username, setUsername]} 
+                propInput={{type: 'email', required:true, autoComplete:'email' }}
+            />
+
+            <Input 
+                nome='password'
+                label='Password' 
+                variabile={[password, setPassword]} 
+                propInput={{type:'password', required:true, autoComplete:'current-password' }}
+            />
 
             <div className={stato.error.class}>
                 <p>{stato.error.msg}</p>
             </div>
 
-            <div>
-                <button formAction='submit'>SignIn</button>
-                <Link to="/register">SignUp</Link>
+            <div className={'form_container-btn'}>
+                <button className={'btn_form'} formAction='submit'>SignIn</button>
+                <Link className={'btn_form second'} to="/register">SignUp</Link>
             </div>
         
         </form>

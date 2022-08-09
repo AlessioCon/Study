@@ -2,9 +2,7 @@ import { useState, useEffect } from 'react';
 import {Link, NavLink, Outlet} from 'react-router-dom';
 import Cookie from '../customHook/cookie';
 
-
 function Dashbord(){
-    const [stato , setStato]  = useState({class: 'button' , msg:'LogOut'});
     const [user, setUser] = useState(null)
     
     useEffect(()=> {
@@ -19,7 +17,7 @@ function Dashbord(){
                     },
                     body: JSON.stringify({id: Cookie.getCookie('user')._id})
                 })
-                let data = await response.json()
+                let data = await response.json();
                 if(!data.success){
                     alert('errore nel trovare l\'utente , ricarica la pagina')
                     window.location.href = '/'
@@ -33,9 +31,8 @@ function Dashbord(){
     }, [user]);
 
 
-    async function userLogOut(){
-        setStato({error: {class: 'button_msg-pending' , msg:''}})
-
+    async function userLogOut(e){
+        e.preventDefault()
         try{
             let response = await fetch('/logout', {
                     method: "GET",
@@ -47,12 +44,11 @@ function Dashbord(){
                     },
             })
             let data = await response.json();
-            if(!data.success) return setStato({error: {class: 'button' , msg:'LogOut'}});
-
+            if(!data.success) return alert('errore! Ricarica la pagina...');   
+           
             Cookie.deliteCookie('user')
             return  window.open("/", "_self");
         
-
         }catch(e){console.log(e)}
     }
 
@@ -67,42 +63,45 @@ function Dashbord(){
     let isMaster = user.grade.find(e => e === 'master');
 
     return (
-        <main>
-            
-            <nav className='nav-dashboard'>
-                <ul>
+
+        <div className='dashboard'>
+
+
+            <nav className={'dashboard-nav'}>
+                <ol>
                     {(Boolean(isMaster)) ? 
-                    <li><NavLink className={({ isActive }) => isActive ? "iconActive" : "iconNoActive"} to="master">Master</NavLink></li>
+                    <li><NavLink  className={({ isActive }) => isActive ? "dashbord-select" : null} to="master">Master</NavLink></li>
                     : null}
-                    <li><NavLink className={({ isActive }) => isActive ? "iconActive" : "iconNoActive"} to="utente">Utente</NavLink></li>
-                    <li><NavLink className={({ isActive }) => isActive ? "iconActive" : "iconNoActive"} to="corsi">Corsi</NavLink></li>
+                    <li><NavLink  className={({ isActive }) => isActive ? "dashbord-select" : null} to="utente">Utente</NavLink></li>
+                    <li><NavLink  className={({ isActive }) => isActive ? "dashbord-select" : null} to="corsi">Corsi</NavLink></li>
                     {(accessCorsiVenditore || cookieSeller) ? 
-                        <li>
-                            crea Corsi
-                            <ul>
-                                <li><Link to="crea-corso">Corsi</Link></li>
-                                <li><Link to="lezioni">Lezioni</Link></li>
-                            </ul>
+                        <li className='sub-nav'>
+                            <a href="" onClick={e => {
+                               e.preventDefault();
+                               e.target.classList.toggle('active')
+                               }}>Crea Corsi</a>
+                            <ol>
+                                <li><Link  to="crea-corso">Corsi</Link></li>
+                                <li><Link  to="crea-lezioni">Lezioni</Link></li>
+                            </ol>
                         </li> 
                         : null}
-                     <li>
-                            impostazioni
-                            <ul>
-                                <li><NavLink to="/impostazioni/utente">utente</NavLink></li>
-                            </ul>
-                        </li> 
-                    {(accessVenditore) ? <li><NavLink className={({ isActive }) => isActive ? "iconActive" : "iconNoActive"} to="venditore">Venditore</NavLink></li> : null}
-                </ul>
+                    <li className='sub-nav'>
+                        <a href="" onClick={e => {
+                           e.preventDefault();
+                           e.target.classList.toggle('active')
+                           }}>Impostazioni</a>
+                        <ol>
+                            <li><NavLink  to="/impostazioni/utente">utente</NavLink></li>
+                        </ol>
+                    </li>
+                    {(accessVenditore) ? <li><NavLink  className={({ isActive }) => isActive ? "dashbord-select" : null} to="venditore">Venditore</NavLink></li> : null}
+                    <li><a href="" onClick={(e) => userLogOut(e)}>LogOut</a></li>
+                </ol>
             </nav>
             <Outlet/>
-            
-            <p>///////////</p>
-            <p>////////////</p>
-            <p>fine Outlet</p>
-            <button className="btn" onClick={() => userLogOut()}>{stato.msg}</button>
-            
-            
-        </main>
+        </div>
+       
     )
 }
 

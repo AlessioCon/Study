@@ -2,19 +2,46 @@ import {Component}  from 'react';
 import { NavLink }  from 'react-router-dom';
 import Cookie from '../customHook/cookie'
 
-class NavBarHeadre extends Component{
 
-    render(){
+
+function menuActive(){
+    let div = document.getElementById('hamburger');
+    div.classList.toggle('active')
+}
+
+
+function NavBarHeadre(){
         return(
-            <nav>
-                <ol>
-                    <li><NavLink to='/contatti'>Contatti</NavLink></li>
-                    <li><NavLink to='/corsi'>Corsi</NavLink></li>
-                    <li><NavLink to='/test'>Test</NavLink></li>
-                </ol>
-            </nav>
+            <div className={'header_nav-container'}>
+                <div id="hamburger" className={'nav-hamburger'}
+                    onClick={e => { 
+                        e.target.classList.toggle('active')}}
+                >
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                </div>
+                <nav className={'header-nav'}>
+                    <button className={"x-hamburger"} onClick={() => menuActive()}>X</button>
+                    <ol>
+                        <li><NavLink to='/contatti' onClick={() => menuActive()}>Contatti</NavLink></li>
+                        <li className='sub-nav'>
+                            <a href="" onClick={e => {
+                                e.preventDefault();
+                                e.target.classList.toggle('active')
+                                } }>click</a>
+                            <ol>
+                                <li><NavLink to='/test/test'     onClick={() => menuActive()}>test di prova</NavLink></li>
+                                <li><NavLink to='/test/test'     onClick={() => menuActive()}>test di prova2</NavLink></li>
+                            </ol>
+                        </li>
+                        <li><NavLink to='/corsi'    onClick={() => menuActive()}>Corsi</NavLink></li>
+                        
+                    </ol>
+                </nav>
+            </div>
+            
         )
-    }
 }
 
 function UserLog(){
@@ -22,9 +49,9 @@ function UserLog(){
     let user = Cookie.getCookie('user');
     let redirect ='login'
     let valueLink= 'Login'
-    if(user){
-        redirect  = (user.user) ? 'dashbord' : 'login';
-        valueLink = (user.user) ? user.user : 'login';
+    if(user && user.user){
+        redirect  =  'dashbord';
+        valueLink =   user.user;
     }
 
     return(
@@ -37,15 +64,12 @@ function UserLog(){
 
 function Header(){
 
-
-
-
     return(
         <header>
             <NavLink to="/">Home</NavLink>
             <NavBarHeadre/>
             <UserLog/>
-            
+
         </header>
    
     )

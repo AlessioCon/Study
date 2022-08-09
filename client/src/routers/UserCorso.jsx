@@ -74,7 +74,7 @@ const [lezione, setLezione] = useState(null);
 const [domande, setDomande] = useState([])//risposte date live
 const [controlAnswers , setControlAnswers] = useState(false); //controllo risposte un buleano
 const [progress , setProgress] = useState([]);
-const [punti , setPunti] = useState();
+const [punti , setPunti] = useState(0);
 const [postoSezioni, setPostoSezioni] = useState(1);
 
 let param = useParams();
@@ -345,12 +345,21 @@ let param = useParams();
             lezioneDisplay = (<p>seleziona una lezione</p>)
         }
         
+        console.log(punti)
 
         return (
         <div>
             <p>il tuo punteggio {punti}</p>
-            <div>{lezioneDisplay}</div>
-            <ul>{chapter}</ul>
+            <div className='col_2'>
+                <div>{lezioneDisplay}</div>
+                <div>
+                    <ul>
+                        {chapter}
+                    </ul>
+                </div>
+                
+            </div>
+
         </div>
             
             )

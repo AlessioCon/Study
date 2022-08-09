@@ -307,19 +307,9 @@ function Lesson(props){
                     setListFile('');
                 }}
             >X</button>
-            <div style={{display: 'inline'}}
-                    onMouseLeave={() => {
-                        document.getElementById('msgRisorseEsterne').style.display = "none";
-                    }}
-                    onMouseEnter={() => {
-                        document.getElementById('msgRisorseEsterne').style.display = "block";
-                    }}>
-                        info
-                        <div id="msgRisorseEsterne">
-                            se inserisci un file e la lezione contiene dei quiz , questi verranno eliminati
-                        </div>
-                    
-                </div>
+            <span title="se inserisci un file e la lezione contiene dei quiz , questi verranno eliminati">
+                info
+            </span>
         </div>]
 
     let video= [
@@ -336,7 +326,7 @@ function Lesson(props){
     ]
 
     return(
-        <div style={{width:'100%'}}>
+        <div>
             <div>
                 <label htmlFor='tLession'>Titolo lezione</label>
                 <input type="text" name="tLession" id="tLession" required
@@ -424,25 +414,7 @@ function Lesson(props){
                         newValue[actualElement].point = e.target.value;
                         setContList(newValue)}}
                 />
-                <div style={{display: 'inline'}}
-                    onMouseLeave={() => {
-                        document.getElementById('msgPunti').style.display = "none";
-                    }}
-                    onMouseEnter={() => {
-                        document.getElementById('msgPunti').style.display = "block";
-                    }}>
-                        info
-                        <div id="msgPunti">
-                            se la lezione è un quiz i punti saranno assegnati in base alla percentuale di risposte esatte date<br/>
-                            es.<br/>
-                            punteggio massimo = 3<br/>
-                            percentuale di risposte esatte  maggiore dell' 80% verranno dati 3 punti<br/>
-                            percentuale di risposte esatte  maggiore del 60% verranno dati 2 punti<br/>
-                            percentuale di rispostre esatte maggiore del 40% verrà dato 1 punto   <br/>
-                            da notare che il calcolo verrà sempre approssimato per eccesso 
-                        </div>
-                    
-                </div>
+                <span title={MSGQUIZ}> info </span>
                     
                 
             </div>
@@ -520,8 +492,8 @@ function ContentLesson(props){
 
 
     return(
-        <div style={{ display:'flex' ,border:'1px solid black'}}>
-                        
+        <div className="col_2">
+                    
                 {(contList.length) ? <Lesson 
                                         contList={[contList , setContList]} 
                                         elemento={actualElement}
@@ -529,8 +501,8 @@ function ContentLesson(props){
                                         /> 
                                         : <p>seleziona elemento</p>}
 
-                <div style={{border:'1px solid blue' , minHeight:'150px'}}>
-                    <input type="search" name="searchE" id="searchE"
+                <div>
+                    <input type="search" name="searchE" id="searchE" placeholder='cerca titolo lezione'
                         value={search}
                         onChange={(e) =>{setSearch(e.target.value)}}
                     />
@@ -602,10 +574,6 @@ const [actualElement , setActualElement] = useState(0);
 const [elBigNum , setElBigNum] = useState(0);
 
     useEffect(()=>{
-        if(!Cookie.getCookie('user').grade.find(e => e === 'seller' ) && !Cookie.getCookie('nawSeller')?.seller){
-            return window.location.href = '/dashbord'
-        }
-
 
         let getLesson = async () =>{
             try {
@@ -729,6 +697,17 @@ const [elBigNum , setElBigNum] = useState(0);
         </form>
     )
 }
+
+
+let MSGQUIZ =`
+        se la lezione è un quiz i punti saranno assegnati in base alla percentuale di risposte esatte date
+        es.
+        punteggio massimo = 3
+        percentuale di risposte esatte  maggiore dell\' 80% verranno dati 3 punti
+        percentuale di risposte esatte  maggiore del 60% verranno dati 2 punti
+        percentuale di rispostre esatte maggiore del 40% verrà dato 1 punto 
+        da notare che il calcolo verrà sempre approssimato per eccesso`
+ 
 
 
 

@@ -19,6 +19,7 @@ import CreateCourse from './component/course/CreateCourse';
 import CreateLesson from './component/course/CreateLesson';
 import UserSeller from './component/dashbord/UserSeller';
 import MasterDashbord from './component/dashbord/MasterDashbord';
+import MasterViewUser from './component/dashbord/MasterViewUser';
 
 import SettingUser from './component/dashbord/SettingUser';
 
@@ -43,13 +44,12 @@ function App (){
                             },
                         })
             let data = await response.json();
+
             if(data.success) { 
-                //if (user !== undefined && user['_id'] === data.data['_id']) return ;
                 Cookie.setCookie('user', data.data , 1);
-                return setUser(data.data)
+                return setUser(data.data);
             }
             
-            //return setUser(false);
         }catch(e){console.log(e)}
     }
     if (!Boolean(user)) getUser();
@@ -59,11 +59,9 @@ function App (){
 
 
 
-
-
-
-
 let isMaster = Boolean(user?.grade?.find(e => e === 'master'))
+let isSeller = Boolean(user?.grade?.find(e => {if(e === 'seller' || e === 'sellerPending') return true}))
+
     return(
         <BrowserRouter>
             <Header/>
@@ -76,12 +74,13 @@ let isMaster = Boolean(user?.grade?.find(e => e === 'master'))
                 <Route path="dashbord"  element={user ? <Dashbord/> : <Navigate to="/login"/>}>
                     <Route path="master" element={isMaster ? <MasterDashbord /> : <Navigate to="/dashbord"/>}/>
                     <Route path="utente" element={<UserDashbord />}/>
-                    <Route path="impostazioni" element={<h1>impostazioni</h1>}/>
-                    <Route path="venditore" element={<UserSeller/>}/>
+                    <Route path="venditore" element={isSeller ? <UserSeller/> :  <Navigate to="/dashbord"/>}/>
                 </Route>
                 <Route path="impostazioni/utente" element={user ? <SettingUser/> : <Navigate to="/login"/> }/>
-                <Route path="dashbord/lezioni" element={<CreateLesson/>}/>
-                <Route path="dashbord/crea-corso" element={<CreateCourse/>}/>
+                <Route path="dashbord/crea-lezioni" element={isSeller ? <CreateLesson/> : <Navigate to="/dashbord"/> }/>
+                <Route path="dashbord/crea-corso" element={isSeller ? <CreateCourse/> : <Navigate to="/dashbord"/>}/>
+
+                <Route path="master/view/:user"  element={isMaster ? <MasterViewUser/> : <Navigate to="/dashbord"/>}/>
 
 
                 <Route path="corsi"  element={<Corsi/>}/>

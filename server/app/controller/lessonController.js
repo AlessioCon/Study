@@ -32,6 +32,19 @@ async function getAll(req,res){
     }
 }
 
+async function getSingleLesson(req,res){
+    try{
+        let lesson = await lessonModel.findById({_id: req.params.id});
+        if(!lesson) return res.json({success:false , msg:'lezione non trovata'});
+
+
+        return res.json({success:true, lesson:lesson});
+
+    }catch(e){
+        res.json({success:false, data:'error server'});
+    }
+}
+
 async function save(req, res){
     try{
         let validator = new Validator()
@@ -323,5 +336,6 @@ module.exports = {
     getAll,
     save,
     update,
-    deleteLesson
+    deleteLesson,
+    getSingleLesson
 }

@@ -5,6 +5,7 @@ const lessonController = require('../controller/lessonController');
 
 
 router.post('/', lessonController.getAll);
+router.get('/:id', lessonController.getSingleLesson);
 
 router.post('/save' , lessonController.save);
 

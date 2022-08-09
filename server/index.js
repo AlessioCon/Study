@@ -45,6 +45,7 @@ const userRouter = require('./app/routes/user');
 const corsiRouter = require('./app/routes/corsi');
 const lessonRouter = require('./app/routes/lesson');
 const stripeRouter = require('./app/routes/stripe');
+const masterRouter = require('./app/routes/master')
 
 /* MIDDLEWARE*/
 const checkUserLogin = require('./app/middleware/check-user-login');
@@ -54,6 +55,7 @@ app.use('/api/corsi', corsiRouter);
 app.use('/api/lesson', lessonRouter)
 app.use('/user', checkUserLogin() ,userRouter);
 app.use('/api/stripe' , stripeRouter);
+app.use('/api/master', masterRouter);
 
 
 

@@ -44,8 +44,8 @@ function AddOneInput(props){
                         setContList(newElement);
                     }}
                 >
-                    <option value="modifiche">modifiche</option>
-                    <option value="illimitato">illimitato</option>
+                    <option title="l'utente può solo modificare il corso" value="modifiche">modifiche</option>
+                    <option title="l'utente ha pieno controllo del corso"value="illimitato">illimitato</option>
                 </select>
                 <button onClick={(e) => {
                     e.preventDefault();
@@ -330,7 +330,7 @@ function Course(props){
         </div>]
 
     return(
-        <div style={{width:'100%'}}>
+        <div>
             <div>
                 <label htmlFor='tCourse'>Titolo Corso</label>
                 <input type="text" name="tCourse" id="tCourse" required
@@ -490,7 +490,7 @@ function ContentCourse(props){
 
 
     return(
-        <div style={{ display:'flex' ,border:'1px solid black'}}>
+        <div className="col_2">
                         
                 {(contList.length) ? <Course 
                                         contList={[contList , setContList]} 
@@ -500,7 +500,7 @@ function ContentCourse(props){
                                         /> 
                                         : <p>seleziona elemento</p>}
 
-                <div style={{border:'1px solid blue' , minHeight:'150px'}}>
+                <div>
                     <input type="search" name="searchE" id="searchE"
                         value={search}
                         onChange={(e) =>{setSearch(e.target.value)}}
@@ -515,51 +515,52 @@ function ContentCourse(props){
                     }}>
                         nuovo corso
                     </button>
-                
-                    <ul style={{overflowY: 'auto' , maxHeight: '200px'}}>
-                        {
-                            contList.filter((e) => { if(new RegExp(search).test(e.ltitle)) return e })
-
-                            .map((x,b) =>{
-                                return <li key={'content'+b}>
-                                    <button onClick={(e) => {
-                                        e.preventDefault();
-                                        let newValue = Object.values(contList);
-                                     
-                                        if(!contList[b]['t']){
-                                            newValue[b]['t'] =  `corso ${elBigNum}`;
-                                            setContList(newValue);
-                                            setElBigNum(elBigNum +1);
-                                        }
-
-                                        setActualElement(b);
-
-                                    }}>{contList[b]['t']}</button>
-
-
-                                    {(isCreatorElement(x)) ? <button onClick={async (e) => {
-                                        e.preventDefault()
-                                        let confirm = alertConfirm('confermi eliminazione corso (digita si)');
-                                        if(confirm){
-                                            if(contList[b]._id){
-                                                let response = await deliteElementOnServer(contList[b]._id , contList[b].idStripe);
-                                                if(response.success !== true){
-                                                    alert('abbiamo riscontrato un problema aggiorna la pagina')
-                                                }
-                                            }
-                                            let newValue = Object.values(contList)
-                                            newValue.splice(b, 1);
+                    <div>
+                        <ul>
+                            {
+                                contList.filter((e) => { if(new RegExp(search).test(e.ltitle)) return e })
     
-                                            if(actualElement === newValue.length && actualElement !== 0) setActualElement(actualElement -1) 
-                                            setContList(newValue);
-                                        } 
-                                    }}>x</button> : null}
-                                </li>
-                            })
-                        }
-                    </ul>
+                                .map((x,b) =>{
+                                    return <li key={'content'+b}>
+                                        <button onClick={(e) => {
+                                            e.preventDefault();
+                                            let newValue = Object.values(contList);
+                                        
+                                            if(!contList[b]['t']){
+                                                newValue[b]['t'] =  `corso ${elBigNum}`;
+                                                setContList(newValue);
+                                                setElBigNum(elBigNum +1);
+                                            }
+    
+                                            setActualElement(b);
+    
+                                        }}>{contList[b]['t']}</button>
+    
+    
+                                        {(isCreatorElement(x)) ? <button onClick={async (e) => {
+                                            e.preventDefault()
+                                            let confirm = alertConfirm('confermi eliminazione corso (digita si)');
+                                            if(confirm){
+                                                if(contList[b]._id){
+                                                    let response = await deliteElementOnServer(contList[b]._id , contList[b].idStripe);
+                                                    if(response.success !== true){
+                                                        alert('abbiamo riscontrato un problema aggiorna la pagina')
+                                                    }
+                                                }
+                                                let newValue = Object.values(contList)
+                                                newValue.splice(b, 1);
+        
+                                                if(actualElement === newValue.length && actualElement !== 0) setActualElement(actualElement -1) 
+                                                setContList(newValue);
+                                            } 
+                                        }}>x</button> : null}
+                                    </li>
+                                })
+                            }
+                        </ul>
+
+                    </div>
                     
-                        
                 </div>
                         
         </div>
@@ -630,16 +631,10 @@ const [elBigNum , setElBigNum] = useState(0);
 const [listLesson, setListLesson] = useState([])
 const [regalaCorso, setRegalaCorso] = useState("");
 const [ msgRegalo ,setMsgRegalo] = useState('');
-const [stripeAmount, setStripeAmount] = useState(0);
+const [stripeAmount, setStripeAmount] = useState(null);
 
 
     useEffect(()=>{
-
-        if(!Cookie.getCookie('user')?.grade.find(e => e === 'seller' ) && !Cookie.getCookie('nawSeller')?.seller){
-            return window.location.href = '/dashbord'
-        }
-
-
 
         let getCourse = async () =>{
             try {
@@ -686,7 +681,6 @@ const [stripeAmount, setStripeAmount] = useState(0);
 
                 setContList(newel);
                 setElBigNum(newel.length);
-                
             }
 
         }catch(e){console.log(e)}}
@@ -694,8 +688,6 @@ const [stripeAmount, setStripeAmount] = useState(0);
         getCourse();
 
     }, [])
-
-
 
     async function saveLesson(lesson){
 
@@ -786,7 +778,7 @@ const [stripeAmount, setStripeAmount] = useState(0);
         let data = await response.json();
         if(data.success)  setStripeAmount(data.amount);
     }
-    if(Boolean(contList[actualElement])) getStripeAmount();
+    if(Boolean(contList[actualElement]?.idStripe) && stripeAmount ) getStripeAmount();
 
     return (
         <div>
@@ -802,6 +794,7 @@ const [stripeAmount, setStripeAmount] = useState(0);
                 />
             </form>
             <div>
+                {(contList?.[actualElement]?.block) ?<p>CORSO ATTUALMENTE BLOCCATO</p> : null}
                 <p>statistiche corso</p>
                     <p>corsi venduti : {contList?.[actualElement]?.ven?.n ?? 0}</p>
                     <p>ricavo stripe: {stripeAmount}</p>

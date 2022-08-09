@@ -21,6 +21,8 @@ router.put('/:id', checkUserLogin(), corsiController.updateCourse);
 router.delete('/:id', checkUserLogin(), corsiController.deleteCourse);
 router.post('/create', checkUserLogin(), corsiController.createCourse);
 
+router.post('/corsi_user' , corsiController.getAllUserCourse);
+
 
 
 

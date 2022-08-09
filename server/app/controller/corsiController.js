@@ -19,6 +19,17 @@ async function getAllCourse(req,res){
     }
 }
 
+async function getAllUserCourse(req,res){
+    try{
+        let allCourse = await courseModel.find({'access.c': req.body.id});
+        if(!allCourse) return res.json({success:false , data:'l\'utente non ha corsi'});
+
+        res.json({success:true, data:allCourse});
+    }catch(e){
+        res.json({success:false, data:'error server'});
+    }
+}
+
 async function getOneCourse(req, res){
 
     try{
@@ -126,23 +137,31 @@ async function updateCourse(req , res){
         let controlSlug = courseModel.findOne({sl: dati.sl}).select('_id');
         if(controlSlug._id) return res.json({success: false, dati:'slug corso già in uso'});
 
+        //controllo corso bloccato
+        let curseBlock = await courseModel.findById({_id: dati._id})
+        if(!curseBlock) return res.json({success:false , msg: 'corso non trovato, impossibilità di vedere se è bloccato'})
 
+        if(curseBlock?.block) dati.s = true;
 
         const course = {
-            title: dati.t,
-            description: dati.d,
+            t: dati.t,
+            d: dati.d,
             sale:dati.sale,
             access:  dati.access,
             chapter: dati.chapter,
-            slug: dati.sl,
-            s:dati.s,
+            sl: dati.sl,
+            s: dati.s,
             img: dati.pathDati,
             idStripe: dati.idStripe
         }
-
+        
+        
         //stripe implementation
         let idStripe = await stripeController.StripeUpdateProduct(course);
         if(!idStripe) res.json({success: false, dati:'corso non salvato per stripe'});
+        
+        
+        
 
 
         course.idStripe = idStripe.id
@@ -150,7 +169,8 @@ async function updateCourse(req , res){
 //-------------------
 
 
-        await courseModel.replaceOne({_id: dati._id}, course);
+        let respoo = await courseModel.updateOne({_id: dati._id}, course );
+
         res.json({success:true, date:'corso modificato correttamente'})
 
     }catch(e){console.log(e) ; return res.json({success:'err'})}
@@ -449,5 +469,6 @@ module.exports = {
     findLesson,
     answersControl,
     saveProgress,
+    getAllUserCourse
 
 }

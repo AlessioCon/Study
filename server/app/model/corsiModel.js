@@ -36,6 +36,7 @@ const corsoSchema = new Schema({
     img:{type:String},
     s: {type:String, alias:'status'},
     idStripe: {type:String},
+    block: {type:Boolean}, //blocco da parte del master
 })
 
 let Course = mongoose.model('Course' , corsoSchema);

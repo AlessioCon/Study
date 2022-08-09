@@ -78,10 +78,12 @@ class validator {
     
     length(input , option){
         let string = option[1];
+        if(typeof input === 'number') input = input.toString();
+
         if (typeof option[1] == 'number') string.toString();
-        if (option[0] == '>' && input.length < option[1]) return {err: true, 'input': input, msg: '  lunghezza stringa insifficiente'}
-        if (option[0] == '<' && input.length > option[1]) return {err: true, 'input': input, msg: '  lunghezza stringa massima superata'}
-        if (option[0] == '=' && input.length != option[1]) return {err: true,'input': input, msg: '  lunghezza stringa non raggiunta'}
+        if (option[0].toString() == '>' && input.length < option[1]) return {err: true, 'input': input, msg: '  lunghezza stringa insifficiente'}
+        if (option[0].toString() == '<' && input.length > option[1]) return {err: true, 'input': input, msg: '  lunghezza stringa massima superata'}
+        if (option[0].toString() == '=' && input.length != option[1]) return {err: true,'input': input, msg: '  lunghezza stringa non raggiunta'}
         
         return {err: false, msg: ''}
     }
