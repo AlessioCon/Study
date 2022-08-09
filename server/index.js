@@ -49,6 +49,7 @@ const masterRouter = require('./app/routes/master')
 
 /* MIDDLEWARE*/
 const checkUserLogin = require('./app/middleware/check-user-login');
+app.use(express.static(path.resolve(__dirname, "./client/build"))); //for online heroku
 
 app.use(signRouter);
 app.use('/api/corsi', corsiRouter);
