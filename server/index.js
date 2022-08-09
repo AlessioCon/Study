@@ -60,7 +60,7 @@ app.use('/api/master', masterRouter);
 
 
 app.get('/', (req, res) => {
-    res.json({});
+    res.send('benvenuto nell\'api')
 });
 
 app.post('/api/download' , (req,res) => {
