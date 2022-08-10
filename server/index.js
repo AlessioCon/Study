@@ -2,6 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const session = require('express-session');
 const passport = require('passport');
+const path = require('path')
 const fs = require('fs');
 
 
@@ -37,7 +38,15 @@ app.use(session({
 app.use(passport.initialize())
 app.use(passport.session())
 
+//for online heroku
+if(process.env?.NODE_ENV === 'production'){ 
+    app.use(express.static("../client/build")); 
+    
+    app.get('*' , (req, res) => {
+        res.sendFile(path.join(__dirname, '../client' , 'build' , 'index.html'))
+    })
 
+}
 
 /* ROUTERS */
 const signRouter = require('./app/routes/sign');
@@ -48,14 +57,6 @@ const stripeRouter = require('./app/routes/stripe');
 const masterRouter = require('./app/routes/master')
 
 /* MIDDLEWARE*/
-//for online heroku
-//if(process.env?.NODE_ENV === 'production'){
-//    app.use(express.static("client/build")); 
-//    console.log('prova')
-//}
-
-
-
 const checkUserLogin = require('./app/middleware/check-user-login');
 
 
