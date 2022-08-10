@@ -37,6 +37,7 @@ app.use(session({
 app.use(passport.initialize())
 app.use(passport.session())
 
+console.log(process.env.PORVA)
 
 
 /* ROUTERS */
@@ -76,7 +77,7 @@ app.use(cors());
 
 const io = require("socket.io")(serverIo, {
     cors: {
-        origin: process.env.DOMAIN,
+        origin: process.env.DOMAIN || 'http://localhost:3000',
         methods: ["GET", "POST"],
         credentials: true
       }

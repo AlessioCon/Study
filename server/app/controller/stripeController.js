@@ -301,8 +301,8 @@ async function updateInfoSeller(req, res){
     try{
         const accountLink = await stripe.accountLinks.create({
             account: req.body.idSeller,
-            refresh_url: process.env.DOMAIN +'/dashbord/venditore?&stripe_access=fail', //link per l'autenticazione scaduto
-            return_url: process.env.DOMAIN +'/dashbord/venditore',
+            refresh_url: (process.env.DOMAIN || 'http://localhost:3000' )  +'/dashbord/venditore?&stripe_access=fail', //link per l'autenticazione scaduto
+            return_url: (process.env.DOMAIN || 'http://localhost:3000' ) + '/dashbord/venditore',
             type: 'account_onboarding',
           });
 
