@@ -37,7 +37,7 @@ app.use(session({
 app.use(passport.initialize())
 app.use(passport.session())
 
-console.log('il risultato è = ' + process.env.PROVA)
+
 
 
 /* ROUTERS */
@@ -77,8 +77,8 @@ app.use(cors());
 
 const io = require("socket.io")(serverIo, {
     cors: {
-        origin: process.env.DOMAIN || 'http://localhost:3000',
-        methods: ["GET", "POST"],
+        origin: process.env.URL_CLIENT || 'http://localhost:3000',
+        methods: ['GET','POST','DELETE','UPDATE','PUT','PATCH'],
         credentials: true
       }
 })
