@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 
 import socketIo from "socket.io-client";
 import Cookie from "../../customHook/cookie"
-
+import env from "react-dotenv";
 
 export default function Prova(props){
   const socketRef = useRef();
@@ -16,7 +16,7 @@ export default function Prova(props){
   let nameRoom = props.room || 'Chat-Globale'
 
   useEffect(() => {
-    socketRef.current = socketIo('http://localhost:3030/' ,{
+    socketRef.current = socketIo( env.URL_ROOM ||'http://localhost:3030/' ,{
         query: { 
           user: Cookie.getCookie('user')?.user,
           room: nameRoom

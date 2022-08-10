@@ -80,14 +80,14 @@ app.post('/api/download' , (req,res) => {
 //----------------------------------------------------
 
 const serverIo = require("http").createServer(app);
-const io = require("socket.io")(serverIo /*, 
+const io = require("socket.io")(serverIo , 
     {
     cors: {
         origin: process.env.URL_CLIENT || 'http://localhost:3000',
         methods: ['GET','POST','DELETE','UPDATE','PUT','PATCH'],
         credentials: true
       }
-}*/
+}
 )
 
 const user = []; //tiene conto di tutti gli utenti di tutte le ROOM

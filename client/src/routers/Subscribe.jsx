@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { Elements, PaymentElement, useStripe, useElements} from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
+import env from "react-dotenv";
 
 import Cookie from "../customHook/cookie"
 
+let apkfake = 'pk_test_51LLMdvHq8ifjUZsHgfMxSN7pZRlpa8xzi5nYAb3Fs71wSbevteSERApmF9gAvLAH9o3fYxwFlyqLxwXaiReX6II100yaJyL8fK'
 
-
-const stripePromise  = loadStripe('pk_test_51LLMdvHq8ifjUZsHgfMxSN7pZRlpa8xzi5nYAb3Fs71wSbevteSERApmF9gAvLAH9o3fYxwFlyqLxwXaiReX6II100yaJyL8fK');
+const stripePromise  = loadStripe(env.APK_STRIPE || apkfake);
 const corsoId = new URLSearchParams(window.location.search).get('idCourse');
 const subId = new URLSearchParams(window.location.search).get('subId');
 
