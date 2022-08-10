@@ -3,6 +3,7 @@ const bodyParser = require('body-parser');
 const session = require('express-session');
 const passport = require('passport');
 const fs = require('fs');
+const cors = require('cors');
 
 
 
@@ -36,6 +37,13 @@ app.use(session({
 }))
 app.use(passport.initialize())
 app.use(passport.session())
+
+
+app.use(cors({
+    origin: process.env.URL_CLIENT || 'http://localhost:3000',
+    methods: ['GET','POST','DELETE','UPDATE','PUT','PATCH'],
+    credentials: true
+}));
 
 
 
@@ -72,16 +80,15 @@ app.post('/api/download' , (req,res) => {
 //----------------------------------------------------
 
 const serverIo = require("http").createServer(app);
-const cors = require('cors');
-app.use(cors());
-
-const io = require("socket.io")(serverIo, {
+const io = require("socket.io")(serverIo /*, 
+    {
     cors: {
         origin: process.env.URL_CLIENT || 'http://localhost:3000',
         methods: ['GET','POST','DELETE','UPDATE','PUT','PATCH'],
         credentials: true
       }
-})
+}*/
+)
 
 const user = []; //tiene conto di tutti gli utenti di tutte le ROOM
 const lastMsg = [] //tiene conto dell' ultimo utente che ha inviato il msg nella relativa ROOM
