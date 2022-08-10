@@ -28,20 +28,29 @@ app.use(bodyParser.json({limit: '5mb'}))
 app.use(bodyParser.urlencoded({ extended: true }));
 
 /*Passport*/
-app.use(require('express-session')({ secret: process.env.SESSION_SECRET, httpOnly:false , resave: true, saveUninitialized: true }));
+app.use(require('express-session')({ 
+    secret: process.env.SESSION_SECRET, 
+    resave: true, 
+    saveUninitialized: true,
+    cookie: {
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 1000,
+        httpOnly: true,
+      },
+}));
 app.use(passport.initialize());
 app.use(passport.session());
 
 
 
-//app.use(passport.authenticate('session'));
+
 
 
 
 
 app.use(cors({
     origin: process.env.URL_CLIENT || 'http://localhost:3000',
-    methods: ['GET','POST','DELETE','UPDATE','PUT','PATCH'],
+    methods: ['GET','POST','DELETE','UPDATE','PUT','PATCH', "OPTIONS", "HEAD"],
     credentials: true
 }));
 
