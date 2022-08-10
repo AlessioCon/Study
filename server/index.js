@@ -36,7 +36,7 @@ app.use(session({
 }))
 app.use(passport.initialize())
 app.use(passport.session())
-app.use
+
 
 
 /* ROUTERS */
@@ -49,10 +49,10 @@ const masterRouter = require('./app/routes/master')
 
 /* MIDDLEWARE*/
 //for online heroku
-if(process.env?.NODE_ENV === 'production'){
-    app.use(express.static("client/build")); 
-    console.log('prova')
-}
+//if(process.env?.NODE_ENV === 'production'){
+//    app.use(express.static("client/build")); 
+//    console.log('prova')
+//}
 
 
 
