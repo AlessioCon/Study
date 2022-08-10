@@ -31,7 +31,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 /*Passport*/
 app.use(require('express-session')({ 
     secret: process.env.SESSION_SECRET, 
-    resave: true, 
+    resave: false, 
     proxy: true,
     saveUninitialized: true,
     cookie: {
