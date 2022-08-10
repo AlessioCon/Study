@@ -32,12 +32,12 @@ app.use(require('express-session')({
     secret: process.env.SESSION_SECRET, 
     resave: false, 
     proxy: true,
-    saveUninitialized: true,
+    saveUninitialized: false,
     cookie: {
         secure: process.env.NODE_ENV === "production",
         maxAge: 1000,
         httpOnly: true,
-        sameSite: 'none',
+        sameSite: 'Strict',
       },
 }));
 app.use(passport.initialize());
