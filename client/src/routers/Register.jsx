@@ -26,7 +26,7 @@ function Register(){
 
         setStato({error: {class: 'form_msg-pending' , msg: ''}});
         try{
-            let response = await fetch('/register', {
+            let response = await fetch(`${window.env.URL_SERVER}/register` ||'/register', {
                 method : 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
