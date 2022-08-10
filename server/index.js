@@ -24,6 +24,7 @@ dbConnect.on('DBConnect', ()=>{
 
 //---- ------------------    ---------------------------
 //codifica richieste
+app.enable('trust proxy')
 app.use(bodyParser.json({limit: '5mb'}))
 app.use(bodyParser.urlencoded({ extended: true }));
 
@@ -31,11 +32,13 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(require('express-session')({ 
     secret: process.env.SESSION_SECRET, 
     resave: true, 
+    proxy: true,
     saveUninitialized: true,
     cookie: {
         secure: process.env.NODE_ENV === "production",
         maxAge: 1000,
-        httpOnly: false,
+        httpOnly: true,
+        sameSite: 'none',
       },
 }));
 app.use(passport.initialize());
