@@ -38,7 +38,7 @@ function Corsi(){
     useEffect(()=>{
         let getCourse = async () =>{
             try{
-                let response = await fetch(process.env.URL_SERVER+"/api/corsi", {
+                let response = await fetch(window.env.URL_SERVER+"/api/corsi", {
                     method: "GET",
                     headers: {
                     Accept: "application/json",
