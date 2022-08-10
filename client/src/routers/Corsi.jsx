@@ -40,7 +40,7 @@ function Corsi(){
     useEffect(()=>{
         let getCourse = async () =>{
             try{
-                let response = await fetch( `${env.URL_SERVER}/api/corsi` || "/api/corsi", {
+                let response = await fetch( (env.URL_SERVER || '') + '/api/corsi' , {
                     method: "GET",
                     headers: {
                     Accept: "application/json",

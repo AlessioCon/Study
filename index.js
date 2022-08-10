@@ -29,26 +29,21 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 /*Passport*/
 app.use(require('express-session')({ 
-    secret: process.env.SESSION_SECRET, 
+    secret: process.env.SESSION_SECRET || 'SuperSecret', 
     resave: true, 
     proxy: true,
     saveUninitialized: true,
     cookie: {
         secure: process.env.NODE_ENV === "production",
         maxAge: 1000 * 60 * 60 * 48,
-        httpOnly: false,
-        sameSite: 'none',
+        httpOnly: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? 'none' : 'lax',
       },
 }));
 app.use(passport.initialize());
 app.use(passport.session());
 
-
-
-
-
-
-
+/*ONLINE IMPLEMENTATION*/
 
 app.use(cors({
     origin: process.env.URL_CLIENT || 'http://localhost:3000',
@@ -57,7 +52,16 @@ app.use(cors({
 }));
 
 
+if (process.env.NODE_ENV === 'production') {
+    // Serve any static files
+    app.use(express.static(path.join(__dirname, 'client/build')));
+  // Handle React routing, return all requests to React app
+    app.get('*', function(req, res) {
+      res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
+    });
+  }
 
+/*ONLINE IMPLEMENTATION*/
 
 /* ROUTERS */
 const signRouter = require('./app/routes/sign');
@@ -87,6 +91,7 @@ app.post('/api/download' , (req,res) => {
 
     res.static()
 })
+
 
 //----------------------------------------------------
 
