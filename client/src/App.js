@@ -46,7 +46,7 @@ function App (){
             let data = await response.json();
 
             if(data.success) { 
-                Cookie.setCookie('user', data.data , 1);
+                Cookie.setCookie('user', data.data , 30);
                 return setUser(data.data);
             }
             

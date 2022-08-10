@@ -24,15 +24,12 @@ function Login(){
                 body: JSON.stringify({
                     username: data.username.value,
                     password: data.password.value,
-                
                 })
             })
             let resData = await response.json();
             if (resData.success === false ) return setStato({error: {class: 'form_msg-error' , msg: resData.msg}});
             
-            if(resData.success === true) {
-                window.open("/", "_self");
-            }
+            if(resData.success === true) window.open("/", "_self");
         }
         catch(e){console.log(e)}
         
