@@ -24,7 +24,6 @@ dbConnect.on('DBConnect', ()=>{
 
 //---- ------------------    ---------------------------
 //codifica richieste
-app.enable('trust proxy')
 app.use(bodyParser.json({limit: '5mb'}))
 app.use(bodyParser.urlencoded({ extended: true }));
 
