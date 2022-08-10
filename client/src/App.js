@@ -31,7 +31,7 @@ function App (){
     const [user, setUser] = useState(Cookie.getCookie('user'));
 
     useEffect(() => {
-
+        Cookie.setCookie('ciao', {ciao: 'si'} , 30)
     const getUser = async () =>{
         try{
             let response = await fetch((env.URL_SERVER || '') + "/login", {
