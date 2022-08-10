@@ -30,14 +30,14 @@ app.use(bodyParser.urlencoded({ extended: true }));
 /*Passport*/
 app.use(require('express-session')({ 
     secret: process.env.SESSION_SECRET, 
-    resave: false, 
+    resave: true, 
     proxy: true,
-    saveUninitialized: false,
+    saveUninitialized: true,
     cookie: {
         secure: process.env.NODE_ENV === "production",
-        maxAge: 1000,
+        maxAge: 1000 * 60 * 60 * 48,
         httpOnly: true,
-        sameSite: 'lax',
+        sameSite: 'none',
       },
 }));
 app.use(passport.initialize());
