@@ -1,7 +1,8 @@
 import {useState ,useEffect, useRef} from 'react';
 import Cookie from '../../customHook/cookie';
 
-import SingleInput from '../form/SingleInput'
+import SingleInput from '../form/SingleInput';
+import env from "react-dotenv";
 
 
 
@@ -26,7 +27,7 @@ export default function SettingUser(){
 
         let getUser = async () => {
             try{
-                let response = await fetch('/user/getuser' , {
+                let response = await fetch((env.URL_SERVER || '') + '/user/getuser' , {
                     method:'POST',
                     headers: {
                         Accept: "application/json",
@@ -64,7 +65,7 @@ export default function SettingUser(){
                     oldPassword = prompt('scrivi la tua vecchia password')
                 }
         
-                let response= await fetch('/user/update', {
+                let response= await fetch((env.URL_SERVER || '') + '/user/update', {
                     method: 'PUT',
                     headers: {
                         Accept: "application/json",

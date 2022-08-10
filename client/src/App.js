@@ -1,7 +1,7 @@
 import  {useEffect, useState} from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Cookie from './customHook/cookie'
-
+import env from "react-dotenv";
 
 
 import './index.css';
@@ -34,7 +34,7 @@ function App (){
 
     const getUser = async () =>{
         try{
-            let response = await fetch("/login", {
+            let response = await fetch((env.URL_SERVER || '') + "/login", {
                             method: "GET",
                             credentials: "include",
                             headers: {

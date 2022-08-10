@@ -1,5 +1,6 @@
 import  {useEffect, useState } from 'react';
 import Cookie from '../../customHook/cookie';
+import env from "react-dotenv";
 
 /*
 function arrayBufferToString( buffer, encoding, callback ) {
@@ -466,7 +467,7 @@ function ContentLesson(props){
     //----------------------------------------------
 
     async function deliteLessonOnServer(id){
-        let response = await fetch(`/api/lesson/${id}` , {
+        let response = await fetch((env.URL_SERVER || '') + `/api/lesson/${id}` , {
             method:'DELETE',
             credentials: "include",
             body: JSON.stringify({userId: Cookie.getCookie('user')._id, lessonId: contList[actualElement]._id }),
@@ -577,7 +578,7 @@ const [elBigNum , setElBigNum] = useState(0);
 
         let getLesson = async () =>{
             try {
-            let response = await fetch('/api/lesson/', {
+            let response = await fetch((env.URL_SERVER || '') + '/api/lesson/', {
                 method: "POST",
                 body: JSON.stringify({id:Cookie.getCookie('user')._id}),
                 credentials: "include",
@@ -668,7 +669,7 @@ const [elBigNum , setElBigNum] = useState(0);
             dati.userOfModify = Cookie.getCookie('user')._id
         }
 
-        let response = await fetch(fetchUrl, {
+        let response = await fetch((env.URL_SERVER || '') + fetchUrl, {
             method: method,
             body: JSON.stringify(dati),
             headers: {

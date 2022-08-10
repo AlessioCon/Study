@@ -1,5 +1,6 @@
 import { loadStripe } from "@stripe/stripe-js";
 import {useEffect , useState} from "react";
+import env from "react-dotenv";
 
 
 function Status(){
@@ -64,7 +65,7 @@ function Status(){
 
 
     async function savingPayment(){
-      let response = await fetch('/user/payCourse' , {
+      let response = await fetch((env.URL_SERVER || '') + '/user/payCourse' , {
         method: 'POST',
         body: JSON.stringify({subId: subId, idCourse: idCourse, idUser: idUser}),
         headers: {

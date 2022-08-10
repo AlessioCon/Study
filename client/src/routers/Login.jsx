@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import env from "react-dotenv";
 
 //element
 import Input from '../component/form/Input'
@@ -15,9 +16,9 @@ function Login(){
     
         let data = e.target;
         setStato({error: {class: 'form_msg-pending' , msg:''}});
-        
+
         try{
-            let response = await fetch(`${window.env.URL_SERVER}/login` || '/login' , {
+            let response = await fetch((env.URL_SERVER || '') +  '/login' , {
                 method : 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

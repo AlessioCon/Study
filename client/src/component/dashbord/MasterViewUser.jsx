@@ -1,12 +1,12 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState } from "react";
 import {useParams} from 'react-router-dom';
 
-import Sezione from '../Section'
-
+import Sezione from '../Section';
+import env from "react-dotenv";
 
 async function downloadFile(href){
     try{
-     let response = await fetch('/api/download', {
+     let response = await fetch((env.URL_SERVER || '') + '/api/download', {
          method: "POST",
          headers: {'Content-Type': 'application/json' },
          body: JSON.stringify({
@@ -53,7 +53,7 @@ function User(params){
             btn.innerText = '';
             btn.classList.add('btn-pending');
     
-            let response= await fetch('/api/master/block_course', {
+            let response= await fetch((env.URL_SERVER || '') + '/api/master/block_course', {
                 method: 'POST',
                 headers: {
                     Accept: "application/json",
@@ -117,7 +117,7 @@ function User(params){
 
     
     async function caricaLezione(id){
-        let response= await fetch('/api/lesson/'+id, {
+        let response= await fetch((env.URL_SERVER || '') + '/api/lesson/'+id, {
             method: 'GET',
             headers: {
                 Accept: "application/json",
@@ -228,7 +228,7 @@ export default function MasterViewUser(){
     
     useEffect(()=>{
         let getUser = async ()=>{
-            let response = await fetch('/user/getuser', {
+            let response = await fetch((env.URL_SERVER || '') + '/user/getuser', {
                 method: 'POST',
                 headers:{
                     accept:'application/json',
@@ -244,7 +244,7 @@ export default function MasterViewUser(){
     }, [])
 
     async function getCourse(){
-        let response = await fetch('/api/corsi/corsi_user', {
+        let response = await fetch((env.URL_SERVER || '') + '/api/corsi/corsi_user', {
             method: 'POST',
             headers:{
                 accept:'application/json',

@@ -2,13 +2,15 @@ import { useState, useEffect } from 'react';
 import {Link, NavLink, Outlet} from 'react-router-dom';
 import Cookie from '../customHook/cookie';
 
+import env from "react-dotenv";
+
 function Dashbord(){
     const [user, setUser] = useState(null)
     
     useEffect(()=> {
         try {
             let getUser = async ()=>{
-                let response = await fetch('/user/getuser' , {
+                let response = await fetch((env.URL_SERVER || '') +  '/user/getuser' , {
                     method: 'POST',
                     headers: {
                         Accept: "application/json",
@@ -34,7 +36,7 @@ function Dashbord(){
     async function userLogOut(e){
         e.preventDefault()
         try{
-            let response = await fetch('/logout', {
+            let response = await fetch((env.URL_SERVER || '') + '/logout', {
                     method: "GET",
                     credentials: "include",
                     headers: {
