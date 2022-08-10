@@ -31,13 +31,12 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(require('express-session')({ 
     secret: process.env.SESSION_SECRET, 
     resave: true, 
-    name: "connect.sid",
     proxy: true,
-    saveUninitialized: true,
+    saveUninitialized: false,
     cookie: {
         secure: process.env.NODE_ENV === "production",
         maxAge: 1000 * 60 * 60 * 48,
-        httpOnly: true,
+        httpOnly: false,
         sameSite: 'none',
       },
 }));
