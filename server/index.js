@@ -48,8 +48,16 @@ const stripeRouter = require('./app/routes/stripe');
 const masterRouter = require('./app/routes/master')
 
 /* MIDDLEWARE*/
+//for online heroku
+if(process.env?.NODE_ENV === 'production'){
+    app.use(express.static("client/build")); 
+    console.log('prova')
+}
+
+
+
 const checkUserLogin = require('./app/middleware/check-user-login');
-app.use(express.static(path.resolve(__dirname, "./client/build"))); //for online heroku
+
 
 app.use(signRouter);
 app.use('/api/corsi', corsiRouter);
@@ -60,9 +68,11 @@ app.use('/api/master', masterRouter);
 
 
 
-app.get('/', (req, res) => {
-    res.send('benvenuto nell\'api')
-});
+
+
+//app.get('/', (req, res) => {
+//    res.json('benvenuto nell\'api')
+//});
 
 app.post('/api/download' , (req,res) => {
 
