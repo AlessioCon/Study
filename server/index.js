@@ -37,7 +37,7 @@ app.use(session({
 app.use(passport.initialize())
 app.use(passport.session())
 
-console.log(process.env.PORVA)
+console.log('il risultato è = ' + process.env.PROVA)
 
 
 /* ROUTERS */
