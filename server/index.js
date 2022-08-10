@@ -37,7 +37,7 @@ app.use(require('express-session')({
         secure: process.env.NODE_ENV === "production",
         maxAge: 1000 * 60 * 60 * 48,
         httpOnly: false,
-        sameSite: 'lax',
+        sameSite: 'none',
       },
 }));
 app.use(passport.initialize());
