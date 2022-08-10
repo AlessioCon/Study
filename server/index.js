@@ -28,10 +28,11 @@ app.use(bodyParser.json({limit: '5mb'}))
 app.use(bodyParser.urlencoded({ extended: true }));
 
 /*Passport*/
-app.use(require('cookie-parser')());
-app.use(require('express-session')({ secret: process.env.SESSION_SECRET, resave: true, saveUninitialized: true }));
+app.use(require('express-session')({ secret: process.env.SESSION_SECRET, HttpOnly: false , resave: true, saveUninitialized: true }));
 app.use(passport.initialize());
 app.use(passport.session());
+
+
 
 //app.use(passport.authenticate('session'));
 
