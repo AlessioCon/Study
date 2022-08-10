@@ -38,15 +38,7 @@ app.use(session({
 app.use(passport.initialize())
 app.use(passport.session())
 
-//for online heroku
-if(process.env?.NODE_ENV === 'production'){ 
-    app.use(express.static("client/build")); 
 
-    app.get('*' , (req, res) => {
-        res.sendFile(path.join(__dirname, '../client' , 'build' , 'index.html'))
-    })
-
-}
 
 /* ROUTERS */
 const signRouter = require('./app/routes/sign');
@@ -67,13 +59,6 @@ app.use('/user', checkUserLogin() ,userRouter);
 app.use('/api/stripe' , stripeRouter);
 app.use('/api/master', masterRouter);
 
-
-
-
-
-//app.get('/', (req, res) => {
-//    res.json('benvenuto nell\'api')
-//});
 
 app.post('/api/download' , (req,res) => {
 
