@@ -31,7 +31,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(require('express-session')({ 
     secret: process.env.SESSION_SECRET, 
     resave: true, 
-    name: "SESS_NAME",
+    name: "connect.sid",
     proxy: true,
     saveUninitialized: true,
     cookie: {
