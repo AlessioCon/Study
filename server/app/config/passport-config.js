@@ -16,7 +16,6 @@ var strategy = new localStrategy(async function verify(username, password, cb) {
 });
 
 passport.serializeUser((user, done) =>{
-    console.log('prova =' +user)
      done(null , user._id);
 })
 
@@ -32,7 +31,7 @@ passport.deserializeUser(async (id, done) => {
 
 
 
-passport.use('local-login',strategy)
+passport.use('local-login', strategy)
 
 
 module.exports = passport
