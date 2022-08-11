@@ -18,7 +18,7 @@ function Login(){
         setStato({error: {class: 'form_msg-pending' , msg:''}});
 
         try{
-            let response = await fetch((env.URL_SERVER || '') +  '/api/sign/login' , {
+            let response = await fetch((env?.URL_SERVER || '' ) +  '/api/sign/login' , {
                 method : 'POST',
                 headers: {
                     Accept: "application/json",

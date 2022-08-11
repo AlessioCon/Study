@@ -10,7 +10,7 @@ function Dashbord(){
     useEffect(()=> {
         try {
             let getUser = async ()=>{
-                let response = await fetch((env.URL_SERVER || '') +  '/api/user/getuser' , {
+                let response = await fetch((env?.URL_SERVER || '' ) +  '/api/user/getuser' , {
                     method: 'POST',
                     headers: {
                         Accept: "application/json",
@@ -36,7 +36,7 @@ function Dashbord(){
     async function userLogOut(e){
         e.preventDefault()
         try{
-            let response = await fetch((env.URL_SERVER || '') + '/api/sign/logout', {
+            let response = await fetch((env?.URL_SERVER || '' ) + '/api/sign/logout', {
                     method: "GET",
                     credentials: "include",
                     headers: {

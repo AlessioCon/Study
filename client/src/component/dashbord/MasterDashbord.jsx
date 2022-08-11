@@ -18,7 +18,7 @@ export default function MasterDashbord(){
 
     useEffect(() => {
         let getMaster = async () => {
-            let response = await fetch((env.URL_SERVER || '') + '/api/master/' , {
+            let response = await fetch((env?.URL_SERVER || '') + '/api/master/' , {
                 method: 'POST',
                 headers:{
                     accept:"application/json",
@@ -42,7 +42,7 @@ export default function MasterDashbord(){
                 btn.innerText = '';
                 btn.classList.add('btn-pending');
         
-                let response= await fetch((env.URL_SERVER || '') + '/api/master/new_seller', {
+                let response= await fetch((env?.URL_SERVER || '') + '/api/master/new_seller', {
                     method: 'POST',
                     headers: {
                         Accept: "application/json",
@@ -65,7 +65,7 @@ export default function MasterDashbord(){
     }
 
     async function allSeller(){
-        let response = await fetch((env.URL_SERVER || '') + '/api/master/all_seller', {
+        let response = await fetch((env?.URL_SERVER || '') + '/api/master/all_seller', {
             method:'POST',
             headers: {
                 accept:'application/json',
@@ -86,7 +86,7 @@ export default function MasterDashbord(){
                 btn.innerText = '';
                 btn.classList.add('btn-pending');
         
-                let response= await fetch((env.URL_SERVER || '') + '/api/master/block_seller', {
+                let response= await fetch((env?.URL_SERVER || '') + '/api/master/block_seller', {
                     method: 'POST',
                     headers: {
                         Accept: "application/json",

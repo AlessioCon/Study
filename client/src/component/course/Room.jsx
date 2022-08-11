@@ -12,11 +12,14 @@ export default function Prova(props){
   const [messages , setMessages] = useState([])
   const [msgInput , setMsgInput] = useState('');
 
+
+
+
   let save = useRef({user: 'no' , msg:[]});
   let nameRoom = props.room || 'Chat-Globale'
 
   useEffect(() => {
-    socketRef.current = socketIo( env.URL_ROOM ||'http://localhost:3030/' ,{
+    socketRef.current = socketIo( env?.URL_ROOM ||'http://localhost:3030/' ,{
         query: { 
           user: Cookie.getCookie('user')?.user,
           room: nameRoom
@@ -36,7 +39,6 @@ let listMsg = [];
 
 
 for(let x = 0 ; x < messages.length ; x++){
-  console.log('prova')
   if(messages[x].user !== save.current.user){
     if(Boolean(save.current.msg.length)){
       listMsg.push(

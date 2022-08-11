@@ -464,7 +464,7 @@ function ContentCourse(props){
     
 //da cambiare e reindirizzare all'eliminazione del corso
     async function deliteElementOnServer(id, idStripe){
-        let response = await fetch((env.URL_SERVER || '') + `/api/corsi/${id}` , {
+        let response = await fetch((env?.URL_SERVER || '' ) + `/api/corsi/${id}` , {
             method:'DELETE',
             credentials: "include",
             body: JSON.stringify({userId:Cookie.getCookie('user')._id , idStripe: idStripe}),
@@ -577,7 +577,7 @@ function ListUserBuyCourse(props){
 
 
     async function fromIdToUser(list){
-        let response = await fetch((env.URL_SERVER || '') + '/api/user/fromIdToUser' , {
+        let response = await fetch((env?.URL_SERVER || '' ) + '/api/user/fromIdToUser' , {
             method: 'POST',
             headers:{
                 Accept: "application/json",
@@ -639,7 +639,7 @@ const [stripeAmount, setStripeAmount] = useState(null);
 
         let getCourse = async () =>{
             try {
-            let response = await fetch((env.URL_SERVER || '') + '/api/corsi/modifica', {
+            let response = await fetch((env?.URL_SERVER || '') + '/api/corsi/modifica', {
                 method: "POST",
                 body: JSON.stringify({id:Cookie.getCookie('user')._id}),
                 credentials: "include",
@@ -715,7 +715,7 @@ const [stripeAmount, setStripeAmount] = useState(null);
         }
 
 
-        let response = await fetch((env.URL_SERVER || '') + fetchUrl, {
+        let response = await fetch((env?.URL_SERVER || '') + fetchUrl, {
             method: method,
             body: JSON.stringify(dati),
             headers: {
@@ -738,7 +738,7 @@ const [stripeAmount, setStripeAmount] = useState(null);
         btn.innerText = ''
 
 
-        let response = await fetch((env.URL_SERVER || '') + '/api/user/payCourse', {
+        let response = await fetch((env?.URL_SERVER || '') + '/api/user/payCourse', {
             method: 'POST',
             headers: {
                 Accept: "application/json",
@@ -767,7 +767,7 @@ const [stripeAmount, setStripeAmount] = useState(null);
   
     async function getStripeAmount(){
 
-        let response = await fetch((env.URL_SERVER || '') + '/api/stripe/amount_product' , {
+        let response = await fetch((env?.URL_SERVER || '') + '/api/stripe/amount_product' , {
             method: 'POST',
             headers:{
                 Accept: "application/json",

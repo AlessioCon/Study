@@ -27,7 +27,7 @@ export default function SettingUser(){
 
         let getUser = async () => {
             try{
-                let response = await fetch((env.URL_SERVER || '') + '/api/user/getuser' , {
+                let response = await fetch((env?.URL_SERVER || '') + '/api/user/getuser' , {
                     method:'POST',
                     headers: {
                         Accept: "application/json",
@@ -65,7 +65,7 @@ export default function SettingUser(){
                     oldPassword = prompt('scrivi la tua vecchia password')
                 }
         
-                let response= await fetch((env.URL_SERVER || '') + '/user/update', {
+                let response= await fetch((env?.URL_SERVER || '') + '/user/update', {
                     method: 'PUT',
                     headers: {
                         Accept: "application/json",

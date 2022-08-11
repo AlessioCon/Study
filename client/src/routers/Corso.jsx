@@ -139,7 +139,7 @@ export default function Corso(){
         let getCourse = async () =>{
             if(corso) return ;
             try{
-                let response = await fetch((env.URL_SERVER || '') + `/api/corsi/${param.name}`, {
+                let response = await fetch((env?.URL_SERVER || '' ) + `/api/corsi/${param.name}`, {
                     method: "GET",
                     headers: {
                     Accept: "application/json",
@@ -157,7 +157,7 @@ export default function Corso(){
             if(corso){
                 if(!Cookie.getCookie('user')) return setButton('login');
 
-                let response =  await fetch( (env.URL_SERVER || '') + '/api/user/haveCourse/'+Cookie.getCookie('user')._id + '/'+corso._id ,{
+                let response =  await fetch((env?.URL_SERVER || '' ) + '/api/user/haveCourse/'+Cookie.getCookie('user')._id + '/'+corso._id ,{
                  method: 'GET',
                  headers: {
                      Accept: "application/json",
@@ -178,7 +178,7 @@ export default function Corso(){
 
     async function buyCurse(id){
         try{
-            let response = await fetch((env.URL_SERVER || '') + '/api/stripe/create-subscription', {
+            let response = await fetch((env?.URL_SERVER || '' ) + '/api/stripe/create-subscription', {
                 method: 'POST',
                 headers: {
                     Accept: "application/json",

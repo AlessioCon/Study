@@ -9,7 +9,7 @@ import env from "react-dotenv";
 
 async function downloadFile(href){
     try{
-     let response = await fetch((env.URL_SERVER || '') + '/api/download', {
+     let response = await fetch((env?.URL_SERVER || '') + '/api/download', {
          method: "POST",
          headers: {'Content-Type': 'application/json' },
          body: JSON.stringify({
@@ -37,7 +37,7 @@ async function downloadFile(href){
 
 async function responseControl(risposte ,idLesson, idCourse){
     try{
-        let res = await fetch((env.URL_SERVER || '') + '/api/corsi/answersControl', {
+        let res = await fetch((env?.URL_SERVER || '' ) + '/api/corsi/answersControl', {
             method: 'POST',
             headers: {
                 Accept: "application/json",
@@ -78,12 +78,14 @@ const [progress , setProgress] = useState([]);
 const [punti , setPunti] = useState(0);
 const [postoSezioni, setPostoSezioni] = useState(1);
 
+
 let param = useParams();
 
     useEffect(()=>{
         let getCourse = async () =>{
+          
             try{
-                let response = await fetch((env.URL_SERVER || '') + `/api/user/haveCourse/${param.idUser}/${param.idCorso}`, {
+                let response = await fetch((env?.URL_SERVER || '' ) + `/api/user/haveCourse/${param.idUser}/${param.idCorso}`, {
                     method: "GET",
                     headers: {
                     Accept: "application/json",
@@ -153,7 +155,7 @@ let param = useParams();
         function findLesson (capIndex, lessIndex) {
             let idLezione = corso.chapter[capIndex].lesson[lessIndex][1];
             async function fetchlesson(){
-                let response = await fetch((env.URL_SERVER || '') + '/api/corsi/findLesson', {
+                let response = await fetch((env?.URL_SERVER || '' ) + '/api/corsi/findLesson', {
                     method: 'POST',
                     headers: {
                         Accept: "application/json",
@@ -186,7 +188,7 @@ let param = useParams();
         
         async function saveProgress(idLesson , answere = []){
             try{
-                let res = await fetch((env.URL_SERVER || '') + '/api/corsi/saveProgress', {
+                let res = await fetch((env?.URL_SERVER || '') + '/api/corsi/saveProgress', {
                     method: 'POST',
                     headers: {
                         Accept: "application/json",
@@ -345,8 +347,6 @@ let param = useParams();
         }else{
             lezioneDisplay = (<p>seleziona una lezione</p>)
         }
-        
-        console.log(punti)
 
         return (
         <div>
