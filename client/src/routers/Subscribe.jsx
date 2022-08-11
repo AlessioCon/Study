@@ -89,7 +89,7 @@ if(stripe){
           elements,
           confirmParams: {
             // Make sure to change this to your payment completion page
-            return_url: "http://localhost:3000/stripe/status/?idCourse="+corsoId+"&&idUser="+Cookie.getCookie('user')._id+'&&subId='+subId,
+            return_url: (env?.URL_SERVER || '') + "/stripe/status/?idCourse="+corsoId+"&&idUser="+Cookie.getCookie('user')._id+'&&subId='+subId,
           },
         });
     
