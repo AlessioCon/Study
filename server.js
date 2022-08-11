@@ -29,6 +29,7 @@ dbConnect.on('DBConnect', ()=>{
 //codifica richieste
 app.use(bodyParser.json({limit: '5mb'}))
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.json()); // to accept json data
 
 /*Passport*/
 app.use(require('express-session')({ 
@@ -54,6 +55,8 @@ app.use(passport.session());
 //    credentials: true
 //}));
 
+// --------------------------deployment------------------------------
+const __dirname = path.resolve();
 
 if (process.env.NODE_ENV === 'production') {
     // Serve any static files
@@ -62,9 +65,13 @@ if (process.env.NODE_ENV === 'production') {
     app.get('*', (req, res) => {
         res.sendFile(path.resolve(__dirname, "client" , "build" , "index.html"))
     })
-}
+} else {
+    app.get("/", (req, res) => {
+      res.send("API is running..");
+    });
+  }
+//--------------------------------------------------------------------------
 
-/*ONLINE IMPLEMENTATION*/
 
 /* ROUTERS */
 const signRouter = require('./app/routes/sign');
