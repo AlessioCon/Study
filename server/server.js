@@ -57,7 +57,7 @@ app.use(passport.session());
 
 if (process.env.NODE_ENV === 'production') {
     // Serve any static files
-    app.use(express.static(path.join(__dirname  , '/client/build')));
+    app.use(express.static(path.join(__dirname  , '../client/build')));
 
     //app.get('*', (req, res) => {
     //    res.sendFile(path.resolve(__dirname, "client" , "build" , "index.html"))
@@ -144,7 +144,7 @@ io.on("connection", (socket) => {
 
 
 app.get('/', (req, res) => {
-    console.log('prova')
+    console.log('ciao')
     res.send('api in funzione...')
 })
 
