@@ -6,6 +6,8 @@ const cors = require('cors');
 
 
 
+
+
 const app = express();
 
 require('dotenv').config();
@@ -46,7 +48,7 @@ app.use(passport.session());
 /*ONLINE IMPLEMENTATION*/
 
 app.use(cors({
-    origin: process.env.URL_CLIENT || 'http://localhost:3000',
+    origin: [process.env.URL_CLIENT || 'http://localhost:3000' , 'http://localhost:5000'],
     methods: ['GET','POST','DELETE','UPDATE','PUT','PATCH', "OPTIONS", "HEAD"],
     credentials: true
 }));
@@ -54,8 +56,8 @@ app.use(cors({
 
 if (process.env.NODE_ENV === 'production') {
     // Serve any static files
-    app.use(express.static(path.join(__dirname, 'client/build')));
-  // Handle React routing, return all requests to React app
+    app.use(express.static(path.join('client/build')));
+   //Handle React routing, return all requests to React app
     app.get('*', function(req, res) {
       res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
     });
@@ -81,7 +83,6 @@ app.use('/api/lesson', lessonRouter)
 app.use('/user', checkUserLogin() ,userRouter);
 app.use('/api/stripe' , stripeRouter);
 app.use('/api/master', masterRouter);
-
 
 app.post('/api/download' , (req,res) => {
 
