@@ -27,7 +27,7 @@ export default function SettingUser(){
 
         let getUser = async () => {
             try{
-                let response = await fetch((env.URL_SERVER || '') + '/user/getuser' , {
+                let response = await fetch((env.URL_SERVER || '') + '/api/user/getuser' , {
                     method:'POST',
                     headers: {
                         Accept: "application/json",

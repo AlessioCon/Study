@@ -19,7 +19,7 @@ export default function UserSeller(){
 
         try {
             let getSeller = async ()=>{
-                let response = await fetch((env.URL_SERVER || '') + '/user/getseller' , {
+                let response = await fetch((env.URL_SERVER || '') + '/api/user/getseller' , {
                     method: 'POST',
                     headers: {
                         Accept: "application/json",
@@ -51,7 +51,7 @@ export default function UserSeller(){
     async function registratiStripe(e){
         e.preventDefault()
         try{
-            let response = await fetch((env.URL_SERVER || '') + '/user/seller/strip_update_info', {
+            let response = await fetch((env.URL_SERVER || '') + '/api/user/seller/strip_update_info', {
                 method: 'POST',
                 headers: {
                     Accept: "application/json",
@@ -76,7 +76,7 @@ export default function UserSeller(){
     async function accediStripe(e){
         e.preventDefault();
         try{
-            let response = await fetch((env.URL_SERVER || '') + '/user/seller/stripe_login', {
+            let response = await fetch((env.URL_SERVER || '') + '/api/user/seller/stripe_login', {
                 method: 'POST',
                 headers: {
                     Accept: "application/json",

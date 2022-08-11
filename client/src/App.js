@@ -33,7 +33,7 @@ function App (){
     useEffect(() => {
     const getUser = async () =>{
         try{
-            let response = await fetch((env.URL_SERVER || '') + "/login", {
+            let response = await fetch("/api/sign/login", {
                             method: "GET",
                             credentials: "include",
                             headers: {

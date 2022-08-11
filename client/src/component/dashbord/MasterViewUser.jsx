@@ -228,7 +228,7 @@ export default function MasterViewUser(){
     
     useEffect(()=>{
         let getUser = async ()=>{
-            let response = await fetch((env.URL_SERVER || '') + '/user/getuser', {
+            let response = await fetch((env.URL_SERVER || '') + '/api/user/getuser', {
                 method: 'POST',
                 headers:{
                     accept:'application/json',

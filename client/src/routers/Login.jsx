@@ -18,9 +18,13 @@ function Login(){
         setStato({error: {class: 'form_msg-pending' , msg:''}});
 
         try{
-            let response = await fetch((env.URL_SERVER || '') +  '/login' , {
+            let response = await fetch((env.URL_SERVER || '') +  '/api/sign/login' , {
                 method : 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    Accept: "application/json",
+                    "Content-Type": "application/json",
+                    "Access-Control-Allow-Credentials": true,
+                },
                 body: JSON.stringify({
                     username: data.username.value,
                     password: data.password.value,

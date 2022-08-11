@@ -65,7 +65,7 @@ function Status(){
 
 
     async function savingPayment(){
-      let response = await fetch((env.URL_SERVER || '') + '/user/payCourse' , {
+      let response = await fetch((env.URL_SERVER || '') + '/api/user/payCourse' , {
         method: 'POST',
         body: JSON.stringify({subId: subId, idCourse: idCourse, idUser: idUser}),
         headers: {

@@ -77,10 +77,10 @@ const masterRouter = require('./app/routes/master')
 const checkUserLogin = require('./app/middleware/check-user-login');
 
 
-app.use(signRouter);
+app.use('/api/sign', signRouter);
 app.use('/api/corsi', corsiRouter);
 app.use('/api/lesson', lessonRouter)
-app.use('/user', checkUserLogin() ,userRouter);
+app.use('/api/user', checkUserLogin() ,userRouter);
 app.use('/api/stripe' , stripeRouter);
 app.use('/api/master', masterRouter);
 
@@ -140,5 +140,13 @@ io.on("connection", (socket) => {
     //  });
     function socketUserOnline(number, room){ io.to(room).emit('userOnline', number) }
 })
+
+
+
+app.get('/', (req, res) => {
+    console.log('prova')
+    res.send('api in funzione...')
+})
+
 
 serverIo.listen(process.env.PortIo, () => console.log(`SocketIo on port ${process.env.PortIo}`));

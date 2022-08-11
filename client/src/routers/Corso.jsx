@@ -157,7 +157,7 @@ export default function Corso(){
             if(corso){
                 if(!Cookie.getCookie('user')) return setButton('login');
 
-                let response =  await fetch( (env.URL_SERVER || '') + '/user/haveCourse/'+Cookie.getCookie('user')._id + '/'+corso._id ,{
+                let response =  await fetch( (env.URL_SERVER || '') + '/api/user/haveCourse/'+Cookie.getCookie('user')._id + '/'+corso._id ,{
                  method: 'GET',
                  headers: {
                      Accept: "application/json",
@@ -204,7 +204,7 @@ export default function Corso(){
     let buttonDisplay;
     switch(button){
         case 'login' :
-            buttonDisplay = (<a href="/login"> registarti</a>)
+            buttonDisplay = (<a href="/api/sign/login"> registarti</a>)
             break
         case 'compra':
             buttonDisplay = (

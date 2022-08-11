@@ -83,7 +83,7 @@ let param = useParams();
     useEffect(()=>{
         let getCourse = async () =>{
             try{
-                let response = await fetch((env.URL_SERVER || '') + `/user/haveCourse/${param.idUser}/${param.idCorso}`, {
+                let response = await fetch((env.URL_SERVER || '') + `/api/user/haveCourse/${param.idUser}/${param.idCorso}`, {
                     method: "GET",
                     headers: {
                     Accept: "application/json",

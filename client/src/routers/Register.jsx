@@ -27,7 +27,7 @@ function Register(){
 
         setStato({error: {class: 'form_msg-pending' , msg: ''}});
         try{
-            let response = await fetch((env.URL_SERVER || '') + '/register', {
+            let response = await fetch((env.URL_SERVER || '') + '/api/sign/register', {
                 method : 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

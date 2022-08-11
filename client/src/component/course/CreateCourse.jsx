@@ -577,7 +577,7 @@ function ListUserBuyCourse(props){
 
 
     async function fromIdToUser(list){
-        let response = await fetch((env.URL_SERVER || '') + '/user/fromIdToUser' , {
+        let response = await fetch((env.URL_SERVER || '') + '/api/user/fromIdToUser' , {
             method: 'POST',
             headers:{
                 Accept: "application/json",
@@ -738,7 +738,7 @@ const [stripeAmount, setStripeAmount] = useState(null);
         btn.innerText = ''
 
 
-        let response = await fetch((env.URL_SERVER || '') + '/user/payCourse', {
+        let response = await fetch((env.URL_SERVER || '') + '/api/user/payCourse', {
             method: 'POST',
             headers: {
                 Accept: "application/json",
