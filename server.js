@@ -56,7 +56,6 @@ app.use(passport.session());
 //}));
 
 // --------------------------deployment------------------------------
-const __dirname = path.resolve();
 
 if (process.env.NODE_ENV === 'production') {
     // Serve any static files
