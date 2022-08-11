@@ -96,7 +96,7 @@ let param = useParams();
                 if(Boolean(data.progress.length)) {
                     let puntiFatti = 0
                     data.progress.map(e => {
-                        if(e?.p) puntiFatti += e.p;
+                        if(e?.p)  puntiFatti += e.p;
                     })
                     if(puntiFatti) setPunti(puntiFatti);
                     setProgress(data.progress)};

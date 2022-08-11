@@ -123,6 +123,13 @@ function Register(){
             />
 
             <Input 
+                nome='cell'
+                label='Numero di Cellulare' 
+                variabile={[cell, setCell]} 
+                propInput={{type: 'number', required:true }}
+            />
+
+            <Input 
                 nome='email'
                 label='Email' 
                 variabile={[email, setEmail]} 

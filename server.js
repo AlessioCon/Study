@@ -47,8 +47,6 @@ app.use(require('express-session')({
 app.use(passport.initialize());
 app.use(passport.session());
 
-/*ONLINE IMPLEMENTATION*/
-
 //app.use(cors({
 //    origin: [process.env.URL_CLIENT || 'http://localhost:3000' , 'http://localhost:5000'],
 //    methods: ['GET','POST','DELETE','UPDATE','PUT','PATCH', "OPTIONS", "HEAD"],
@@ -64,13 +62,8 @@ if (process.env.NODE_ENV === 'production') {
     //app.get('*', (req, res) => {
     //    res.sendFile(path.resolve(__dirname, "client" , "build" , "index.html"))
     //})
-} else {
-    app.get("/", (req, res) => {
-      res.send("API is running..");
-    });
-  }
+}
 //--------------------------------------------------------------------------
-
 
 /* ROUTERS */
 const signRouter = require('./app/routes/sign');

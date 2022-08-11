@@ -210,7 +210,7 @@ export default function Corso(){
             buttonDisplay = (
                 <button onClick={async (e) => {
                     e.preventDefault() ;
-                    let data = await buyCurse(corso.idStripe);
+                    await buyCurse(corso.idStripe);
                     //if(data) window.open("/subscribe?clientSecret="+data.clientSecret+'&&idCourse='+corso._id+'&&subId='+data.subscriptionId, "_self");
                 }}>
                     compra corso
@@ -220,6 +220,8 @@ export default function Corso(){
             buttonDisplay = (
                 <a href={`../user/corso/${Cookie.getCookie('user')._id}/${corso._id}`}>vedi corso</a>
             )
+            break
+        default: break
     }
     //-----------------
 
@@ -246,6 +248,7 @@ export default function Corso(){
                         {(corso.sale.o) ? <p>scontato adesso a = {corso.sale.o} €</p> : null}
                     </div>)
                 break
+            default: break
         }
     }
     //-----------------

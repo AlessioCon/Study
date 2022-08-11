@@ -32,7 +32,7 @@ function Status(){
 
     // Retrieve the PaymentIntent
     stripe.retrievePaymentIntent(clientSecret).then(({paymentIntent}) => {
-      const message = document.querySelector('#message')
+      //const message = document.querySelector('#message')
     
       // Inspect the PaymentIntent `status` to indicate the status of the payment
       // to your customer.
@@ -75,7 +75,7 @@ function Status(){
         },
 
       })
-      let date = await response.json()
+      await response.json()
     }
 
 
