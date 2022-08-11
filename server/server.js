@@ -65,7 +65,6 @@ const masterRouter = require('./app/routes/master')
 /* MIDDLEWARE*/
 const checkUserLogin = require('./app/middleware/check-user-login');
 
-
 app.use('/api/sign', signRouter);
 app.use('/api/corsi', corsiRouter);
 app.use('/api/lesson', lessonRouter)
