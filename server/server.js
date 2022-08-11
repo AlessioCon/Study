@@ -144,14 +144,6 @@ io.on("connection", (socket) => {
     function socketUserOnline(number, room){ io.to(room).emit('userOnline', number) }
 })
 
-
-
-app.get('/', (req, res) => {
-    console.log('ciao')
-    res.send('api in funzione...')
-})
-
-
 serverIo.listen(process.env.PortIo, () => console.log(`SocketIo on port ${process.env.PortIo}`));
 
 
@@ -163,7 +155,13 @@ if (process.env.NODE_ENV === 'production') {
     app.use(express.static(path.join(__dirname  , '../client/build')));
 
     app.get('*', (req, res) => {
-        res.sendFile(path.resolve(__dirname, "client" , "build" , "index.html"))
+        res.sendFile(path.resolve(__dirname, "../client" , "build" , "index.html"))
     })
 }
+
+
+app.get('/', (req, res) => {
+    console.log('ciao')
+    res.send('api in funzione...')
+})
 //--------------------------------------------------------------------------
