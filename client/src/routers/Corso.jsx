@@ -204,7 +204,7 @@ export default function Corso(){
     let buttonDisplay;
     switch(button){
         case 'login' :
-            buttonDisplay = (<a href="/api/sign/login"> registarti</a>)
+            buttonDisplay = (<a href="/login"> registarti</a>)
             break
         case 'compra':
             buttonDisplay = (
