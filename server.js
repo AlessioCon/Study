@@ -56,7 +56,7 @@ app.use(passport.session());
 
 if (process.env.NODE_ENV === 'production') {
     // Serve any static files
-    app.use(express.static(path.join('client/build')));
+    app.use(express.static(path.join(__dirname  , '/client/build')));
 }
 
 /*ONLINE IMPLEMENTATION*/
