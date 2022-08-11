@@ -18,7 +18,7 @@ function Login(){
         setStato({error: {class: 'form_msg-pending' , msg:''}});
 
         try{
-            let response = await fetch('/login' , {
+            let response = await fetch((env.URL_SERVER || '') +  '/login' , {
                 method : 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
