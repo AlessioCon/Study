@@ -47,17 +47,17 @@ app.use(passport.session());
 
 /*ONLINE IMPLEMENTATION*/
 
-app.use(cors({
-    origin: [process.env.URL_CLIENT || 'http://localhost:3000' , 'http://localhost:5000'],
-    methods: ['GET','POST','DELETE','UPDATE','PUT','PATCH', "OPTIONS", "HEAD"],
-    credentials: true
-}));
+//app.use(cors({
+//    origin: [process.env.URL_CLIENT || 'http://localhost:3000' , 'http://localhost:5000'],
+//    methods: ['GET','POST','DELETE','UPDATE','PUT','PATCH', "OPTIONS", "HEAD"],
+//    credentials: true
+//}));
 
 
 if (process.env.NODE_ENV === 'production') {
     // Serve any static files
     app.use(express.static(path.join('client/build')));
-  }
+}
 
 /*ONLINE IMPLEMENTATION*/
 
