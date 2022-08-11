@@ -53,17 +53,6 @@ app.use(passport.session());
 //    credentials: true
 //}));
 
-// --------------------------deployment------------------------------
-
-if (process.env.NODE_ENV === 'production') {
-    // Serve any static files
-    app.use(express.static(path.join(__dirname  , '../client/build')));
-
-    //app.get('*', (req, res) => {
-    //    res.sendFile(path.resolve(__dirname, "client" , "build" , "index.html"))
-    //})
-}
-//--------------------------------------------------------------------------
 
 /* ROUTERS */
 const signRouter = require('./app/routes/sign');
@@ -150,3 +139,15 @@ app.get('/', (req, res) => {
 
 
 serverIo.listen(process.env.PortIo, () => console.log(`SocketIo on port ${process.env.PortIo}`));
+
+// --------------------------deployment------------------------------
+
+if (process.env.NODE_ENV === 'production') {
+    // Serve any static files
+    app.use(express.static(path.join(__dirname  , '../client/build')));
+
+    app.get('*', (req, res) => {
+        res.sendFile(path.resolve(__dirname, "client" , "build" , "index.html"))
+    })
+}
+//--------------------------------------------------------------------------
