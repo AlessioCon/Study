@@ -334,7 +334,7 @@ async function amountProduct(req, res){
     try{
         //se è chiamato direttamente o tramite altro controller
         let idStripe = req?.body?.idStripe || req
- console.log('chiamata')
+
         //id Corso?
         const price = await stripe.prices.retrieve(
             idStripe
