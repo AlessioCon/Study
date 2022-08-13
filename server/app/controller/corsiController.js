@@ -379,6 +379,7 @@ async function answersControl(req, res){
 }
 
 async function saveProgress(req, res){
+
     try{
         let user = await userModel.findById({_id: req.body.idUser});
         if(!user) return res.json({success: false , msg:'user non trovato'});
@@ -389,38 +390,41 @@ async function saveProgress(req, res){
                 return e
             }});
 
-        let lesson = await lessonModel.findById({_id: req.body.idLesson}).select('p');
-
+        let lesson = await lessonModel.findById({_id: req.body.idLesson}).select('p quiz')
         //controllo se è un quiz
-        let point = 0;
-        if(! Boolean(lesson?.quiz?.length)){point = lesson.p}
-        else{
-            let question = lesson.quiz.length
-            let trueAnswere = 0
-            lesson.quiz.map((dom , domIndex) =>{
-                let risposta = dom[req.body.answere[domIndex]]
-                if(risposta?.c) trueAnswere++
-            })
 
-            let perCent = parseInt(100*trueAnswere/question);
-
-            if(perCent >= 80){point = lesson.p}
-            else if(perCent >= 60){point = parseInt(lesson.p/2);}
-            else if(perCent >= 40){point = Math.round(lesson.p/3)}
-        };
+        let point = 0
+        if(Boolean(lesson?.quiz?.length)){
+ 
+        let question = lesson.quiz.length;
+        let trueAnswere = 0;
+       
+        lesson.quiz.map((dom , domIndex) =>{
+            let risposta = dom.answere[req.body.answere[domIndex]]
+            if(Boolean(risposta?.c)) trueAnswere++
+        })
+       
+        let perCent = parseInt(100*trueAnswere/question);
+        if(perCent >= 80){point = lesson.p}
+        else if(perCent >= 60){point = parseInt(lesson.p/2);}
+        else if(perCent >= 40){point = Math.round(lesson.p/3)}
+        }
+        
 
         if(!CourseBuy) return res.json({success: false , msg:'l\'utente non ha comprato il corso'});
 
         let AllLesson = CourseBuy.lesson || [];
-        let lessonIndex;
-        AllLesson.find((el , index) => {if(el.idL == req.body.idLesson){ lessonIndex = index }})
+        
+        let lessonIndex = AllLesson.findIndex(el => el.idL == req.body.idLesson )
+        
 
-        if(lessonIndex){
+        if(lessonIndex !== -1){
+            if(AllLesson[lessonIndex].p > point ) point = AllLesson[lessonIndex].p
             AllLesson[lessonIndex] = {
                     _id: false,
                     idL: req.body.idLesson,
                     an : req.body?.answere,
-                    p: point
+                    p: point 
                 }
         }else{
             AllLesson.push({

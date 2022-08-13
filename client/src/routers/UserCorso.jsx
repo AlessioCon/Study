@@ -95,8 +95,9 @@ let param = useParams();
                 })
                 let data = await response.json();
                 if(!data.success) return;
+    
                 if(Boolean(data.progress.length)) {
-                    let puntiFatti = 0
+                    let puntiFatti = 0;
                     data.progress.map(e => {
                         if(e?.p)  puntiFatti += e.p;
                     })
@@ -111,6 +112,31 @@ let param = useParams();
         if(!corso) getCourse();
 
     }, [corso])
+
+
+
+    async function reloadPoint(){
+        try{
+            let response = await fetch((env?.URL_SERVER || '' ) + `/api/user/haveCourse/${param.idUser}/${param.idCorso}`, {
+                method: "GET",
+                headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Credentials": true,
+                },
+            })
+            let data = await response.json();
+            if(!data.success) return;
+
+            if(Boolean(data.progress.length)) {
+                let puntiFatti = 0;
+                data.progress.map(e => {
+                    if(e?.p)  puntiFatti += e.p;
+                })
+                if(puntiFatti) setPunti(puntiFatti)};
+
+        }catch(e){console.log(e);}
+    }
 
     function CorsoDisplay (){
 
@@ -212,7 +238,7 @@ let param = useParams();
                     })
                     setProgress(newValue)
                 }
-                window.location.reload()
+                reloadPoint();
 
             }catch(e){if(e) console.log(e);}
         }

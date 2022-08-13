@@ -35,7 +35,7 @@ export default function UserSeller(){
                     let grade = Cookie.getCookie('user').grade;
                     let filterGrade = grade.find(e => e === 'sellerPending')
 
-                    if(data.seller?.metadata?.isSeller && filterGrade && !Cookie.apply.getCookie('nawSeller') ){
+                    if(data.seller?.metadata?.isSeller && filterGrade && !Cookie.getCookie('nawSeller') ){
                         Cookie.setCookie('nawSeller' , {seller: true} , 1)
                     }
                     return setSeller(data.seller)

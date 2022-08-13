@@ -63,6 +63,7 @@ function Dashbord(){
     let cookieSeller = Cookie.getCookie('newSeller')?.seller;
 
     let isMaster = user.grade.find(e => e === 'master');
+    console.log(isMaster)
 
     return (
 

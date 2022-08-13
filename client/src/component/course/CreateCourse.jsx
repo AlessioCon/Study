@@ -395,7 +395,7 @@ function Course(props){
 
             <AddOneInput 
                 name="utente" 
-                msg="inserisci i nomi utente che avranno accesso ai quiz"
+                msg="inserisci i nomi utente che avranno accesso al corso"
                 contList={[contList , setContList]}
                 actualElement = {props.elemento}
             />
@@ -779,7 +779,7 @@ const [stripeAmount, setStripeAmount] = useState(null);
         let data = await response.json();
         if(data.success)  setStripeAmount(data.amount);
     }
-    if(Boolean(contList[actualElement]?.idStripe) && stripeAmount ) getStripeAmount();
+    if(Boolean(contList[actualElement]?.idStripe) && !stripeAmount ) getStripeAmount();
 
     return (
         <div>
@@ -800,7 +800,7 @@ const [stripeAmount, setStripeAmount] = useState(null);
                     <p>corsi venduti : {contList?.[actualElement]?.ven?.n ?? 0}</p>
                     <p>ricavo stripe: {stripeAmount}</p>
                     <p>ricavo paypal: 0</p>
-                    <p>totale: 0</p>
+                    <p>totale: {stripeAmount}</p>
                 <form onSubmit={(e) => saveRegalaCorso(e)}>
                     <div>
                         <label htmlFor='regalaCorso'>inserisci nome utenti a cui vuoi regalare il corso</label>

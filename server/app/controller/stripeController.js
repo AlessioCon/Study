@@ -17,8 +17,6 @@ async function StripeCreateProduct(item){
             metadata: {block: false},
         })
 
-
-
         let amount = (item.sale.o !== 0) ? item.sale.o : item.sale.p
         if(item.sale.e){ amount = (amount / 3).toFixed(2) }
 
@@ -43,6 +41,7 @@ async function StripeUpdateProduct(item){
     try{
         let amount = (item.sale.o !== 0) ? item.sale.o : item.sale.p;
         if(item.sale.e){ amount = (amount / 3).toFixed(2) }
+       
 
         const priceFined = await stripe.prices.retrieve(
             item.idStripe
@@ -60,6 +59,7 @@ async function StripeUpdateProduct(item){
             }
         )
         
+
         if(priceFined.unit_amount === amount * 100) return {success:true , id: item.idStripe};
 
         //delite old price
@@ -131,7 +131,7 @@ async function CreateSubscription(req, res){
         //retrive items
         const corso = req.body.idStripe;
         const user  = req.body.idUser;
-        usetStripe = await userModel.findById(user);
+        let usetStripe = await userModel.findById(user);
 
         let corsoData = await curseModel.findOne({idStripe: corso}).select('sale.e access');
         if(!corsoData) return res.json({success: false, msg:'corso non trovato'});
@@ -164,6 +164,7 @@ async function CreateSubscription(req, res){
         }
 
         //mese di scadenza
+        if(dayMonth = 1) dayMonth = 31
         let data = Date.now() + ((60*60*24*dayMonth)*1000);
         let fulldata = new Date(data).getTime();
         let unixTime = Math.round(fulldata / 1000);
@@ -187,10 +188,10 @@ async function CreateSubscription(req, res){
 
             transfer_data: {
                 destination: userCourse.idSS,
-                amount_percent: 91
-            
+                amount_percent: 91.0
             },
           });
+
 
         return res.json({
             success: true,
@@ -233,6 +234,17 @@ async function stripeNewCustomer(data){
                 postal_code: data.cap,
                 state: data.country,
             },
+            //metadata: {
+            //    codice_fiscale: data.txc
+            //}
+            invoice_settings: {
+                custom_fields :[
+                    {
+                        name: 'codice fiscale',
+                        value: data.txc
+                    }
+                ]
+            }
           });
         
         return {success: true , id: customer.id}
@@ -296,7 +308,6 @@ async function getSeller(id){
 }
 
 
-
 async function updateInfoSeller(req, res){
     try{
         const accountLink = await stripe.accountLinks.create({
@@ -323,7 +334,7 @@ async function amountProduct(req, res){
     try{
         //se è chiamato direttamente o tramite altro controller
         let idStripe = req?.body?.idStripe || req
- 
+ console.log('chiamata')
         //id Corso?
         const price = await stripe.prices.retrieve(
             idStripe
@@ -350,12 +361,9 @@ async function amountProduct(req, res){
 }
 
 
-
-
-
 const stripeUse = require('stripe');
 async function webHook(request, response){
-    const endpointSecret = process.env.PrivateHook;
+    const endpointSecret = process.env.PrivateHook || "whsec_3d277abe1c7d79f1905d72ec3a0574362a8a6e2d4a72bf106dc666ac4837d238";
     const sig = request.headers['stripe-signature'];
 
     let event = request.body; //se attivi il codice sotto event deve essere solo inizzializzato
@@ -397,16 +405,14 @@ async function webHook(request, response){
        //tracciamento prodotto cosi da quantificare quanto il prodotto ha fatto guadagnare
         const invoice = event.data.object;
 
+
         await stripe.invoices.update(invoice.id,
-            {metadata: {
+            {
+            metadata: {
                 product: invoice.lines.data[0].price.product,
                 amount:  (invoice.lines.data[0].price.unit_amount / 100)
             }}
           );
-
-
-
-           
 
        default:
          console.log(`Unhandled event type ${event.type}`);

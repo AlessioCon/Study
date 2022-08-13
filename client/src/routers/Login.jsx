@@ -6,8 +6,8 @@ import env from "react-dotenv";
 import Input from '../component/form/Input'
 
 function Login(){
-    let [username, setUsername] = useState('');
-    let [password, setPassword] = useState('');
+    let [username, setUsername] = useState('ales@gmail.com');
+    let [password, setPassword] = useState('Pa23d%eust');
     let [stato , setStato]      = useState({error: {class: '' , msg:''}});
     
 

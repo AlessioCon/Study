@@ -42,7 +42,8 @@
   },
   "react-dotenv": {
     "whitelist": [
-      "URL_SERVER"
+      "URL_SERVER",
+      "PrivateHook"
     ]
   },
   "devDependencies": {
