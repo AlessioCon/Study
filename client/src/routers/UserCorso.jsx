@@ -82,8 +82,9 @@ const [postoSezioni, setPostoSezioni] = useState(1);
 let param = useParams();
 
     useEffect(()=>{
+        
         let getCourse = async () =>{
-          
+        
             try{
                 let response = await fetch((env?.URL_SERVER || '' ) + `/api/user/haveCourse/${param.idUser}/${param.idCorso}`, {
                     method: "GET",
@@ -99,7 +100,8 @@ let param = useParams();
                 if(Boolean(data.progress.length)) {
                     let puntiFatti = 0;
                     data.progress.map(e => {
-                        if(e?.p)  puntiFatti += e.p;
+                        if(e?.p) return puntiFatti += e.p;
+                        return undefined
                     })
                     if(puntiFatti) setPunti(puntiFatti);
                     setProgress(data.progress)};
@@ -131,7 +133,8 @@ let param = useParams();
             if(Boolean(data.progress.length)) {
                 let puntiFatti = 0;
                 data.progress.map(e => {
-                    if(e?.p)  puntiFatti += e.p;
+                    if(e?.p)  return puntiFatti += e.p;
+                    return undefined
                 })
                 if(puntiFatti) setPunti(puntiFatti)};
 
@@ -166,8 +169,14 @@ let param = useParams();
                 }
                 chapter.push(
                     <li key={cap.t+capIndex}>
-                    {(cap?.u) ? <span>{cap.u}</span> : null}
+            
                     {cap.t}
+                    {(cap?.u) ? 
+                    <div style={{display: 'block'}}>
+                        <span>{cap.u}</span>
+                        <span> {(cap?.u <= punti) ? undefined : 'bloccato'} </span>
+                    </div>
+                    : undefined}
                     <ul>
                         {lessonList}
                     </ul>
@@ -317,7 +326,7 @@ let param = useParams();
                             <form>
                                {risposte}
                             </form>
-                            {(controlAnswers) ? createMsgAnswer(elementi.length, controlAnswers[elementi.length]) : null}
+                            {(controlAnswers) ? createMsgAnswer(elementi.length, controlAnswers[elementi.length]) : undefined}
                         </li>
                         
                     )
@@ -350,7 +359,7 @@ let param = useParams();
                 }
             else if(lezione.f){ 
                 tipo = (
-                    <a href="" onClick={e => {
+                    <a href="/" onClick={e => {
                         e.preventDefault();
                         downloadFile(lezione.f);
                         saveProgress(lezione._id)

@@ -58,17 +58,16 @@ function Dashbord(){
         return(<p>caricamento...</p>)
     }
 
-    let accessVenditore = user.grade.find(e => {if(e === 'seller' || e === 'sellerPending') return true});
+    let accessVenditore = user.grade.find(e => e === 'seller' || e === 'sellerPending');
     let accessCorsiVenditore = user.grade.find(e => e === 'seller' );
+
     let cookieSeller = Cookie.getCookie('newSeller')?.seller;
 
     let isMaster = user.grade.find(e => e === 'master');
-    console.log(isMaster)
 
     return (
 
         <div className='dashboard'>
-
 
             <nav className={'dashboard-nav'}>
                 <ol>
@@ -79,7 +78,7 @@ function Dashbord(){
                     <li><NavLink  className={({ isActive }) => isActive ? "dashbord-select" : null} to="corsi">Corsi</NavLink></li>
                     {(accessCorsiVenditore || cookieSeller) ? 
                         <li className='sub-nav'>
-                            <a href="" onClick={e => {
+                            <a href="/" onClick={e => {
                                e.preventDefault();
                                e.target.classList.toggle('active')
                                }}>Crea Corsi</a>
@@ -90,7 +89,7 @@ function Dashbord(){
                         </li> 
                         : null}
                     <li className='sub-nav'>
-                        <a href="" onClick={e => {
+                        <a href="/" onClick={e => {
                            e.preventDefault();
                            e.target.classList.toggle('active')
                            }}>Impostazioni</a>
@@ -98,8 +97,8 @@ function Dashbord(){
                             <li><NavLink  to="/impostazioni/utente">utente</NavLink></li>
                         </ol>
                     </li>
-                    {(accessVenditore) ? <li><NavLink  className={({ isActive }) => isActive ? "dashbord-select" : null} to="venditore">Venditore</NavLink></li> : null}
-                    <li><a href="" onClick={(e) => userLogOut(e)}>LogOut</a></li>
+                    {(accessVenditore) ? <li><NavLink  className={({ isActive }) => isActive ? "dashbord-select" : undefined} to="venditore">Venditore</NavLink></li> : null}
+                    <li><a href="/" onClick={(e) => userLogOut(e)}>LogOut</a></li>
                 </ol>
             </nav>
             <Outlet/>

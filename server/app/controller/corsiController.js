@@ -408,7 +408,8 @@ async function saveProgress(req, res){
         if(perCent >= 80){point = lesson.p}
         else if(perCent >= 60){point = parseInt(lesson.p/2);}
         else if(perCent >= 40){point = Math.round(lesson.p/3)}
-        }
+
+        }else{ point = lesson.p}
         
 
         if(!CourseBuy) return res.json({success: false , msg:'l\'utente non ha comprato il corso'});

@@ -182,7 +182,7 @@ function User(params){
             }
         else if(data.lesson.f){ 
             viewLezione = (
-                <a href="" onClick={e => {
+                <a href="/" onClick={e => {
                     e.preventDefault();
                     downloadFile(data.lesson.f);
                 }}>
@@ -241,7 +241,7 @@ export default function MasterViewUser(){
             if(data.success) setUser(data.user)
         }
         getUser()
-    }, [])
+    },[])
 
     async function getCourse(){
         let response = await fetch((env?.URL_SERVER || '') + '/api/corsi/corsi_user', {
