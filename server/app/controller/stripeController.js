@@ -361,20 +361,18 @@ async function amountProduct(req, res){
 }
 
 
-const stripeUse = require('stripe');
 async function webHook(request, response){
     const endpointSecret = process.env.PrivateHook || "whsec_3d277abe1c7d79f1905d72ec3a0574362a8a6e2d4a72bf106dc666ac4837d238";
     const sig = request.headers['stripe-signature'];
 
-    let event = request.body; //se attivi il codice sotto event deve essere solo inizzializzato
+    let event;
 
-    //try {
-    //  event = stripeUse.webhooks.constructEvent(request.body, sig, endpointSecret);
-    //}
-    //catch (err) {
-    //  response.status(400).send(`Webhook Error: ${err.message}`);
-    //  return
-    //}
+    try {
+        event = stripe.webhooks.constructEvent(request.body, sig, endpointSecret);
+      } catch (err) {
+        response.status(400).send(`Webhook Error: ${err.message}`);
+        return;
+      }
 
      // Handle the event
      switch (event.type) {
