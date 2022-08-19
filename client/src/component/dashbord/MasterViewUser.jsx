@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import {useParams} from 'react-router-dom';
+import {useParams, Link} from 'react-router-dom';
 
 import Sezione from '../Section';
 import env from "react-dotenv";
@@ -102,15 +102,28 @@ function User(params){
     
     let corso = []
     viewCourse?.map(e => {
+        console.log(e)
         return corso.push(
-            <li key={e.t}>
-                {e.t}
-                {e.lesson.map((y , indexY) => 
-                    (<button key={indexY + '-'} index={y[1]} 
-                        onClick={e => {e.preventDefault(); caricaLezione(y[1])}}>
-                        {y[0]}
-                    </button>)
-                )}
+            <li key={e.ma}>
+                {e.ma}
+                <ol>
+                   {e.li_ma.map((cap , capIndex) => {
+                        return(
+                            <li key={cap.t+capIndex}>
+                                {cap.t}
+                                <ol>
+                                    {cap.lesson.map((y , indexY) => 
+                                        (<button key={indexY + '-'} index={y[1]} 
+                                            onClick={e => {e.preventDefault(); caricaLezione(y[1])}}>
+                                            {y[0]}
+                                        </button>)
+                                    )}
+                                </ol>
+                            </li>
+                        )
+                   })} 
+                </ol>
+                
             </li>
         )
     })
@@ -205,6 +218,8 @@ function User(params){
             <p>residenza: {`${user.address.c} , ${user.address.s} , ${user.address.cap}`}</p>
 
             <p>corsi</p>
+            <Link to={"../../dashbord/crea-corso?user="+user._id}>Modifica un corso</Link>
+            <Link to={"../../dashbord/crea-lezioni?user="+user._id}>Modifica una lezione</Link>
             {Boolean(listaCourse?.length) ? <Sezione
                 elementi={listaCourse}
                 divisione={10}
@@ -212,7 +227,7 @@ function User(params){
                 postoSezioni={[postoCorsi, setPostoCorsi]}
             /> : null}
             
-            {(Boolean(viewCourse?.length)) ? <div>{lezione}<ul>{corso}</ul> </div> : null}
+            {(Boolean(viewCourse?.length)) ? <div>{lezione}<ul>{corso}</ul></div> : null}
             
         </div>
         

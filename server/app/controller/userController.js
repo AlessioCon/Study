@@ -145,7 +145,7 @@ async function haveCourse(req, res){
     let corso = await courseModel.findById({_id:req.params.idCourse})
     
 
-    if (corso) return res.json({success:true, haveCourse:true , course: corso , progress: progress.lesson })
+    if (corso) return res.json({success:true, haveCourse:true , course: corso , progress: progress.materia })
     
     res.json({success:true , haveCourse:false})
 } 

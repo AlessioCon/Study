@@ -1,4 +1,4 @@
-import {useState , useEffect} from 'react';
+import {useState , useEffect, useRef} from 'react';
 import Cookie from "../../customHook/cookie";
 import env from "react-dotenv";
 
@@ -20,6 +20,33 @@ function AddOneInput(props){
 
     let name = (props.name) ? props.name : 'addOneInput';
     let inputProf= [];
+
+    async function fromIdToUser(list){
+       
+        let response = await fetch((env?.URL_SERVER || '' ) + '/api/user/fromIdToUser' , {
+            method: 'POST',
+            headers:{
+                Accept: "application/json",
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Credentials": true,
+            },
+            body: JSON.stringify({listId: list})
+        })
+        let data = await response.json();
+        console.log(data)
+        if(!data.success) return undefined;
+
+        let newList = [...contList];
+        data.userList.map((x, index) => newList[actualElement].access[index][0] = x.user)
+        setContList(newList)
+        
+    }
+
+    if(typeof parseInt(contList[actualElement]?.access?.[0]?.[0]) === 'number'){
+        let list = []
+        contList[actualElement]?.access?.map(x => list.push(x[0]))
+        if(Boolean(list.length)) fromIdToUser(list)
+    }
 
     for(let x = 0; element.length > x ; x++){
         
@@ -59,8 +86,6 @@ function AddOneInput(props){
 
     }
 
- 
-
     return (
         <div id="profForm">
             <p>{props.msg}</p>
@@ -89,11 +114,12 @@ function AddOneInput(props){
 
 function CreateList(props){
     let listLesson = props.listLesson;
+    let nMateria = props.nMateria;
 
     let [contList , setContList] = props.contList;
     let actualElement = props.elemento;
     let nCapitolo = props.nCapitolo;
-    let capitolo = contList[actualElement].chapter[nCapitolo];
+    let capitolo = contList[actualElement].chapter[nMateria].li_ma[nCapitolo];
 
 
     let list = [];
@@ -112,8 +138,8 @@ function CreateList(props){
                 e.preventDefault()
                 let newValue = Object.values(contList);
                 let value = capitolo.lesson[posto];
-                newValue[actualElement].chapter[nCapitolo].lesson.splice(posto , 1);
-                newValue[actualElement].chapter[nCapitolo].lesson.splice(posto -1, 0, value);
+                newValue[actualElement].chapter[nMateria].li_ma[nCapitolo].lesson.splice(posto , 1);
+                newValue[actualElement].chapter[nMateria].li_ma[nCapitolo].lesson.splice(posto -1, 0, value);
                 setContList(newValue)
             }}>
             sù
@@ -128,8 +154,8 @@ function CreateList(props){
                 e.preventDefault()
                 let newValue = Object.values(contList);
                 let value = capitolo.lesson[posto];
-                newValue[actualElement].chapter[nCapitolo].lesson.splice(posto , 1);
-                newValue[actualElement].chapter[nCapitolo].lesson.splice(posto +1,0, value);
+                newValue[actualElement].chapter[nMateria].li_ma[nCapitolo].lesson.splice(posto , 1);
+                newValue[actualElement].chapter[nMateria].li_ma[nCapitolo].lesson.splice(posto +1,0, value);
                 setContList(newValue);
             }}>
             giù
@@ -146,8 +172,8 @@ function CreateList(props){
                     value={capitolo.lesson[x][0] ?? ''}
                     onChange={(e)=>{
                         let newValue = Object.values(contList);
-                        let id = listLesson.find(le => le.n == e.target.value )?._id;
-                        newValue[actualElement].chapter[nCapitolo].lesson[x] = [e.target.value, id];
+                        let id = listLesson.find(le => le.n === e.target.value )?._id;
+                        newValue[actualElement].chapter[nMateria].li_ma[nCapitolo].lesson[x] = [e.target.value, id];
                         setContList(newValue);
                     }}
                 />
@@ -165,7 +191,7 @@ function CreateList(props){
                 <button onClick={(e) => {
                    e.preventDefault()
                    let newValue = Object.values(contList);
-                   newValue[actualElement].chapter[nCapitolo].lesson.splice(x+1, 0, '');
+                   newValue[actualElement].chapter[nMateria].li_ma[nCapitolo].lesson.splice(x+1, 0, '');
                    setContList(newValue);
                 }}>
             nuovo
@@ -190,15 +216,14 @@ function AddChupter(props){
     
             let capitolo = elemento.chapter[x] ?? {}
     
-    
             chapterDisplay.push(
                 <li key={`${name}${x}`}>
-                    <label htmlFor={`${name}${x}`}>{`capitolo ${x+1}`}</label>
-                    <input type="text" name={`${name}${x}`} id={`${name}${x}`}  placeholder='inserisci nome capitolo' required
-                        value={capitolo.t ?? ''}
+                    <label htmlFor={`${name}${x}`}>{`materia ${x+1}`}</label>
+                    <input type="text" name={`${name}${x}`} id={`${name}${x}`}  placeholder='inserisci nome materia' required
+                        value={capitolo.ma ?? ''}
                         onChange={(e)=>{
                             let newValue = Object.values(contList);
-                            newValue[actualElement].chapter[x].t = e.target.value;
+                            newValue[actualElement].chapter[x].ma = e.target.value;
                             setContList(newValue);
                         }}
                     />
@@ -209,43 +234,77 @@ function AddChupter(props){
                         newValue[actualElement].chapter.splice(x , 1);
                         setContList(newValue);
                     }}>X</button>
-    
-                    <label htmlFor={`${name}lock${x}`}>blocco</label>
-                    <input type="number" name={`${name}lock${x}`} id={`${name}lock${x}`}  min="0" placeholder='sblocco a...'
-                        value={capitolo.u ?? 0}
-                        onChange={(e)=>{
-                            let newValue = Object.values(contList);
-                            newValue[actualElement].chapter[x].u = e.target.value;
-                            setContList(newValue);
-                        }}
-                    />
-    
                     <div>
 
-                        {<CreateList
-                            nCapitolo={x} 
-                            elemento={props.elemento} 
-                            contList={props.contList} 
-                            listLesson={props.listLesson}
-                        />}
+                        {capitolo?.li_ma?.map((cap , index) => (
+                            <div key={'capitolo'+index}>
+                                <label htmlFor={`${cap.t}${index}`}>{`capitolo ${index+1}`}</label>
+                                <input type="text" name={`${cap.t}${index}`} id={`${cap.t}${index}`}  placeholder='inserisci nome capitolo' required
+                                    value={cap.t ?? ''}
+                                    onChange={(e)=>{
+                                        let newValue = Object.values(contList);
+                                        newValue[actualElement].chapter[x].li_ma[index].t = e.target.value;
+                                        setContList(newValue);
+                                    }}
+                                />
+
+                                <label htmlFor={`${name}lock${x}`}>blocco</label>
+                                <input type="number" name={`${name}lock${x}`} id={`${name}lock${x}`}  min="0" placeholder='sblocco a...'
+                                    value={cap.u ?? 0}
+                                    onChange={(e)=>{
+                                        let newValue = Object.values(contList);
+                                        newValue[actualElement].chapter[x].li_ma[index].u = e.target.value;
+                                        setContList(newValue);
+                                }}
+                    />
+                                <CreateList
+                                    nMateria={x}
+                                    nCapitolo={index} 
+                                    elemento={props.elemento} 
+                                    contList={props.contList} 
+                                    listLesson={props.listLesson}
+                                />
+
+                                <button onClick={(e)=>{
+                                    e.preventDefault(); 
+                                    let newValue = Object.values(contList) ;
+                                    if(!capitolo?.li_ma[index].lesson) newValue[actualElement].chapter[x].li_ma[index].lesson = [];
+                                    newValue[actualElement].chapter[x].li_ma[index].lesson.push('') ;
+                                    setContList(newValue);
+                                }}>+ less</button>
+            
+                                <button onClick={(e)=>{
+                                    e.preventDefault(); 
+                                    if(capitolo?.li_ma[index]?.lesson?.length > 0){
+                                        let newValue = Object.values(contList) ; 
+                                        newValue[actualElement].chapter[x].li_ma[index].lesson.splice(capitolo.li_ma[index].lesson.length -1, 1)
+                                        setContList(newValue);
+                                    }   
+                                }}>- less</button>
+        
+                            </div>
+                                    
+                        ))}
     
     
+
                         <button onClick={(e)=>{
                             e.preventDefault(); 
                             let newValue = Object.values(contList) ;
-                            if(!capitolo.lesson) newValue[actualElement].chapter[x].lesson = [];
-                            newValue[actualElement].chapter[x].lesson.push('') ;
+                            if(!capitolo?.li_ma) newValue[actualElement].chapter[x].li_ma = [];
+                            newValue[actualElement].chapter[x].li_ma.push({t: '' , lesson: []}) ;
                             setContList(newValue);
-                        }}>+</button>
+                         
+                        }}>+ cap</button>
     
                         <button onClick={(e)=>{
                             e.preventDefault(); 
-                            if(capitolo.lesson?.length > 0){
+                            if(capitolo?.li_ma?.length > 0){
                                 let newValue = Object.values(contList) ; 
-                                newValue[actualElement].chapter[x].lesson.splice(capitolo.lesson.length -1, 1)
+                                newValue[actualElement].chapter[x].li_ma.splice(capitolo.li_ma.length -1, 1)
                                 setContList(newValue);
                             }   
-                        }}>-</button>
+                        }}>- cap</button>
                     </div>
     
                 </li>
@@ -268,7 +327,7 @@ function AddChupter(props){
                 newValue[actualElement].chapter.push({});
                 setContList(newValue);
 
-               }}>+</button>
+               }}>+ mat</button>
 
             <button onClick={(e) => { 
                 e.preventDefault(); 
@@ -278,9 +337,10 @@ function AddChupter(props){
                     newValue[actualElement].chapter.splice(elemento.chapter.length -1, 1);
                     setContList(newValue);
                 }  
-            }}>-</button>
+            }}>- mat</button>
         </div>
     )
+//}
 }
 
 function Course(props){
@@ -288,6 +348,7 @@ function Course(props){
     let actualElement = props.elemento;
     let element = contList[actualElement];
     let [listFile , setListFile] = props.listFile;
+    let [limiti, setLimiti] = props.limiti;
 
     let inputFile = [
         <div key='file'>
@@ -335,7 +396,7 @@ function Course(props){
             <div>
                 <label htmlFor='tCourse'>Titolo Corso</label>
                 <input type="text" name="tCourse" id="tCourse" required
-                    value={element.t ?? ''}
+                    value={element?.t ?? ''}
                     onChange={(e) => {
                         let newValue = Object.values(contList);
                         newValue[actualElement].t = e.target.value
@@ -393,12 +454,13 @@ function Course(props){
                 />
             </div>
 
-            <AddOneInput 
+            {(!limiti) ?  <AddOneInput 
                 name="utente" 
                 msg="inserisci i nomi utente che avranno accesso al corso"
                 contList={[contList , setContList]}
                 actualElement = {props.elemento}
-            />
+            /> : undefined}
+           
 
             <AddChupter name="list" 
                 contList={props.contList} 
@@ -427,7 +489,9 @@ function Course(props){
                     onChange={(e) => {
                         let newValue = Object.values(contList);
                         newValue[actualElement].s = e.target.checked;
-                        setContList(newValue)}}
+                        setContList(newValue);
+                    }}
+                       
                 />
 
             </div>
@@ -447,9 +511,12 @@ function ContentCourse(props){
     const [search , setSearch] = useState('');
     const [elBigNum , setElBigNum] = props.elBigNum;
 
+
     let [actualElement , setActualElement] =  props.actualElement;
     let [contList , setContList] = props.contList;
-
+    let [limiti, setLimiti] = props.limiti;
+    let UserForMaster = props.UserForMaster
+    
     const [listFile , setListFile] = useState(contList[actualElement]?.file?.name ?? '')
     if(listFile !== contList[actualElement]?.file?.name ) setListFile(contList[actualElement]?.file?.name);
 
@@ -467,7 +534,7 @@ function ContentCourse(props){
         let response = await fetch((env?.URL_SERVER || '' ) + `/api/corsi/${id}` , {
             method:'DELETE',
             credentials: "include",
-            body: JSON.stringify({userId:Cookie.getCookie('user')._id , idStripe: idStripe}),
+            body: JSON.stringify({userId: UserForMaster.current || Cookie.getCookie('user')._id , idStripe: idStripe}),
             headers: {
                 Accept: "application/json",
                         "Content-Type": "application/json",
@@ -490,14 +557,26 @@ function ContentCourse(props){
     }
 
 
+    function checkLimiti(element){
+ 
+        if(element?.creator === Cookie.getCookie('user')._id || element?.creator === UserForMaster.current ) return setLimiti(false);
+       
+        if(element?.access?.find(x => x[0] === Cookie.getCookie('user').user && x[1] === 'illimitato')){
+            return setLimiti(false)
+        }else{return setLimiti(true)}
+    }
+
+
     return(
+
         <div className="col_2">
                         
-                {(contList.length) ? <Course 
+                {(contList.length && actualElement !== undefined) ? <Course 
                                         contList={[contList , setContList]} 
                                         elemento={actualElement}
                                         listFile={[listFile, setListFile]}
                                         listLesson= {props.listLesson}
+                                        limiti ={[limiti, setLimiti]}
                                         /> 
                                         : <p>seleziona elemento</p>}
 
@@ -526,6 +605,7 @@ function ContentCourse(props){
                                         <button onClick={(e) => {
                                             e.preventDefault();
                                             let newValue = Object.values(contList);
+                                            checkLimiti(x);
                                         
                                             if(!contList[b]['t']){
                                                 newValue[b]['t'] =  `corso ${elBigNum}`;
@@ -536,6 +616,7 @@ function ContentCourse(props){
                                             setActualElement(b);
     
                                         }}>{contList[b]['t']}</button>
+                                        {(!isCreatorElement(x)) ? <span>non tuo</span> : undefined}
     
     
                                         {(isCreatorElement(x)) ? <button onClick={async (e) => {
@@ -602,7 +683,7 @@ function ListUserBuyCourse(props){
         let user = []
         for(let x = 0 ; x < listUser.length ; x++){
             user.push(
-                <p key={listUser[x].user} title={userList[x]}>{listUser[x].user}</p>
+                <p key={listUser[x].user + x} title={userList[x]}>{listUser[x].user}</p>
             )
         }
         return(
@@ -621,27 +702,48 @@ function ListUserBuyCourse(props){
 
 }
 
-
-
-
-
 function CreateCourse(){
 const [contList, setContList] = useState([])
-const [actualElement , setActualElement] = useState(0);
+const [actualElement , setActualElement] = useState(undefined);
 const [elBigNum , setElBigNum] = useState(0);
 const [listLesson, setListLesson] = useState([])
 const [regalaCorso, setRegalaCorso] = useState("");
 const [ msgRegalo ,setMsgRegalo] = useState('');
-const [stripeAmount, setStripeAmount] = useState(null);
+const [stripeAmount, setStripeAmount] = useState(undefined);
+const [limiti , setLimiti] = useState(true) 
+let UserForMaster = useRef(undefined);
 
 
     useEffect(()=>{
-
+        
         let getCourse = async () =>{
+
+            if(Cookie.getCookie('user').grade.find(x => x === 'master')){
+                try{
+                    let response = await fetch((env?.URL_SERVER || '') + '/api/master/', {
+                        method: "POST",
+                        body: JSON.stringify({id: Cookie.getCookie('user')._id}),
+                        credentials: "include",
+                        headers: {
+                            Accept: "application/json",
+                            "Content-Type": "application/json",
+                            "Access-Control-Allow-Credentials": true,
+                            },
+                        })
+                    let data = await response.json();
+                    if(!data.success) return undefined;
+                    const params = new URLSearchParams(window.location.search);
+                    if(params.get("user")) UserForMaster.current = params.get("user")
+                    
+                }catch(e){console.log(e)} 
+            }
+
+
+
             try {
             let response = await fetch((env?.URL_SERVER || '') + '/api/corsi/modifica', {
                 method: "POST",
-                body: JSON.stringify({id:Cookie.getCookie('user')._id}),
+                body: JSON.stringify({id: UserForMaster.current || Cookie.getCookie('user')._id}),
                 credentials: "include",
                 headers: {
                     Accept: "application/json",
@@ -696,8 +798,9 @@ const [stripeAmount, setStripeAmount] = useState(null);
 
         let access = {
             prof: lesson.access ?? null,
-            creator: (dati._id) ? dati.creator : Cookie.getCookie('user')._id
+            creator: (dati._id) ? dati.creator : UserForMaster.current || Cookie.getCookie('user')._id
         }
+
 
         if(!dati.sl){
             dati.sl = dati.t.toLowerCase().replaceAll(' ','-');
@@ -711,9 +814,8 @@ const [stripeAmount, setStripeAmount] = useState(null);
         if(dati._id){
             fetchUrl = '/api/corsi/update';
             method   = 'PUT';
-            dati.userOfModify = Cookie.getCookie('user')._id
+            dati.userOfModify = UserForMaster.current || Cookie.getCookie('user')._id
         }
-
 
         let response = await fetch((env?.URL_SERVER || '') + fetchUrl, {
             method: method,
@@ -779,10 +881,11 @@ const [stripeAmount, setStripeAmount] = useState(null);
         let data = await response.json();
         if(data.success)  setStripeAmount(data.amount);
     }
-    if(Boolean(contList[actualElement]?.idStripe) && !stripeAmount ) getStripeAmount();
+    if(Boolean(contList[actualElement]?.idStripe) && stripeAmount !== undefined ) getStripeAmount();
 
     return (
         <div>
+            
             <form onSubmit={(e)=>{
                 e.preventDefault();
                 saveLesson(contList[actualElement]);
@@ -792,9 +895,13 @@ const [stripeAmount, setStripeAmount] = useState(null);
                     actualElement={[actualElement, setActualElement]} 
                     elBigNum={[elBigNum, setElBigNum]}
                     listLesson={listLesson}
+                    limiti={[limiti, setLimiti]}
+                    UserForMaster = {UserForMaster}
                 />
             </form>
-            <div>
+            
+            
+           {(!limiti) ? <div>
                 {(contList?.[actualElement]?.block) ?<p>CORSO ATTUALMENTE BLOCCATO</p> : null}
                 <p>statistiche corso</p>
                     <p>corsi venduti : {contList?.[actualElement]?.ven?.n ?? 0}</p>
@@ -817,8 +924,9 @@ const [stripeAmount, setStripeAmount] = useState(null);
                 </form>
 
                 <ListUserBuyCourse userList={contList?.[actualElement]?.ven?.ul}/>
-            </div>
-        </div>
+            </div> : undefined}
+        </div> 
+            
         
     )
 }

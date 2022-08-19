@@ -114,6 +114,7 @@ export default function MasterDashbord(){
         let filter = seller.filter(e => reg.test(e.user.toLowerCase()));
         let list = []
         filter.map(u => {
+            let userBlock = u.grade.includes('sellerBlock');
             return list.push(
                 <li className='flex-content' key={u.user}>
                    <span title="nome completo">{u.nome}</span>
@@ -121,13 +122,14 @@ export default function MasterDashbord(){
                    <span title="corsi attivi">{u.active_course}</span>
                    <span title="guadagno totale">{u.amount}</span>
                    <span>
-                    <button onClick={e => {
+                    {(userBlock)  ? <p title={"utente bloccato, aggiungilo nel campo \"aggiungi venditore\""}>utente bloccato</p> : <button onClick={e => {
                             e.preventDefault()
                             let confirm = prompt(`sei sicuro di voler bloccare "${u.user}" come venditore? digita: si`)
                             if(confirm !=='si') return ;
                             blockSeller(u._id, e.target)
                             }
-                        }>Blocca venditore</button>
+                    }>Blocca venditore</button>}
+                    
                     <a href={"../master/view/"+u._id} title="visita il profilo">profilo</a>
                    </span>
                    
@@ -137,7 +139,6 @@ export default function MasterDashbord(){
         setSellerList(list)
     }
     if(seller && !sellerList) filterSeller()
-
     
     return(
         <div className='dashbord-outlet'>

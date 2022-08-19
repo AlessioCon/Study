@@ -253,7 +253,6 @@ export default function Corso(){
     }
     //-----------------
 
-
     function displayCourse(){
 
         return(
@@ -266,12 +265,20 @@ export default function Corso(){
                 <div>
                     <h3>cosa contiene il corso</h3>
                     <ul>
-                    {corso.chapter.map((capitolo) =>{
-                        return (<li key={capitolo.t}>
-                           {capitolo.t}
+                    {corso?.chapter?.map(materia =>{
+                        return (<li key={materia.ma}>
+                           {materia.ma}
                             <ul>
-                                {capitolo.lesson.map((lesson) =>{
-                                    return <li key={lesson[1]}>{lesson[0]}</li>
+                                {materia.li_ma.map((capitoli) =>{
+                                    return(
+                                    <li key={capitoli.t}>{capitoli.t}
+                                        <ul>
+                                            {capitoli?.lesson.map(lezioni => (
+                                                <li key={lezioni[1]}>{lezioni[0]}</li>
+                                            ))}
+    
+                                        </ul>
+                                    </li>)
                                 })}
                             </ul>
                         </li>)
@@ -297,3 +304,9 @@ export default function Corso(){
     
 }
 
+
+
+
+
+
+//return <li key={lesson[1]}>{lesson[0]}</li>

@@ -57,7 +57,7 @@ async function allSeller(req, res){
     
     
         //trova tutti i venditori
-        let allSellers = await userModel.find({grade: 'seller'}).select('_id user name')
+        let allSellers = await userModel.find({grade: {$in: ['seller' , 'sellerBlock']}}).select('_id user name grade')
         if(!Boolean(allSellers)) res.json({success: true , sellers:[]})
     
     
@@ -81,7 +81,8 @@ async function allSeller(req, res){
                 nome:`${item.name.f} ${item.name.l}`,
                 user: item.user,
                 active_course: courses,
-                amount: amount  
+                amount: amount ,
+                grade: item.grade
             }
     
             list.push(seller)
@@ -91,7 +92,6 @@ async function allSeller(req, res){
         res.json({success: true , list: list})
 
     }catch(e){console.log(e), res.json({success: 'error' , msg:'errore server'})}
-
 }
 
 

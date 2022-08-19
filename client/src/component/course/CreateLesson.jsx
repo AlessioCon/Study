@@ -1,4 +1,4 @@
-import  {useEffect, useState } from 'react';
+import  {useEffect, useState, useRef } from 'react';
 import Cookie from '../../customHook/cookie';
 import env from "react-dotenv";
 
@@ -269,6 +269,25 @@ function Lesson(props){
     let element = contList[actualElement];
     let [listFile , setListFile] = props.listFile;
 
+    function calcoloPunteggio(){
+        let punti = contList[actualElement].point;
+        let basso = Math.round(punti/3);
+        let medio = Math.round(punti/2);
+
+        let MSGQUIZ =`
+        se la lezione è un quiz i punti saranno assegnati in base alla percentuale di risposte esatte date
+        secondo i dati attuali:
+        punteggio massimo = ${punti}
+        percentuale di risposte esatte  maggiore dell\' 80% verranno dati ${punti} punti
+        percentuale di risposte esatte  maggiore del 60% verranno dati ${medio} punti
+        percentuale di rispostre esatte maggiore del 40% verrà dato ${basso} punto 
+        da notare che il calcolo verrà sempre approssimato per eccesso`
+
+        return MSGQUIZ
+
+    }
+
+
     let inputFile = [
         <div key='file'>
             <label htmlFor='files'>risorse esterne</label>
@@ -415,7 +434,7 @@ function Lesson(props){
                         newValue[actualElement].point = e.target.value;
                         setContList(newValue)}}
                 />
-                <span title={MSGQUIZ}> info </span>
+                <span title={calcoloPunteggio()}> info </span>
                     
                 
             </div>
@@ -451,6 +470,7 @@ function ContentLesson(props){
 
     let [actualElement , setActualElement] =  props.actualElement;
     let [contList , setContList] = props.contList;
+    let UserForMaster = props.UserForMaster
 
     const [listFile , setListFile] = useState(contList[actualElement]?.file?.name ?? '')
     if(listFile !== contList[actualElement]?.file?.name ) setListFile(contList[actualElement]?.file?.name)
@@ -470,7 +490,7 @@ function ContentLesson(props){
         let response = await fetch((env?.URL_SERVER || '') + `/api/lesson/${id}` , {
             method:'DELETE',
             credentials: "include",
-            body: JSON.stringify({userId: Cookie.getCookie('user')._id, lessonId: contList[actualElement]._id }),
+            body: JSON.stringify({userId: UserForMaster.current || Cookie.getCookie('user')._id, lessonId: contList[actualElement]._id }),
             headers: {
                 Accept: "application/json",
                         "Content-Type": "application/json",
@@ -481,6 +501,30 @@ function ContentLesson(props){
         let data = await response.json();
         if(data.success !== true) alert('problema nella cancellazione della lezione , ricarica la pagina');
         return data;
+    }
+
+
+    async function fromIdToUser(list){
+        let response = await fetch((env?.URL_SERVER || '' ) + '/api/user/fromIdToUser' , {
+            method: 'POST',
+            headers:{
+                Accept: "application/json",
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Credentials": true,
+            },
+            body: JSON.stringify({listId: list})
+        })
+        let data = await response.json()
+        if(!data.success) return undefined;
+        let newList = [...contList];
+        data.userList.map((x, index) => newList[actualElement].access[index][0] = x.user)
+        setContList(newList)
+    }
+
+    if(typeof parseInt(contList[actualElement]?.access?.[0]?.[0]) === 'number'){
+        let list = []
+        contList[actualElement]?.access?.map(x => list.push(x[0]))
+        if(Boolean(list.length)) fromIdToUser(list)
     }
 
 
@@ -523,7 +567,8 @@ function ContentLesson(props){
                             contList.filter((e) => { if(new RegExp(search).test(e.ltitle)) return e })
 
                             .map((x,b) =>{
-                                return <li key={'content'+b}>
+                                
+                                return (<li key={'content'+b}>
                                     <button onClick={(e) => {
                                         e.preventDefault();
                                         let newValue = Object.values(contList);
@@ -538,6 +583,7 @@ function ContentLesson(props){
                                         setActualElement(b);
 
                                     }}>{contList[b]['ltitle']}</button>
+                                    {!(isLessonCreator(x)) ? <span>non tua</span> : undefined}
 
 
                                     {(isLessonCreator(x)) ? <button onClick={async (e) => {
@@ -557,7 +603,7 @@ function ContentLesson(props){
                                             setContList(newValue);
                                         } 
                                     }}>x</button> : null}
-                                </li>
+                                </li>)
                             })
                         }
                     </ul>
@@ -574,13 +620,37 @@ const [contList, setContList] = useState([])
 const [actualElement , setActualElement] = useState(0);
 const [elBigNum , setElBigNum] = useState(0);
 
+let UserForMaster = useRef(undefined);
+
     useEffect(()=>{
 
+
         let getLesson = async () =>{
+
+            if(Cookie.getCookie('user').grade.find(x => x === 'master')){
+                try{
+                    let response = await fetch((env?.URL_SERVER || '') + '/api/master/', {
+                        method: "POST",
+                        body: JSON.stringify({id: Cookie.getCookie('user')._id}),
+                        credentials: "include",
+                        headers: {
+                            Accept: "application/json",
+                            "Content-Type": "application/json",
+                            "Access-Control-Allow-Credentials": true,
+                            },
+                        })
+                    let data = await response.json();
+                    if(!data.success) return undefined;
+                    const params = new URLSearchParams(window.location.search);
+                    if(params.get("user")) UserForMaster.current = params.get("user")
+                    
+                }catch(e){console.log(e)} 
+            }
+
             try {
             let response = await fetch((env?.URL_SERVER || '') + '/api/lesson/', {
                 method: "POST",
-                body: JSON.stringify({id:Cookie.getCookie('user')._id}),
+                body: JSON.stringify({id: UserForMaster.current || Cookie.getCookie('user')._id}),
                 credentials: "include",
                 headers: {
                     Accept: "application/json",
@@ -635,6 +705,7 @@ const [elBigNum , setElBigNum] = useState(0);
 
     }, [])
 
+
     async function saveLesson(lesson){
 
         //elliminare video
@@ -655,7 +726,7 @@ const [elBigNum , setElBigNum] = useState(0);
 
         let access = {
             prof: lesson.access ?? null,
-            creator: (dati._id) ? dati.creator : Cookie.getCookie('user')._id
+            creator: (dati._id) ? dati.creator : UserForMaster.current || Cookie.getCookie('user')._id
         }
         
         dati.access = access;
@@ -666,7 +737,7 @@ const [elBigNum , setElBigNum] = useState(0);
         if(dati._id){
             fetchUrl = '/api/lesson/update';
             method   = 'PUT';
-            dati.userOfModify = Cookie.getCookie('user')._id
+            dati.userOfModify = UserForMaster.current || Cookie.getCookie('user')._id
         }
 
         let response = await fetch((env?.URL_SERVER || '') + fetchUrl, {
@@ -684,7 +755,6 @@ const [elBigNum , setElBigNum] = useState(0);
     }
 
 
-
     return (
         <form onSubmit={(e)=>{
             e.preventDefault();
@@ -694,21 +764,13 @@ const [elBigNum , setElBigNum] = useState(0);
                 contList={[contList, setContList]} 
                 actualElement={[actualElement, setActualElement]} 
                 elBigNum={[elBigNum, setElBigNum]}
+                UserForMaster ={UserForMaster}
             />
         </form>
     )
 }
 
 
-let MSGQUIZ =`
-        se la lezione è un quiz i punti saranno assegnati in base alla percentuale di risposte esatte date
-        es.
-        punteggio massimo = 3
-        percentuale di risposte esatte  maggiore dell\' 80% verranno dati 3 punti
-        percentuale di risposte esatte  maggiore del 60% verranno dati 2 punti
-        percentuale di rispostre esatte maggiore del 40% verrà dato 1 punto 
-        da notare che il calcolo verrà sempre approssimato per eccesso`
- 
 
 
 

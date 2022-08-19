@@ -13,20 +13,41 @@ const corsoSchema = new Schema({
     access:{
         _id:false,
         prof: [{
-            n: {type:String , alisa:'name'},
-            g: {type:String , alisa:'grade'}
+            _id:false,
+            n: {type:String , alias:'name'},
+            g: {type:String , alias:'grade'}
         }],
         c: {type:String, alias:'access.creator'}
     },
 
     //capitoli , lezioni, , quiz 
-    chapter:[{
-        _id: false,
-        t: {type:String , alias:'title'},
-        lesson: [],
-        u: {type:Number  , alias:'unlock'}, //a quante stelle si potra sbloccare
 
-    }],
+    chapter:[
+        {
+            ma: {type:String, alias:'materia'},
+            li_ma:[
+                {
+                    _id: false,
+                    t: {type:String , alias:'title'},
+                    lesson: [],
+                    u: {type:Number  , alias:'unlock'}, //a quante stelle si potra sbloccare il capitolo della materia
+                }
+            ],
+            
+            _id:false,
+        }
+    ],
+
+
+
+
+   //chapter:[{
+   //    _id: false,
+   //    t: {type:String , alias:'title'},
+   //    lesson: [],
+   //    u: {type:Number  , alias:'unlock'}, //a quante stelle si potra sbloccare
+
+   //}],
     ven:{
         n: {type:Number, alias:'vendite'} ,
         ul:[{type:String, alias:'userList'}],

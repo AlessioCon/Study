@@ -108,7 +108,7 @@ async function updateCourse(req , res){
         }
 
         //controllo dei prof che hanno accesso
-        let prof = []
+        let prof = [];
         for(x = 0 ; x < dati.access['prof'].length ; x++){
             let sinProf = dati.access['prof'][x];
 
@@ -169,7 +169,7 @@ async function updateCourse(req , res){
 //-------------------
 
 
-        let respoo = await courseModel.updateOne({_id: dati._id}, course );
+        await courseModel.updateOne({_id: dati._id}, course );
 
         res.json({success:true, date:'corso modificato correttamente'})
 
@@ -274,8 +274,8 @@ async function createCourse(req, res){
 
 
 //stripe implementation
-        let idStripe = await stripeController.StripeCreateProduct(course);
-        if(!idStripe) res.json({success: false, dati:'corso non salvato per stripe'});
+       let idStripe = await stripeController.StripeCreateProduct(course);
+       if(!idStripe) res.json({success: false, dati:'corso non salvato per stripe'});
 
 
         course.idStripe = idStripe.id
@@ -406,7 +406,7 @@ async function saveProgress(req, res){
        
         let perCent = parseInt(100*trueAnswere/question);
         if(perCent >= 80){point = lesson.p}
-        else if(perCent >= 60){point = parseInt(lesson.p/2);}
+        else if(perCent >= 60){point = Math.round(lesson.p/2);}
         else if(perCent >= 40){point = Math.round(lesson.p/3)}
 
         }else{ point = lesson.p}
@@ -414,29 +414,32 @@ async function saveProgress(req, res){
 
         if(!CourseBuy) return res.json({success: false , msg:'l\'utente non ha comprato il corso'});
 
-        let AllLesson = CourseBuy.lesson || [];
-        
-        let lessonIndex = AllLesson.findIndex(el => el.idL == req.body.idLesson )
-        
+        let materia = CourseBuy.materia.find(x => x.name === req.body.categoria);
+       
+        if(!materia) {
+            user.CourseBuy[indexCourse].materia.push({name: req.body.categoria , lesson: []});
+            materia = {name: req.body.categoria , lesson: []};
+        }
 
+        let lessonIndex = materia.lesson.findIndex(el => el.idL === req.body.idLesson);
         if(lessonIndex !== -1){
-            if(AllLesson[lessonIndex].p > point ) point = AllLesson[lessonIndex].p
-            AllLesson[lessonIndex] = {
-                    _id: false,
-                    idL: req.body.idLesson,
-                    an : req.body?.answere,
-                    p: point 
-                }
+            if(materia.lesson[lessonIndex]?.p > point ) point = materia.lesson[lessonIndex].p;
+            materia.lesson[lessonIndex] = {
+                       idL: req.body.idLesson,
+                       an : req.body?.answere,
+                       p: point 
+                   }
         }else{
-            AllLesson.push({
-                _id: false,
+            materia.lesson.push({
                 idL: req.body.idLesson,
                 an: req.body?.answere,
                 p: point
             })
         }
 
-        user.CourseBuy[indexCourse].lesson = AllLesson;
+        let materiaIndex = user.CourseBuy[indexCourse].materia.findIndex(x => x.name === req.body.categoria);
+        user.CourseBuy[indexCourse].materia[materiaIndex] =  materia;
+
         await user.save();
         return res.json({success:true})
 
@@ -456,7 +459,8 @@ async function accessoCorso(user, idCourse){
         //controlla se è il creatore del corso
         if(resp.access.c === user) return 'creator';
         //controlla se è un prof
-        if(resp.access.prof.find(element => {element.n === user && element.g === 'illimitato'})) return 'creator';
+        if(resp.access.prof.find(el => el.n === user && (el.g === 'illimitato' || el.g === 'modifiche'))) return 'creator'
+
         return false;
 
     }catch(e){console.log(e); return {success:err, date:'errore controllo utente accesso al corso'}}

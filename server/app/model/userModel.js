@@ -31,13 +31,16 @@ const userSchema = new Schema({
         _id: false,
         courseId: {type:String},
         sub: {type:String},
-        lesson:[
-            {_id:false,
-             idL: {type:String},//idLesson
-             an: {type:Array},//risposte date nel caso fosse un quiz (answere)
-             p: {type:Number , alias:'point'},
-            }
-        ],
+        materia: [{
+            name: {type:String},
+            lesson: [
+                {_id:false,
+                idL: {type:String},//idLesson
+                an: {type:Array},//risposte date nel caso fosse un quiz (answere)
+                p: {type:Number , alias:'point'},
+               }],
+            _id:false
+        }]
         
     }
         

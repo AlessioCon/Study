@@ -47,12 +47,14 @@ function App (){
             if(data.success) { 
                 Cookie.setCookie('user', data.data , 30);
                 return setUser(data.data);
+            }else{
+                if(Cookie.getCookie('user')){ Cookie.deliteCookie('user') ; setUser(undefined)}
             }
             
         }catch(e){console.log(e)}
     }
-    if (!Boolean(user)) getUser();
-    }, [user]);
+    getUser();
+    }, []);
 
     
 
@@ -76,8 +78,8 @@ let isSeller = Boolean(user?.grade?.find(e => {if(e === 'seller' || e === 'selle
                     <Route path="venditore" element={isSeller ? <UserSeller/> :  <Navigate to="/dashbord"/>}/>
                 </Route>
                 <Route path="impostazioni/utente" element={user ? <SettingUser/> : <Navigate to="/login"/> }/>
-                <Route path="dashbord/crea-lezioni" element={isSeller ? <CreateLesson/> : <Navigate to="/dashbord"/> }/>
-                <Route path="dashbord/crea-corso" element={isSeller ? <CreateCourse/> : <Navigate to="/dashbord"/>}/>
+                <Route path="dashbord/crea-lezioni" element={(isSeller || isMaster) ? <CreateLesson/> : <Navigate to="/dashbord"/> }/>
+                <Route path="dashbord/crea-corso" element={(isSeller || isMaster) ? <CreateCourse/> : <Navigate to="/dashbord"/>}/>
 
                 <Route path="master/view/:user"  element={isMaster ? <MasterViewUser/> : <Navigate to="/dashbord"/>}/>
 

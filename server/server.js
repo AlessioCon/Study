@@ -77,8 +77,6 @@ app.post('/api/download' , (req,res) => {
     let href= req.body.href
     let base64Image = fs.readFileSync('app'+href, {encoding: 'UTF-8'} ,(err) => {if(err) console.log(err)})
     return res.json({url:base64Image})
-
-    res.static()
 })
 
 

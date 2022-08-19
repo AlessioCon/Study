@@ -1,4 +1,3 @@
-import {Component}  from 'react';
 import { NavLink }  from 'react-router-dom';
 import Cookie from '../customHook/cookie'
 
