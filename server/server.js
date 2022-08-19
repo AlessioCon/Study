@@ -1,5 +1,4 @@
 const express = require('express');
-const bodyParser = require('body-parser');
 const passport = require('passport');
 const fs = require('fs');
 const cors = require('cors');
@@ -27,8 +26,9 @@ dbConnect.on('DBConnect', ()=>{
 
 //---- ------------------    ---------------------------
 //codifica richieste
-app.use(bodyParser.json({limit: '5mb'}))
-app.use(bodyParser.urlencoded({ extended: true }));
+//app.use(bodyParser.json({limit: '5mb'}))
+
+app.use('/api/stripe/webhook', express.raw({type: 'application/json'}))
 app.use(express.json()); // to accept json data
 
 /*Passport*/
@@ -65,11 +65,11 @@ const masterRouter = require('./app/routes/master')
 /* MIDDLEWARE*/
 const checkUserLogin = require('./app/middleware/check-user-login');
 
-app.use('/api/sign', signRouter);
-app.use('/api/corsi', corsiRouter);
-app.use('/api/lesson', lessonRouter)
-app.use('/api/user', checkUserLogin() ,userRouter);
-app.use('/api/stripe' , stripeRouter);
+app.use('/api/sign'  ,  signRouter);
+app.use('/api/corsi' ,  corsiRouter);
+app.use('/api/lesson',  lessonRouter)
+app.use('/api/user'  ,  checkUserLogin() ,userRouter);
+app.use('/api/stripe'  , stripeRouter);
 app.use('/api/master', masterRouter);
 
 app.post('/api/download' , (req,res) => {

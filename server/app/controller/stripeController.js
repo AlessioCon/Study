@@ -362,15 +362,17 @@ async function amountProduct(req, res){
 
 
 async function webHook(request, response){
-    const endpointSecret = process.env.PrivateHook || "whsec_3d277abe1c7d79f1905d72ec3a0574362a8a6e2d4a72bf106dc666ac4837d238";
-    const sig = request.headers['stripe-signature'];
-
+    const endpointSecret = process.env.PrivateHook || "whsec_Si7CHmAjqti3V17OXC0mFkKeoWSaKvJF";
+    const sig = request.headers['stripe-signature']
+   
     let event;
 
     try {
-        event = stripe.webhooks.constructEvent(request.body, sig, endpointSecret);
+        event = stripe.webhooks.constructEvent(request.body , sig, endpointSecret);
       } catch (err) {
         response.status(400).send(`Webhook Error: ${err.message}`);
+        console.log(err)
+        debugger
         return;
       }
 
@@ -400,17 +402,17 @@ async function webHook(request, response){
          break;
        case 'invoice.payment_succeeded':
 
-       //tracciamento prodotto cosi da quantificare quanto il prodotto ha fatto guadagnare
-        const invoice = event.data.object;
-
-
-        await stripe.invoices.update(invoice.id,
-            {
-            metadata: {
-                product: invoice.lines.data[0].price.product,
-                amount:  (invoice.lines.data[0].price.unit_amount / 100)
-            }}
-          );
+        //tracciamento prodotto cosi da quantificare quanto il prodotto ha fatto guadagnare
+            const invoice = event.data.object;
+          
+            await stripe.invoices.update(invoice.id,
+                {
+                metadata: {
+                    product: invoice.lines.data[0].price.product,
+                    amount:  (invoice.lines.data[0].price.unit_amount / 100)
+                }}
+            );
+            break
 
        default:
          console.log(`Unhandled event type ${event.type}`);

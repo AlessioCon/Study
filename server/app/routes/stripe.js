@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 
+
 const stripeController = require('../controller/stripeController')
 
 //middleware
@@ -14,7 +15,7 @@ router.post('/amount_product' , stripeController.amountProduct)
 
 
 //webhook
-router.post('/webhook', express.raw({type: 'application/json'}), stripeController.webHook)
+router.post('/webhook', stripeController.webHook)
 
 
 
