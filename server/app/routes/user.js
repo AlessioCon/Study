@@ -20,6 +20,8 @@ router.post('/fromIdToUser' , userController.fromIdToUser)
 
 router.put('/update' , userController.updateUser)
 
+router.post('/get_user_course' , userController.getUserCourse)//tutti i corsi acquistati dall'utente
+
 
 
 router.get('/dashbord', (req, res) => {

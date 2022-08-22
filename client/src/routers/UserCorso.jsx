@@ -134,7 +134,7 @@ let param = useParams();
                                 }}
                             >
                             {lesson[0]}</button>
-                            {(progresesLesson)? <span>fatto</span>: undefined}
+                            {(progresesLesson)? <span>✅</span>: <span>⭕</span>}
                         </li>
                     )
 
@@ -381,6 +381,24 @@ let param = useParams();
                 </div>)
         }
 
+        function statistiche() {
+            if(Boolean(progress.length)){
+                let listStatistiche= []
+                progress.map((mat, matIndex) =>{
+                  let p = 0;
+                  mat.lesson.map(point => p += point.p || 0);
+                  listStatistiche.push(<p key={mat.name+ matIndex}>{mat.name}: {p}</p>)
+                })
+                return (
+                    <div>
+                        {listStatistiche}
+                    </div>
+                )
+
+            }else{
+                return <p>statistiche a 0</p>
+            }
+        }
         return (
             <div>
                 {(categoria) ? <p>punteggio {categoria}: {punti[corso.chapter.findIndex(x => x.ma === categoria)]}</p> : undefined}
@@ -392,6 +410,10 @@ let param = useParams();
                         </ul>
                     </div>
                     
+                </div>
+                <div>
+                    <h2>statistiche</h2>
+                    {statistiche()}
                 </div>
             </div>
         )

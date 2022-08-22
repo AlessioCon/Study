@@ -21,11 +21,14 @@ import UserSeller from './component/dashbord/UserSeller';
 import MasterDashbord from './component/dashbord/MasterDashbord';
 import MasterViewUser from './component/dashbord/MasterViewUser';
 
+import UserCorsi from './routers/UserCorsi'
+import UserCorso from './routers/UserCorso';
+
 import SettingUser from './component/dashbord/SettingUser';
 
 import Status from './routers/Status';
 
-import UserCorso from './routers/UserCorso';
+
 
 function App (){
     const [user, setUser] = useState(Cookie.getCookie('user'));
@@ -76,6 +79,7 @@ let isSeller = Boolean(user?.grade?.find(e => {if(e === 'seller' || e === 'selle
                     <Route path="master" element={isMaster ? <MasterDashbord /> : <Navigate to="/dashbord"/>}/>
                     <Route path="utente" element={<UserDashbord />}/>
                     <Route path="venditore" element={isSeller ? <UserSeller/> :  <Navigate to="/dashbord"/>}/>
+                    <Route path="corsi" element={<UserCorsi/>}/>
                 </Route>
                 <Route path="impostazioni/utente" element={user ? <SettingUser/> : <Navigate to="/login"/> }/>
                 <Route path="dashbord/crea-lezioni" element={(isSeller || isMaster) ? <CreateLesson/> : <Navigate to="/dashbord"/> }/>

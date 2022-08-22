@@ -111,6 +111,36 @@ function Option(props){
     let name = (props.name) ? props.name : 'addMoreInput'
     let chapterDisplay = [];
 
+    function buttonSu (n){
+        return (<button key={"buttonsu" + n} onClick={e => {
+            e.preventDefault();
+            let newValue = Object.values(contList);
+            let value = newValue[actualElement].quiz[n];
+            newValue[actualElement].quiz.splice(n, 1)
+            newValue[actualElement].quiz.splice(n -1, 0 , value)
+            setContList(newValue);
+        }}>su</button>)
+    }
+
+    function buttonGiu (n){
+        return (<button key={"buttongiu" + n} onClick={e => {
+            e.preventDefault();
+            let newValue = Object.values(contList);
+            let value = newValue[actualElement].quiz[n];
+            newValue[actualElement].quiz.splice(n, 1)
+            newValue[actualElement].quiz.splice(n +1, 0 , value)
+            setContList(newValue);
+        }}>giu</button>)
+    }
+
+    function buttonCrea (n){
+        return (<button key={"buttoncrea" + n} onClick={e => {
+            e.preventDefault();
+            let newValue = Object.values(contList);
+            newValue[actualElement].quiz.splice(n +1, 0 , {q: '' , answere: []})
+            setContList(newValue);
+        }}>crea</button>)
+    }
 
     
     for(let x = division[0]; division[1] > x && element.quiz.length > x ; x++){
@@ -137,6 +167,9 @@ function Option(props){
                     
                     setContList(newValue);
                 }}>X</button>
+                {(x !== 0) ? buttonSu(x) : undefined}
+                {(x !== (element.quiz.length - 1)) ? buttonGiu(x): undefined}
+                {buttonCrea(x)}
 
                 <div>
                     {quiz[x]['answere'].map((e)=>{
@@ -521,7 +554,7 @@ function ContentLesson(props){
         setContList(newList)
     }
 
-    if(typeof parseInt(contList[actualElement]?.access?.[0]?.[0]) === 'number'){
+    if(Boolean(parseInt(contList[actualElement]?.access?.[0]?.[0]))){
         let list = []
         contList[actualElement]?.access?.map(x => list.push(x[0]))
         if(Boolean(list.length)) fromIdToUser(list)

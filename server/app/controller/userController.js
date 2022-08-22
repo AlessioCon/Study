@@ -104,7 +104,6 @@ async function userNew(req, res){
     
 }
 
-
 async function getUser(req, res){
     try{
         let userDb = await userModel.findById({_id: req.body.id})
@@ -399,12 +398,31 @@ async function updateUser(req, res){
     
 }
 
+async function getUserCourse(req, res){
+    try{
+        let user = await userModel.findById(req.body.id).select('-_id CourseBuy');
+
+        if(!user) return res.json({success:false , msg: 'non hai corsi acquistati'})
+        let listCourse = []
+        for(let x = 0 ; x < user.CourseBuy.length ; x++){
+            let course = await courseModel.findById(user.CourseBuy[x].courseId).select('t sale img sl s');
+            if(course) listCourse.push(course)
+        }
+        
+
+        return res.json({success:true, courses: listCourse});
+
+
+    }catch(e){console.log(e)}
+
+}
 
 module.exports = {
     userNew,
     userLogin,
     getUser,
     updateUser,
+    getUserCourse,
 
     haveCourse,
     payCourse,

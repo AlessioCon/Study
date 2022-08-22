@@ -42,7 +42,7 @@ function AddOneInput(props){
         
     }
 
-    if(typeof parseInt(contList[actualElement]?.access?.[0]?.[0]) === 'number'){
+    if(Boolean(parseInt(contList[actualElement]?.access?.[0]?.[0]))){
         let list = []
         contList[actualElement]?.access?.map(x => list.push(x[0]))
         if(Boolean(list.length)) fromIdToUser(list)
@@ -868,6 +868,7 @@ let UserForMaster = useRef(undefined);
 
   
     async function getStripeAmount(){
+       
 
         let response = await fetch((env?.URL_SERVER || '') + '/api/stripe/amount_product' , {
             method: 'POST',
@@ -881,7 +882,8 @@ let UserForMaster = useRef(undefined);
         let data = await response.json();
         if(data.success)  setStripeAmount(data.amount);
     }
-    if(Boolean(contList[actualElement]?.idStripe) && stripeAmount !== undefined ) getStripeAmount();
+
+    if(Boolean(contList[actualElement]?.idStripe) && stripeAmount === undefined ) getStripeAmount();
 
     return (
         <div>
@@ -904,7 +906,7 @@ let UserForMaster = useRef(undefined);
            {(!limiti) ? <div>
                 {(contList?.[actualElement]?.block) ?<p>CORSO ATTUALMENTE BLOCCATO</p> : null}
                 <p>statistiche corso</p>
-                    <p>corsi venduti : {contList?.[actualElement]?.ven?.n ?? 0}</p>
+                    <p>corsi venduti : {contList?.[actualElement]?.ven?.ul?.length ?? 0}</p>
                     <p>ricavo stripe: {stripeAmount}</p>
                     <p>ricavo paypal: 0</p>
                     <p>totale: {stripeAmount}</p>
