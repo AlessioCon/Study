@@ -46,6 +46,23 @@ const userSchema = new Schema({
         
     ],
 
+    /*gestione simulazioni*/
+    simu:[{
+        _id: false,
+        simId: {type:String , alias: 'simulationId'},
+        stat: [{
+            _id:false,
+            n: {type:String ,alias:'name'}, //name categoria
+            num: {type:Number, alias:'number'}//percentuale completata
+        }],
+        dom:[{//domande salvate
+            _id:false,
+            n: {type:String, alias:'name'},//nome categoria
+            a: [] // answere , indice di domanda
+        }],
+        hit: {type:Number} //quante volte l'utente ha fatto il corso
+    }]
+
 })
 
 userSchema.virtual('fullName').get(function(){

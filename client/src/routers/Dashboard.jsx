@@ -64,7 +64,7 @@ function Dashbord(){
     let cookieSeller = Cookie.getCookie('newSeller')?.seller;
 
     let isMaster = user.grade.find(e => e === 'master');
-
+    let isSimulator = user.grade.find(e => e === 'simulation');
     return (
 
         <div className='dashboard'>
@@ -76,6 +76,7 @@ function Dashbord(){
                     : null}
                     <li><NavLink  className={({ isActive }) => isActive ? "dashbord-select" : null} to="utente">Utente</NavLink></li>
                     <li><NavLink  className={({ isActive }) => isActive ? "dashbord-select" : null} to="corsi">Corsi</NavLink></li>
+                    <li><NavLink  className={({ isActive }) => isActive ? "dashbord-select" : null} to="simulazioni">Simulazioni</NavLink></li>
                     {(accessCorsiVenditore || cookieSeller) ? 
                         <li className='sub-nav'>
                             <a href="/" onClick={e => {
@@ -88,6 +89,7 @@ function Dashbord(){
                             </ol>
                         </li> 
                         : null}
+                    {(isSimulator) ?<li> <Link to="crea-simulazioni">Crea simulazioni</Link></li> : undefined}
                     <li className='sub-nav'>
                         <a href="/" onClick={e => {
                            e.preventDefault();

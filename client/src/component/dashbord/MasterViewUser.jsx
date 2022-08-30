@@ -31,12 +31,21 @@ async function downloadFile(href){
  };
 
 
+ function User(params){
+    let user = params.user
 
-
-
-
-
-function User(params){
+    if(!user) return <p>caricamento...</p>
+    return(
+            <div>
+                <p>nome: {`${user.name.f} ${user.name.l}`}</p>
+                <p>username: {user.user}</p>
+                <p>data di nascita: {user?.date}</p>
+                <p>email: {user.email}</p>
+                <p>residenza: {`${user.address.c} , ${user.address.s} , ${user.address.cap}`}</p> 
+            </div>
+    )
+}
+function CourseUser(params){
     let user = params.user
     let course = params.course
     let [viewCourse , setViewCourse] = useState(); //contiene tutti i capitoli del corso scelto
@@ -82,7 +91,7 @@ function User(params){
             <span title='nome corso'>{e.t}</span>
             <span title='prezzo'>{(e.sale.o) ? 'scontato: '+ e.sale.o +' €' : 'prezzo: ' + e.sale.p + ' €'}</span>
             <span title='stato corso'>stato: {(e?.block || !e.s ) ? 'non attivo' : 'attivo'}</span>
-            <span title='quantità venduta'>venduti: {e.ven.ul.length}</span>
+            <span title='quantità venduta'>venduti: {e.ven?.length || 0}</span>
             <span>
                 <button onClick={btn => {
                     btn.preventDefault();
@@ -102,7 +111,6 @@ function User(params){
     
     let corso = []
     viewCourse?.map(e => {
-        console.log(e)
         return corso.push(
             <li key={e.ma}>
                 {e.ma}
@@ -128,7 +136,6 @@ function User(params){
         )
     })
 
-    
     async function caricaLezione(id){
         let response= await fetch((env?.URL_SERVER || '') + '/api/lesson/'+id, {
             method: 'GET',
@@ -210,35 +217,93 @@ function User(params){
 
 
     return(
-        <div>
-            <p>nome: {`${user.name.f} ${user.name.l}`}</p>
-            <p>username: {user.user}</p>
-            <p>data di nascita: {user?.date}</p>
-            <p>email: {user.email}</p>
-            <p>residenza: {`${user.address.c} , ${user.address.s} , ${user.address.cap}`}</p>
+            <div>
+                <p>CORSI</p>
+                <Link to={"../../dashbord/crea-corso?user="+user._id}>Modifica un corso</Link>
+                <Link to={"../../dashbord/crea-lezioni?user="+user._id}>Modifica una lezione</Link>
+                {Boolean(listaCourse?.length) ? <Sezione
+                    elementi={listaCourse}
+                    divisione={10}
+                    down={true}
+                    postoSezioni={[postoCorsi, setPostoCorsi]}
+                /> : null}
+                
+                {(Boolean(viewCourse?.length)) ? <div>{lezione}<ul>{corso}</ul></div> : null}
+            </div>      
+    )
+}
 
-            <p>corsi</p>
-            <Link to={"../../dashbord/crea-corso?user="+user._id}>Modifica un corso</Link>
-            <Link to={"../../dashbord/crea-lezioni?user="+user._id}>Modifica una lezione</Link>
-            {Boolean(listaCourse?.length) ? <Sezione
-                elementi={listaCourse}
-                divisione={10}
-                down={true}
-                postoSezioni={[postoCorsi, setPostoCorsi]}
-            /> : null}
-            
-            {(Boolean(viewCourse?.length)) ? <div>{lezione}<ul>{corso}</ul></div> : null}
-            
-        </div>
+function SimulationUser(params){
+    let user = params.user
+    let simulations = params.simulations
+    const [postoSimulazioni, setPostoSimulazioni] = useState(1);
+
+    async function simulationBlock(idSimulation , btn){
+        if(!btn.classList.contains('btn-pending')){
+            try{
+                let btntext= btn.innerText
+                btn.innerText = '';
+                btn.classList.add('btn-pending');
         
+                let response= await fetch((env?.URL_SERVER || '') + '/api/master/block_simulation', {
+                    method: 'POST',
+                    headers: {
+                        Accept: "application/json",
+                        "Content-Type": "application/json",
+                        "Access-Control-Allow-Credentials": true,
+                    },
+                    body: JSON.stringify({ idSimulation: idSimulation})
+                })
+                let data = await response.json();
+                alert(data.msg)
+        
+                btn.innerText = btntext;
+                btn.classList.remove('btn-pending');
+            }catch(e){console.log(e)}
+        }
+        }
+
+    let listaSimulation = []
+    simulations?.map((e, index)=> {
+        let hit = Number(e.hit?.e || 0) +  Number(e.hit?.h || 0)
+    return listaSimulation.push(
+        <li className='flex-content' key={e.n +' - ' +index}>
+            <span title='nome simulazione'>{e.n}</span>
+            <span title='stato corso'>stato: {(e?.block || !e.s ) ? 'non attivo' : 'attivo'}</span>
+            <span title='quante volte è stata fatta'>avvii: {hit} </span>
+            <span>
+                <button onClick={btn => {
+                    btn.preventDefault();
+                    simulationBlock(e._id , btn.target)
+                }}>{(e.block) ? 'Sblocca' : 'Blocca'} simulazione</button>
+    
+            </span>
+            
+            
+        </li>
+        )
+    })
+    return (
+            <div>
+                <p>SIMULAZIONI</p>
+                <Link to={"../../dashbord/crea-simulazioni?user="+user._id}>Modifica una simulazione</Link>
+                {Boolean(listaSimulation?.length) ? <Sezione
+                    elementi={listaSimulation}
+                    divisione={10}
+                    down={true}
+                    postoSezioni={[postoSimulazioni, setPostoSimulazioni]}
+                /> : null}
+            </div>
     )
 }
 
 
 
+
 export default function MasterViewUser(){
     let [user , setUser] = useState(null);
-    let [course, setCourse] = useState(null)
+    let [course, setCourse] = useState(null);
+    let [simulations , setSimulations] = useState(null);
     let param = useParams();
     
     useEffect(()=>{
@@ -253,7 +318,12 @@ export default function MasterViewUser(){
                 body: JSON.stringify({id: param.user})
             })
             let data = await response.json()
-            if(data.success) setUser(data.user)
+            
+            if(data.user.grade.find(x => x === 'seller' || 'sellerBlock ' || 'sellerPending')) getCourse();
+            if(data.user.grade.find(x => x === 'simulation' || 'simulationBlock')) getSimulation()
+
+
+            if(data.success) setUser(data.user);
         }
         getUser()
     },[])
@@ -271,16 +341,36 @@ export default function MasterViewUser(){
         let data = await response.json();
         if(data.success){ setCourse(data.data)
         }else{ setCourse([])}
+
     }
-    if(user && !course) getCourse();
+
+    async function getSimulation(){
+        let response = await fetch((env?.URL_SERVER || '') + '/api/simulation/simulation_user', {
+            method: 'POST',
+            headers:{
+                accept:'application/json',
+                'Content-Type': 'application/json',
+                "Access-Control-Allow-Credentials": true,
+            },
+            body: JSON.stringify({id: param.user})
+        })
+        let data = await response.json();
+        if(data.success){ setSimulations(data.simulations)
+        }else{ setSimulations([])}
+    }
 
 
     
     return(
         <div>
             <h1>Vedi utente</h1>
-            {(user) ? <User user={user} course={course}/> : null}
+            <User user={user}/>
+            {(course) ? <CourseUser user={user} course = {course}/> : undefined}
+            {(simulations) ? <SimulationUser user={user} simulations = {simulations}/> : undefined}
         </div>
         
     )
 }
+
+
+

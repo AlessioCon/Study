@@ -23,7 +23,7 @@ function NavBarHeadre(){
                 <nav className={'header-nav'}>
                     <button className={"x-hamburger"} onClick={() => menuActive()}>X</button>
                     <ol>
-                        <li><NavLink to='/contatti' onClick={() => menuActive()}>Contatti</NavLink></li>
+                        <li><NavLink to='/simulazioni' onClick={() => menuActive()}>simulazioni</NavLink></li>
                         <li className='sub-nav'>
                             <a href="" onClick={e => {
                                 e.preventDefault();

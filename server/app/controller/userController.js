@@ -193,6 +193,7 @@ async function getUserSeller(req, res){
     }catch(e){if(e) console.log(e)}
 }
 
+//fromIdToUser molto forse non è usata , da considerare la deprecazione
 async function fromIdToUser(req, res){
     try{
         let list = req.body.listId;

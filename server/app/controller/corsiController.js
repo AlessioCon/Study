@@ -24,7 +24,27 @@ async function getAllUserCourse(req,res){
         let allCourse = await courseModel.find({'access.c': req.body.id});
         if(!allCourse) return res.json({success:false , data:'l\'utente non ha corsi'});
 
-        res.json({success:true, data:allCourse});
+        for(let y = 0 ; y < allCourse.length; y++ ){
+            //nome prof da id a username
+            for(let x = 0 ; x < allCourse[y].access.prof.length  ; x++){
+                let userName =  await userModel.findOne({_id: allCourse[y].access.prof[x].n }).select('user');
+                if(userName) allCourse[y].access.prof[x].n = userName.user;
+            }
+
+            
+
+            //nome lista utenti che ha comprato il corso : da id a user
+            for(let x = 0 ; x < allCourse[y].ven.length; x++){
+                let userName =  await userModel.findOne({_id: allCourse[y].ven[x] }).select('user');
+                if(userName) allCourse[y].ven[x] = userName.user;
+            }
+        };
+
+        let lessonUser = await lessonModel.find({s: {$nin:['bozza']} , $or: [{'access.c': req.body.id}, {'access.prof.n':req.body.id}]}).select('n _id');
+
+
+
+        res.json({success:true, data:allCourse, lesson:lessonUser});
     }catch(e){
         res.json({success:false, data:'error server'});
     }
@@ -89,7 +109,8 @@ async function updateCourse(req , res){
         
 
         //sistema di memorizzazione file
-        dati.pathDati = dati.img ?? '';
+        if(dati?.img  && dati.img !== ''){fs.unlinkSync(__dirname + '/..'+ dati.img) ; dati.img = ''}
+
         if(dati.file?.file === 'not') dati.pathDati = '';
 
         if(dati.file?.file && dati.file?.file != 'not'){
@@ -319,22 +340,29 @@ async function getModifyCourse(req, res){
 
         if(!courseAll && !courseProf) return res.json({success:false , data:'corsi non disponibili'});
 
-        for(let y = 0 ; y < courseProf.length; y++ ){
-            let course = courseProf[y]
-            for(let x = 0 ; x < course.access.prof.length  ; x++){
-                let idUser = course.access.prof[x].n;
-                let userName =  await userModel.findOne({_id: idUser}).select('user');
-                if(userName) course.access.prof[x].n = userName.user;
-                if(course.access.prof[x].n === req.body.id) course.validation = course.access.prof[x].g;
+        let full = [...courseAll , ...courseProf]
+        
+        for(let y = 0 ; y < full.length; y++ ){
+            //nome prof da id a username
+            for(let x = 0 ; x < full[y].access.prof.length  ; x++){
+                let userName =  await userModel.findOne({_id: full[y].access.prof[x].n }).select('user');
+                if(userName) full[y].access.prof[x].n = userName.user;
             }
 
-            courseAll.push(course);
+            
 
+            //nome lista utenti che ha comprato il corso : da id a user
+            for(let x = 0 ; x < full[y].ven.length; x++){
+                let userName =  await userModel.findOne({_id: full[y].ven[x] }).select('user');
+                if(userName) full[y].ven[x] = userName.user;
+            }
         };
         
+
+    
         let lessonUser = await lessonModel.find({s: {$nin:['bozza']} , $or: [{'access.c': req.body.id}, {'access.prof.n':req.body.id}]}).select('n _id');
 
-        return res.json({success:true, data:courseAll , lesson:lessonUser});
+        return res.json({success:true, data:full , lesson:lessonUser});
 
     }catch(e){
         res.json({success:false, data:'error server'});

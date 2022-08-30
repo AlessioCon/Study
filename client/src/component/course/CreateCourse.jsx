@@ -21,32 +21,6 @@ function AddOneInput(props){
     let name = (props.name) ? props.name : 'addOneInput';
     let inputProf= [];
 
-    async function fromIdToUser(list){
-       
-        let response = await fetch((env?.URL_SERVER || '' ) + '/api/user/fromIdToUser' , {
-            method: 'POST',
-            headers:{
-                Accept: "application/json",
-                "Content-Type": "application/json",
-                "Access-Control-Allow-Credentials": true,
-            },
-            body: JSON.stringify({listId: list})
-        })
-        let data = await response.json();
-        console.log(data)
-        if(!data.success) return undefined;
-
-        let newList = [...contList];
-        data.userList.map((x, index) => newList[actualElement].access[index][0] = x.user)
-        setContList(newList)
-        
-    }
-
-    if(Boolean(parseInt(contList[actualElement]?.access?.[0]?.[0]))){
-        let list = []
-        contList[actualElement]?.access?.map(x => list.push(x[0]))
-        if(Boolean(list.length)) fromIdToUser(list)
-    }
 
     for(let x = 0; element.length > x ; x++){
         
@@ -534,7 +508,11 @@ function ContentCourse(props){
         let response = await fetch((env?.URL_SERVER || '' ) + `/api/corsi/${id}` , {
             method:'DELETE',
             credentials: "include",
-            body: JSON.stringify({userId: UserForMaster.current || Cookie.getCookie('user')._id , idStripe: idStripe}),
+            body: JSON.stringify({
+                userId: UserForMaster.current || Cookie.getCookie('user')._id , 
+                idStripe: idStripe,
+                id: id
+            }),
             headers: {
                 Accept: "application/json",
                         "Content-Type": "application/json",
@@ -650,40 +628,20 @@ function ContentCourse(props){
 }
 
 function ListUserBuyCourse(props){
-    let [listUser, setListUser] = useState('');
     const [postoSezioni, setPostoSezioni] = useState(1); //per far funzionare section
     
     
     let userList = props.userList;
 
+    if(userList.length === 0){ 
+        
+        return <p>nessuno ha comprato il corso</p>
 
-    async function fromIdToUser(list){
-        let response = await fetch((env?.URL_SERVER || '' ) + '/api/user/fromIdToUser' , {
-            method: 'POST',
-            headers:{
-                Accept: "application/json",
-                "Content-Type": "application/json",
-                "Access-Control-Allow-Credentials": true,
-            },
-            body: JSON.stringify({listId: list})
-        })
-        let data = await response.json()
-        if(!data.success) return userList = undefined;
-        setListUser(data.userList)
-    }
-
-    if(userList && !Boolean(listUser)){
-        fromIdToUser(userList);
-        return(
-            <ul>
-                caricamento lista...
-            </ul>
-        )
-    }else if(userList && Boolean(listUser)){
+    }else{
         let user = []
-        for(let x = 0 ; x < listUser.length ; x++){
+        for(let x = 0 ; x < userList.length ; x++){
             user.push(
-                <p key={listUser[x].user + x} title={userList[x]}>{listUser[x].user}</p>
+                <p key={userList[x] + x} title={userList[x]}>{userList[x]}</p>
             )
         }
         return(
@@ -698,7 +656,7 @@ function ListUserBuyCourse(props){
             </div>
         )
 
-    }else{ return null}
+    }
 
 }
 
@@ -741,7 +699,10 @@ let UserForMaster = useRef(undefined);
 
 
             try {
-            let response = await fetch((env?.URL_SERVER || '') + '/api/corsi/modifica', {
+            let fetchUrl = 'modifica';
+            if(Cookie.getCookie('user').grade.find(x => x === 'master')) fetchUrl = 'corsi_user';
+
+            let response = await fetch((env?.URL_SERVER || '') + '/api/corsi/'+fetchUrl, {
                 method: "POST",
                 body: JSON.stringify({id: UserForMaster.current || Cookie.getCookie('user')._id}),
                 credentials: "include",
@@ -925,7 +886,7 @@ let UserForMaster = useRef(undefined);
                     {(Boolean(msgRegalo)) ? <p>{msgRegalo}</p> : null}
                 </form>
 
-                <ListUserBuyCourse userList={contList?.[actualElement]?.ven?.ul}/>
+                <ListUserBuyCourse userList={contList?.[actualElement]?.ven}/>
             </div> : undefined}
         </div> 
             

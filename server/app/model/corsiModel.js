@@ -38,20 +38,8 @@ const corsoSchema = new Schema({
         }
     ],
 
-
-
-
-   //chapter:[{
-   //    _id: false,
-   //    t: {type:String , alias:'title'},
-   //    lesson: [],
-   //    u: {type:Number  , alias:'unlock'}, //a quante stelle si potra sbloccare
-
-   //}],
-    ven:{
-        n: {type:Number, alias:'vendite'} ,
-        ul:[{type:String, alias:'userList'}],
-    },
+    ven:[],
+    
 
     sl :{type:String, alias:'slug'},
     img:{type:String},

@@ -13,6 +13,8 @@ router.put('/update' , lessonController.update);
 
 router.delete('/:id', lessonController.deleteLesson);
 
+router.post('/lesson_user' , lessonController.getAllUserLesson);//prendi solo le lezioni create dall'utente (per master)
+
 
 
 module.exports = router;

@@ -1,5 +1,6 @@
-const userModel   = require('../model/userModel')
-const courseModel = require('../model/corsiModel')
+const userModel   = require('../model/userModel');
+const courseModel = require('../model/corsiModel');
+const simulationModel = require('../model/simulationModel');
 
 const stripeController = require('../controller/stripeController')
 
@@ -13,7 +14,6 @@ async function isMaster(req, res){
         res.json({success: true , user: master.user})
     }catch(e){console.log(e)}
 }
-
 
 async function newSeller(req, res){
     try{
@@ -60,8 +60,7 @@ async function allSeller(req, res){
         let allSellers = await userModel.find({grade: {$in: ['seller' , 'sellerBlock']}}).select('_id user name grade')
         if(!Boolean(allSellers)) res.json({success: true , sellers:[]})
     
-    
-        list = []
+        let list = []
         //trova tutti i corsi dei venditori
         for(let x = 0 ; x < allSellers.length ; x++){
             let item = allSellers[x]
@@ -88,12 +87,11 @@ async function allSeller(req, res){
             list.push(seller)
               
         }
-        
+
         res.json({success: true , list: list})
 
     }catch(e){console.log(e), res.json({success: 'error' , msg:'errore server'})}
 }
-
 
 async function blockSeller(req, res){
     try{
@@ -135,6 +133,102 @@ async function blockCourse(req, res){
 
 
 
+
+async function newCreatorSimulator(req, res){
+    try{
+        let master = await masterRetrive(req.body.idMaster)
+        if(master.success === false) return res.json({success: false , msg: master.msg})
+
+        let user = await userModel.findOne({user: req.body.user});
+        if(!Boolean(user)) return res.json({success: false , msg:'utente non trovato'});
+
+        //se era già un venditore altrimenti...
+        if(user.grade.find(e => e === 'simulationBlock')){
+            let newGrade = user.grade.filter(e => e !== 'simulationBlock');
+            newGrade.push('simulation')
+            user.grade = newGrade;
+            await user.save();
+            return res.json({success: false, msg:'l\'utente '+ user.user + ' è di nuovo un creatore di simulazioni'});
+        }else{
+            let usergrade = user.grade.find(e => e === 'simulation' );
+            if(usergrade) return res.json({success: false, msg: 'l\'utente è gia un creatore di simulazioni'});
+
+            user.grade.push('simulation')
+            await user.save();
+            res.json({saccess: true , msg:'adesso '+ req.body.user + ' è un creatore di simulazioni'})
+        }
+
+    }catch(e){console.log(e)}
+}
+async function allCreatorSimulator(req, res){
+    try{
+        let master = await masterRetrive(req.body.idMaster)
+        if(master.success === false) return res.json({success: false , msg: master.msg})
+    
+    
+        //trova tutti i venditori
+        let allCreator = await userModel.find({grade: {$in: ['simulation' , 'simulationBlock']}}).select('_id user name grade')
+        if(!Boolean(allCreator)) res.json({success: true , sellers:[]})
+    
+    
+        list = []
+        //trova tutti i corsi dei venditori
+        for(let x = 0 ; x < allCreator.length ; x++){
+            let item = allCreator[x]
+            let allSimulation = await simulationModel.find({'access.c': item._id}).select('_id');
+            let simulation = allSimulation.length;
+    
+            let user = {
+                _id: item._id,
+                nome:`${item.name.f} ${item.name.l}`,
+                user: item.user,
+                active_simulation: simulation,
+                grade: item.grade
+            }
+    
+            list.push(user)
+              
+        }
+        
+        res.json({success: true , list: list})
+
+    }catch(e){console.log(e), res.json({success: 'error' , msg:'errore server'})}
+}
+async function blockCreatorSimulator(req, res){
+    try{
+        let master = await masterRetrive(req.body.idMaster)
+        if(master.success === false) return res.json({success: false , msg: master.msg})
+
+        let userSim = await userModel.findById({_id: req.body.idUser});
+        if(!Boolean(userSim)) return res.json({success: false , msg:'utente non trovato'});
+
+        if(userSim.grade.find(e => e === 'simulationBlock')) return res.json({success:false, msg:'l\'utente non è un creatore di simulazioni'})
+
+        let gradeFilter = userSim.grade.filter(e => e !== 'simulation');
+        gradeFilter.push('simulationBlock')
+
+        userSim.grade = gradeFilter
+        await userSim.save();
+        res.json({saccess: true , msg:'adesso '+ userSim.user + ' non è un creatore di simulazioni'})
+        
+    }catch(e){console.log(e)}
+}
+async function blockSimulation(req, res){
+    try{
+        let simulation = await simulationModel.findById({_id:req.body.idSimulation})
+        if(!simulation) return res.json({success: false, msg: 'simulazione non trovata'})
+
+        if(simulation?.block){ simulation.block = false ; simulation.s = false
+        }else{simulation.block = true ; simulation.s = true}
+
+        await simulation.save();
+        res.json({success: true, msg: 'modifica alla simulazione effettuata'})
+
+    }catch(e){console.log(e)}
+}
+
+
+
 async function masterRetrive(id){
     let user = await userModel.findById({_id: id});
     if(!Boolean(user)) return {success:false , msg:'utente insesistente'};
@@ -149,5 +243,10 @@ module.exports = {
     newSeller,
     allSeller,
     blockSeller,
-    blockCourse
+    blockCourse,
+
+    newCreatorSimulator,
+    allCreatorSimulator,
+    blockCreatorSimulator,
+    blockSimulation,
 }

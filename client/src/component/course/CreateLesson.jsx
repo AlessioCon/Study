@@ -504,7 +504,7 @@ function ContentLesson(props){
     let [actualElement , setActualElement] =  props.actualElement;
     let [contList , setContList] = props.contList;
     let UserForMaster = props.UserForMaster
-
+   
     const [listFile , setListFile] = useState(contList[actualElement]?.file?.name ?? '')
     if(listFile !== contList[actualElement]?.file?.name ) setListFile(contList[actualElement]?.file?.name)
 
@@ -534,30 +534,6 @@ function ContentLesson(props){
         let data = await response.json();
         if(data.success !== true) alert('problema nella cancellazione della lezione , ricarica la pagina');
         return data;
-    }
-
-
-    async function fromIdToUser(list){
-        let response = await fetch((env?.URL_SERVER || '' ) + '/api/user/fromIdToUser' , {
-            method: 'POST',
-            headers:{
-                Accept: "application/json",
-                "Content-Type": "application/json",
-                "Access-Control-Allow-Credentials": true,
-            },
-            body: JSON.stringify({listId: list})
-        })
-        let data = await response.json()
-        if(!data.success) return undefined;
-        let newList = [...contList];
-        data.userList.map((x, index) => newList[actualElement].access[index][0] = x.user)
-        setContList(newList)
-    }
-
-    if(Boolean(parseInt(contList[actualElement]?.access?.[0]?.[0]))){
-        let list = []
-        contList[actualElement]?.access?.map(x => list.push(x[0]))
-        if(Boolean(list.length)) fromIdToUser(list)
     }
 
 
@@ -679,9 +655,13 @@ let UserForMaster = useRef(undefined);
                     
                 }catch(e){console.log(e)} 
             }
-
+            
+            
             try {
-            let response = await fetch((env?.URL_SERVER || '') + '/api/lesson/', {
+            let fetchUrl = '';
+            if(Cookie.getCookie('user').grade.find(x => x === 'master')) fetchUrl = 'lesson_user';
+
+            let response = await fetch((env?.URL_SERVER || '') + '/api/lesson/'+fetchUrl, {
                 method: "POST",
                 body: JSON.stringify({id: UserForMaster.current || Cookie.getCookie('user')._id}),
                 credentials: "include",
@@ -712,7 +692,7 @@ let UserForMaster = useRef(undefined);
                     e.link = e.l
                     e.bozza = (e.s === 'bozza') ? true : false;
                     e.time = (parseInt(e.ti)) ?  parseInt(e.ti) : 0 ;
-                    e.type = (e.quiz) ? true : false;
+                    e.type = (Boolean(e.quiz.length)) ? true : false;
                     e.point = e.p ?? 0;
 
                     if(e.f){
@@ -745,17 +725,12 @@ let UserForMaster = useRef(undefined);
         if(lesson.type){
             lesson.link = '';
             lesson.file = [];
-        }else{
-            lesson.quiz = [];
-            lesson.file = [];
-        }
 
-        if(Boolean(lesson.file.length)){
-            lesson.link = '';
-            lesson.quiz = [];
-        }
+        }else{lesson.quiz = [];}
 
-        let dati = JSON.parse(JSON.stringify(lesson));
+        if(Boolean(lesson.file.length)){ lesson.link = '';}
+
+        let dati = lesson;
 
         let access = {
             prof: lesson.access ?? null,

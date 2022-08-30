@@ -3,7 +3,7 @@ const passport = require('passport');
 const fs = require('fs');
 const cors = require('cors');
 const path = require('path')
-
+let userModel = require('./app/model/userModel')
 
 
 
@@ -26,10 +26,8 @@ dbConnect.on('DBConnect', ()=>{
 
 //---- ------------------    ---------------------------
 //codifica richieste
-//app.use(bodyParser.json({limit: '5mb'}))
-
 app.use('/api/stripe/webhook', express.raw({type: 'application/json'}))
-app.use(express.json()); // to accept json data
+app.use(express.json({limit: 5000000})); // to accept json data
 
 /*Passport*/
 app.use(require('express-session')({ 
@@ -59,6 +57,7 @@ const signRouter = require('./app/routes/sign');
 const userRouter = require('./app/routes/user');
 const corsiRouter = require('./app/routes/corsi');
 const lessonRouter = require('./app/routes/lesson');
+const simulationRouter = require('./app/routes/simulation');
 const stripeRouter = require('./app/routes/stripe');
 const masterRouter = require('./app/routes/master')
 
@@ -67,7 +66,8 @@ const checkUserLogin = require('./app/middleware/check-user-login');
 
 app.use('/api/sign'  ,  signRouter);
 app.use('/api/corsi' ,  corsiRouter);
-app.use('/api/lesson',  lessonRouter)
+app.use('/api/lesson',  lessonRouter);
+app.use('/api/simulation',  simulationRouter)
 app.use('/api/user'  ,  checkUserLogin() ,userRouter);
 app.use('/api/stripe'  , stripeRouter);
 app.use('/api/master', masterRouter);
@@ -77,6 +77,15 @@ app.post('/api/download' , (req,res) => {
     let href= req.body.href
     let base64Image = fs.readFileSync('app'+href, {encoding: 'UTF-8'} ,(err) => {if(err) console.log(err)})
     return res.json({url:base64Image})
+})
+
+app.post('/api/mail/userToUser' , async (req, res) => {
+    try{
+        let userTo = await userModel.findById({_id: req.body.userTo}).select('email');
+        if(!userTo) return res.json({success: false , msg: 'email utente (to) non trovata'});
+    
+        return res.json({success: true, userTo: userTo.email});
+    }catch(e){console.log(e); return res.json({success: 'error'});}
 })
 
 

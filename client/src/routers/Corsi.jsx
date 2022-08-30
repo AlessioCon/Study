@@ -19,6 +19,7 @@ function listCourse(corsi, filter){
                     <NavLink style={{border: "2px solid black", display: "block", margin: "10px"}}
                         to={corso.sl}
                         key={corso.sl}
+                        title='vai al corso'
                     >
                     <p>{corso.t}</p>
                     <p>{corso.sale.p} €</p>

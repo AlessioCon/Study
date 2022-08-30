@@ -11,21 +11,18 @@ async function getAll(req,res){
     try{
         let lessonAll = await lessonModel.find({['access.c']: req.body.id});
         let lessonProf = await lessonModel.find({['access.prof.n']:req.body.id ,['access.prof.g']:'modifiche'});
-        if(!lessonAll && lessonProf) return res.json({success:false , data:'lezioni non disponibili'});
+        if(!lessonAll && !lessonProf) return res.json({success:false , data:'lezioni non disponibili'});
 
-        for(let y = 0 ; y < lessonProf.length; y++ ){
-            let lesson = lessonProf[y]
-            for(let x = 0 ; x < lesson.access.prof.length  ; x++){
-                let idUser = lesson.access.prof[x].n;
-                let userName =  await userModel.findOne({_id: idUser}).select('user');
-                if(userName) lesson.access.prof[x].n = userName.user
+        let full = [...lessonAll, ...lessonProf];
+
+        for(let y = 0 ; y < full.length; y++ ){
+            for(let x = 0 ; x < full[y].access.prof.length  ; x++){
+                let userName =  await userModel.findOne({_id: full[y].access.prof[y].n}).select('user');
+                if(userName) full[y].access.prof[x].n = userName.user
             }
-
-            lessonAll.push(lesson);
-
         };
 
-        return res.json({success:true, data:lessonAll});
+        return res.json({success:true, data:full});
 
     }catch(e){
         res.json({success:false, data:'error server'});
@@ -125,8 +122,6 @@ async function save(req, res){
                     grade: sinProf[1]
                 })
             }
-            
-            
         }
 
         dati.access.prof = prof
@@ -150,8 +145,6 @@ async function save(req, res){
             point: dati.point
         })
 
-        console.log(dati.pathDati)
-
         await lesson.save();
         return res.json({success:true , data:'lesson is live'})
 
@@ -174,7 +167,8 @@ async function update(req,res){
         
 
         //sistema di memorizzazione file
-        dati.pathDati = dati.f ?? '';
+        if(dati?.f  && dati.f !== ''){fs.unlinkSync(__dirname + '/..'+ dati.f) ; dati.f = ''}
+
         if(dati.file?.file === 'not') dati.pathDati = '';
 
         if(dati.file?.file && dati.file?.file !== 'not'){
@@ -307,6 +301,26 @@ async function deleteLesson(req,res){
     }
 }
 
+async function getAllUserLesson(req,res){
+    try{
+        let lessonAll = await lessonModel.find({['access.c']: req.body.id});
+        if(!lessonAll) return res.json({success:false , data:'lezioni non disponibili'});
+
+
+        for(let y = 0 ; y < lessonAll.length; y++ ){
+            for(let x = 0 ; x < lessonAll[y].access.prof.length  ; x++){
+                let userName =  await userModel.findOne({_id: lessonAll[y].access.prof[y].n}).select('user');
+                if(userName) lessonAll[y].access.prof[x].n = userName.user
+            }
+        };
+
+        return res.json({success:true, data:lessonAll});
+
+    }catch(e){
+        res.json({success:false, data:'error server'});
+    }
+}
+
 
 
 //funzioni ripetitive
@@ -337,5 +351,6 @@ module.exports = {
     save,
     update,
     deleteLesson,
-    getSingleLesson
+    getSingleLesson,
+    getAllUserLesson
 }
