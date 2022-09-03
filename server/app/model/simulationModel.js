@@ -16,11 +16,7 @@ let simulationModel = new Schema({
         active: {type:Boolean}
     },
 
-    time: {
-        _id:false,
-        m: {type:Number, max:60 , alias:'time.minuti'},
-        o: {type:Number, max:24 , alias:'time.ore'},
-        }, //quanto dura un quiz
+    time: {type:Number}, //quanto dura un quiz in minuti
     hit: {
         _id:false,                         //
         e: {type:Number, alias:'hit.easy', dafault: 0},//quante volte è stata fatta la simulazione in modalita easy e hard
@@ -30,17 +26,22 @@ let simulationModel = new Schema({
     chapter:[
         {
             ma: {type:String, alias:'materia'},
-            quiz:[{
+            li_ma:[{
                 _id:false,
-                q: {type:String, alias:'question'},
-                c: {type:String, alias:'comment'},
-                answere:[{
+                t: {type:String, alias:'capitolo'},
+                quiz:[{
                     _id:false,
-                    t: {type:String, alias:'text'},
-                    c: {type:Boolean, alias:'correct'},
-                    p: {type:Number, alias:'point' , dafault: 0}, //quante volte è stata scelta la domanda
+                    q: {type:String, alias:'question'},
+                    c: {type:String, alias:'comment'},
+                    answere:[{
+                        _id:false,
+                        t: {type:String, alias:'text'},
+                        c: {type:Boolean, alias:'correct'},
+                        p: {type:Number, alias:'point' , dafault: 0}, //quante volte è stata scelta la domanda
+                    }],
                 }],
             }],
+            
             _id:false,
         }
     ],

@@ -418,6 +418,69 @@ async function getUserCourse(req, res){
 
 }
 
+async function sendMsg(req, res){
+    try{
+       let user =await userModel.findById({_id: req.body.id})
+       if(!user) return res.json({success:false, msg: 'user non trovato'})
+
+       if(!user?.msg) user.msg = {alert: true, posta: []};
+       user.msg.alert = true;
+       user.msg.posta.unshift(
+           {
+               tipe: req.body.type,
+               msg: [...req.body.msg]
+           }
+       )
+       if(user.msg.posta.length > 100) user.msg.posta = user.msg.posta.slice(0,100);
+
+       await user.save();
+       return res.json({success: true})
+    }catch(e){console.log(e); return res.json({success:'error'})}
+}
+async function haveMsg(req,res){
+    try{
+        let user = await userModel.findById({_id: req.body.id}).select('msg');
+        if(!user) return res.json({success:false});
+
+        if(!user?.msg) user.msg = {alert: false , posta:[]}
+        let alert = user?.msg?.alert || false;
+        return res.json({success: true, alert: alert })
+
+    }catch(e){console.log(e); res.json({success:'error'})}
+}
+
+async function getUserMsg(req,res){
+    try{
+        let user = await userModel.findById({_id: req.body.id}).select('msg');
+        if(!user) return res.json({success:false});
+
+        if(!user?.msg) user.msg = {alert: false , posta:[]};
+        user.msg.alert = false;
+        
+        await user.save()
+        return res.json({success: true, msg: user.msg.posta })
+
+    }catch(e){console.log(e); res.json({success:'error'})}
+}
+
+async function deleteUserMsg(req,res){
+    try{
+        let user = await userModel.findById({_id: req.body.id}).select('msg');
+        if(!user) return res.json({success:false});
+
+        if(req.body.all){
+            user.msg.posta = [];
+        }else{
+            user.msg.posta.splice(req.body.index, 1);
+        }
+        
+        
+        await user.save();
+        return res.json({success: true})
+
+    }catch(e){console.log(e); res.json({success:'error'})}
+}
+
 module.exports = {
     userNew,
     userLogin,
@@ -428,5 +491,10 @@ module.exports = {
     haveCourse,
     payCourse,
     getUserSeller,
-    fromIdToUser
+    fromIdToUser,
+
+    sendMsg,
+    haveMsg,
+    getUserMsg,
+    deleteUserMsg
 }

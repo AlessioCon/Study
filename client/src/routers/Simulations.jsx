@@ -44,22 +44,12 @@ export default function Simulations(){
         .filter(x => regExp.test(x.n))
         .map((sim , simIndex) => {
 
-            //organizza ore e minuti
-            let minuti , ore ; 
-
            
-            if(sim.time.o === 0 || !sim.time?.o){ore = '00';
-            }else if(sim.time.o < 10){ ore = '0'+sim.time.o;
-            }else{ore = sim.time.o}
-            if(sim.time.m === 0 || !sim.time?.m){minuti = '00'; 
-            }else if(sim.time.m < 10){ minuti = '0'+sim.time.o;
-            }else{minuti = sim.time.m}
-
             simulation.push(
                 <NavLink key={sim.n+simIndex} to={sim.n} title="vai alla simulazione">
                     <p>{sim.n}</p>
                     <p>{sim.d}</p>
-                    <p>{`tempo: ${ore}:${minuti}h`}</p>
+                    <p>{`tempo: ${sim.time} m`}</p>
                 </NavLink>
             ) 
         })

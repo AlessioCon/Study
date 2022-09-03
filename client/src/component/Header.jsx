@@ -1,13 +1,39 @@
 import { NavLink }  from 'react-router-dom';
 import Cookie from '../customHook/cookie'
 
-
-
+import env from "react-dotenv";
+import { useEffect, useState } from 'react';
 function menuActive(){
     let div = document.getElementById('hamburger');
     div.classList.toggle('active')
 }
 
+function Msg(){
+    const [msg, setMsg] = useState(null);
+
+    useEffect(()=>{
+        async function getMsg(){
+            let response = await fetch((env?.URL_SERVER || '') + '/api/user/have_msg' , {
+                method: 'POST',
+                headers: {
+                    Accept: "application/json",
+                    "Content-Type": "application/json",
+                    "Access-Control-Allow-Credentials": true,
+                },
+                body: JSON.stringify({id: Cookie.getCookie('user')._id})
+            })
+            let dati = await response.json();
+            setMsg(dati?.alert || false)
+        }
+        if(msg === null) getMsg()
+    })
+
+    return(
+        <NavLink to='/dashbord/msg'     onClick={() => setMsg(false)}>
+            {(msg) ? 'nuovi msg': 'msg'}
+        </NavLink>
+    )
+}
 
 function NavBarHeadre(){
         return(
@@ -67,6 +93,7 @@ function Header(){
         <header>
             <NavLink to="/">Home</NavLink>
             <NavBarHeadre/>
+            {(Cookie.getCookie('user')) ? <Msg/>  : undefined}
             <UserLog/>
 
         </header>

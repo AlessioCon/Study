@@ -270,7 +270,7 @@ function SimulationUser(params){
         <li className='flex-content' key={e.n +' - ' +index}>
             <span title='nome simulazione'>{e.n}</span>
             <span title='stato corso'>stato: {(e?.block || !e.s ) ? 'non attivo' : 'attivo'}</span>
-            <span title='quante volte è stata fatta'>avvii: {hit} </span>
+            <span title='quante volte è stata fatta'>tentativi svolti: {hit} </span>
             <span>
                 <button onClick={btn => {
                     btn.preventDefault();

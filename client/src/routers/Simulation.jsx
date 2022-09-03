@@ -4,8 +4,6 @@ import {useParams} from 'react-router-dom';
 import env from "react-dotenv";
 
 
-
-
 export default function Simulation(){
     const [simulation , setSimulation] = useState(undefined);
     const [btnTimer, setBtnTimer] = useState(1)
@@ -41,15 +39,6 @@ export default function Simulation(){
     }else if(simulation.length === 0){
         bodySimulation.push(<p key='simulazione'>simulazione non trovata</p>)
     }else{
-        let minuti , ore;
-
-        if(simulation.time.o === 0 || !simulation.time?.o){ore = '00';
-        }else if(simulation.time.o < 10){ ore = '0'+simulation.time.o;
-        }else{ore = simulation.time.o}
-        if(simulation.time.m === 0 || !simulation.time?.m){minuti = '00'; 
-        }else if(simulation.time.m < 10){ minuti = '0'+simulation.time.o;
-        }else{minuti = simulation.time.m}
-
 
         let listTable= []
         simulation.table.map((item , index) => listTable.push(
@@ -67,7 +56,7 @@ export default function Simulation(){
                 <div className='info'>
                     <p>{simulation.n}</p>
                     <p>{simulation.d}</p>
-                    <p>{`tempo: ${ore}:${minuti}h`}</p>
+                    <p>{`tempo: ${simulation.time} m`}</p>
                     <p>fatta in modalita timere: {simulation.hit.h}</p>
                     <p>fatta in modalita no-Timer: {simulation.hit.e}</p>
                 </div>
@@ -75,7 +64,21 @@ export default function Simulation(){
                     <p>argomenti trattati</p>
                     <ul>
                         {simulation.chapter.map((mat, matIndex) => {
-                            return (<p key={mat.ma+matIndex}>{`${mat.ma} , domande: ${mat.quiz.length}`}</p>)
+
+                            
+                            return (
+                            <div key={mat.ma+matIndex}>
+                                <p>{mat.ma}</p>
+                                <ul>
+                                    {mat.li_ma.map((cap, capIndex) => {
+                                    return (
+                                        <li key={'capitolo'+matIndex+'-'+capIndex}>
+                                                {cap.t} = {cap.quiz.length} domand{(cap.quiz.length === 1) ? 'a' : 'e'}
+                                        </li>)
+                                    })}
+                                </ul>
+  
+                            </div>)
                         })}
                     </ul>
                 </div>
@@ -86,7 +89,7 @@ export default function Simulation(){
 
     return(
         <div>
-            {bodySimulation}
+            {(1 === 1) ? bodySimulation : undefined} 
             <form onSubmit={e => {e.preventDefault(); startSimulation(e)}}>
                 <p>scegli se attivare il timer</p>
                 <div>

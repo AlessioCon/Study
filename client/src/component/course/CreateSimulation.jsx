@@ -4,6 +4,7 @@ import env from "react-dotenv";
 
 
 import MultiSection from '../MultiSection'
+import PlurySection from '../PlurySection'
 
 
 function alertConfirm(msg){
@@ -86,60 +87,67 @@ function AddChupter(props){
     let [contList , setContList] = props.contList;
     let actualElement = props.elemento;
     let elemento = contList[actualElement];
+    const [plurySection, setPlurySection] = useState([]);
+
+
+    //per PLURYSECTION
+    useEffect(() => {
+        let mat = [];
+        let elemento = contList[actualElement]
+        elemento?.chapter.forEach((materia) => {
+           mat.push(new Array(materia.li_ma.length).fill(1))
+        });
+        setPlurySection(mat)
+    }, [actualElement])
+
 
     let name = (props.name) ? props.name : 'addMoreInput'
     let chapterDisplay = [];
-    //per sezione
-    let p = []
-    elemento.chapter.map(x => p.push(1))    
-    let [posto , setPostoSezioni]  = useState(p);
 
-
-    function buttonSu (cap , n){
+    
+    function buttonSu (mat ,cap , n){
         return (<button key={"buttonsu" + n} onClick={e => {
             e.preventDefault();
             let newValue = Object.values(contList);
-            let value = newValue[actualElement].chapter[cap].quiz[n];
-            newValue[actualElement].chapter[cap].quiz.splice(n, 1)
-            newValue[actualElement].chapter[cap].quiz.splice(n -1, 0 , value)
+            let value = newValue[actualElement].chapter[mat].li_ma[cap].quiz[n];
+            newValue[actualElement].chapter[mat].li_ma[cap].quiz.splice(n, 1)
+            newValue[actualElement].chapter[mat].li_ma[cap].quiz.splice(n -1, 0 , value)
             setContList(newValue);
         }}>su</button>)
     }
 
-    function buttonGiu (cap, n){
+    function buttonGiu (mat ,cap, n){
         return (<button key={"buttongiu" + n} onClick={e => {
             e.preventDefault();
             let newValue = Object.values(contList);
-            let value = newValue[actualElement].chapter[cap].quiz[n];
-            newValue[actualElement].chapter[cap].quiz.splice(n, 1)
-            newValue[actualElement].chapter[cap].quiz.splice(n +1, 0 , value)
+            let value = newValue[actualElement].chapter[mat].li_ma[cap].quiz[n];
+            newValue[actualElement].chapter[mat].li_ma[cap].quiz.splice(n, 1)
+            newValue[actualElement].chapter[mat].li_ma[cap].quiz.splice(n +1, 0 , value)
             setContList(newValue);
         }}>giu</button>)
     }
 
-    function buttonCrea (cap ,n){
+    function buttonCrea (mat, cap ,n){
         return (<button key={"buttoncrea" + n} onClick={e => {
             e.preventDefault();
             let newValue = Object.values(contList);
-            newValue[actualElement].chapter[cap].quiz.splice(n +1, 0 , {q: '' , answere: []})
+            newValue[actualElement].chapter[mat].li_ma[cap].quiz.splice(n +1, 0 , {q: '' , answere: []})
             setContList(newValue);
         }}>crea</button>)
     }
 
-    function buttonDelite (cap ,n){
+    function buttonDelite (mat, cap ,n){
         return (<button key={"buttonellimina" + n} onClick={e => {
             e.preventDefault();
             let newValue = Object.values(contList);
-            newValue[actualElement].chapter[cap].quiz.splice(n , 1)
+            newValue[actualElement].chapter[mat].li_ma[cap].quiz.splice(n , 1)
             setContList(newValue);
         }}>ellimina</button>)
     }
 
-    
     if(Boolean(elemento.chapter?.length)){
         for(let x = 0; elemento.chapter.length > x; x++){
-
-            let domande = [];
+    
             let capitolo = elemento.chapter[x] ?? {}
     
             chapterDisplay.push(
@@ -159,53 +167,63 @@ function AddChupter(props){
                         let newValue = Object.values(contList);
                         newValue[actualElement].chapter.splice(x , 1);
                         setContList(newValue);
+
+                        //plurySection
+                        let plury = [...plurySection]
+                        plury.splice(x , 1)
+                        setPlurySection(plury)
+
+
                     }}>X</button>
                     <div>
 
+                        {capitolo?.li_ma?.map((cap , capIndex) => {
 
-                        {capitolo?.quiz?.map((quiz , index) => {
+                            let domande = []
 
-                            domande.push(
-                                <div key={'quiz'+index}>
-                                    <div>
-                                        <label htmlFor={quiz.q+x}>{'domanda '+index }</label>
-                                        <input type='text' name={quiz.q+x} id={quiz.q+x} value={quiz.q || ''} required 
-                                            onChange={e => {
-                                                let newValue = [...contList];
-                                                newValue[actualElement].chapter[x].quiz[index].q = e.target.value;
-                                                setContList(newValue);
-                                            }}
-                                        />
-                                    </div>
-                                
-                                {quiz.answere.map((answere, ansIndex) => (
-                                        <div key={'risposta'+ansIndex}>
-                                        <label htmlFor={'risposta'+ansIndex}>risposta</label>
-                                        <input name={'risposta'+ansIndex} id={'risposta'+ansIndex} required
-                                            value={answere.t ?? ''}
-                                            onChange={(e) => {
-                                                let newValue = [...contList];
-                                                newValue[actualElement].chapter[x].quiz[index].answere[ansIndex].t = e.target.value
-                                                setContList(newValue)}}
-                                        />
-                                        
-                                        <label htmlFor={answere +'C'}>corretta</label>
-                                        <input type='checkbox' name={answere +'C'} id={answere +'C'} 
-                                            checked={answere.c ?? false}
-                                            onChange={(e)=>{
-                                                let newValue = [...contList];
-                                                newValue[actualElement].chapter[x].quiz[index].answere[ansIndex].c = e.target.checked;
-                                                setContList(newValue)}}
+                            {cap?.quiz?.map((quiz , index) => {
+                                domande.push(
+                                    <div key={'quiz'+index}>
+                                        <div>
+                                            <label htmlFor={quiz.q+x}>{'domanda '+(index +1)}</label>
+                                            <input type='text' name={quiz.q+x} id={quiz.q+x} value={quiz.q || ''} required 
+                                                onChange={e => {
+                                                    let newValue = [...contList];
+                                                    newValue[actualElement].chapter[x].li_ma[capIndex].quiz[index].q = e.target.value;
+                                                    setContList(newValue);
+                                                }}
                                             />
                                         </div>
-    
-                                ))}
-                                <div>
+        
+                                    {quiz.answere.map((answere, ansIndex) => (
+                                            <div key={'risposta'+ansIndex}>
+                                            <label htmlFor={'risposta'+ansIndex}>risposta</label>
+                                            <input name={'risposta'+ansIndex} id={'risposta'+ansIndex} required
+                                                value={answere.t ?? ''}
+                                                onChange={(e) => {
+                                                    let newValue = [...contList];
+                                                    newValue[actualElement].chapter[x].li_ma[capIndex].quiz[index].answere[ansIndex].t = e.target.value
+                                                    setContList(newValue)}}
+                                            />
+                                            
+                                            <label htmlFor={answere +'C'}>corretta</label>
+                                            <input type='checkbox' name={answere +'C'} id={answere +'C'} 
+                                                checked={answere.c ?? false}
+                                                onChange={(e)=>{
+                                                    let newValue = [...contList];
+                                                    newValue[actualElement].chapter[x].li_ma[capIndex].quiz[index].answere[ansIndex].c = e.target.checked;
+                                                    setContList(newValue)}}
+                                                />
+                                            </div>
+        
+                                    ))}
+                                    
+                                    <div>
                                         <label htmlFor={'commento'+x}>{'commento'}</label>
                                         <input type='text' name={'commento'+x} id={'commento'+x} value={quiz.c || ''} required 
                                             onChange={e => {
                                                 let newValue = [...contList];
-                                                newValue[actualElement].chapter[x].quiz[index].c = e.target.value;
+                                                newValue[actualElement].chapter[x].li_ma[capIndex].quiz[index].c = e.target.value;
                                                 setContList(newValue);
                                             }}
                                         />
@@ -213,63 +231,113 @@ function AddChupter(props){
     
                                     <button onClick={(e)=>{
                                         e.preventDefault(); 
+                                        
                                         let newValue = Object.values(contList) ;
-                                        if(!capitolo?.quiz[index]?.answere) newValue[actualElement].chapter[x].quiz[index].answere = [];
-                                        newValue[actualElement].chapter[x].quiz[index].answere.push({}) ;
+                                        if(!quiz?.answere) newValue[actualElement].chapter[x].li_ma[capIndex].quiz[index].answere = [];
+                                        newValue[actualElement].chapter[x].li_ma[capIndex].quiz[index].answere.push({}) ;
                                         setContList(newValue);
                                     }}>+ risp</button>
-                
-                                    <button onClick={(e)=>{
-                                        e.preventDefault(); 
-                                        if(capitolo?.quiz[index]?.answere?.length > 0){
-                                            let newValue = Object.values(contList) ; 
-                                            newValue[actualElement].chapter[x].quiz[index].answere.splice(capitolo.quiz[index].answere.length -1, 1)
-                                            setContList(newValue);
-                                        }   
-                                    }}>- risp</button>
-
-                                    {(index !== 0) ? buttonSu(x, index) : undefined}
-                                    {(index !== capitolo.quiz.length -1) ? buttonGiu(x, index) : undefined}
-                                    {buttonCrea(x, index)}
-                                    {buttonDelite(x, index)}
-            
-                                </div>
-                            )
-
-                            
                                     
+                                    {(quiz?.answere?.length > 0) ? 
+
+                                        <button onClick={(e)=>{
+                                            e.preventDefault(); 
+                                            if(quiz?.answere?.length > 0){
+                                                let newValue = Object.values(contList) ; 
+                                                newValue[actualElement].chapter[x].li_ma[capIndex].quiz[index].answere.splice(quiz?.answere?.length -1, 1)
+                                                setContList(newValue);
+                                            }   
+                                        }}>- risp</button>
+                                    
+                                    
+                                    :undefined}
+
+                                    {(index !== 0) ? buttonSu(x, capIndex, index) : undefined}
+                                    {(index !== cap.quiz.length -1) ? buttonGiu(x, capIndex, index) : null}
+                                    {buttonCrea(x, capIndex, index)}
+                                    {buttonDelite(x, capIndex, index)} 
+                                </div>
+                                )      
                             })}
 
-                        <MultiSection
-                            elementi= {domande}
-                            divisione= {5}
-                            down = {true}
-                            postoSezioni = {[posto , setPostoSezioni]}
-                            index= {x}
-                        />
+                            return (
+                                <div key={'capitolo'+capIndex}>
+                                    <label htmlFor={`${cap.t}${capIndex}`}>{`capitolo ${capIndex+1}`}</label>
+                                    <input type="text" name={`${cap.t}${capIndex}`} id={`${cap.t}${capIndex}`}  placeholder='inserisci nome capitolo' required
+                                        value={cap.t ?? ''}
+                                        onChange={(e)=>{
+                                            let newValue = Object.values(contList);
+                                            newValue[actualElement].chapter[x].li_ma[capIndex].t = e.target.value;
+                                            setContList(newValue);
+                                        }}
+                                    />
 
+                                    {<PlurySection
+                                        elementi= {domande}
+                                        divisione= {5}
+                                        down = {true}
+                                        postoSezioni = {[plurySection , setPlurySection]}
+                                        index= {[x, capIndex]}//materia, capitolo
+                                    />}
 
-                        <button onClick={(e) => { 
-                            e.preventDefault(); 
-                            let newValue = Object.values(contList) ; 
-                            newValue[actualElement].chapter[x].quiz.push({
-                            q: '',
-                            answere:[]
-                        });
-                            setContList(newValue);
-                        }}>+ dom</button>
-
-                        <button onClick={(e) => { 
-                            e.preventDefault(); 
-                            if(capitolo.quiz.length > 0){
-                                let newValue = [...contList] ; 
-                                newValue[actualElement].chapter[x].quiz.pop()
-                                setContList(newValue);
-                            }
+                                    <button onClick={(e)=>{
+                                        e.preventDefault(); 
+                                        let newValue = Object.values(contList) ;
+                                        if(!capitolo?.li_ma[capIndex].quiz) newValue[actualElement].chapter[x].li_ma[capIndex].quiz = [];
+                                        newValue[actualElement].chapter[x].li_ma[capIndex].quiz.push({q:'', answere:[] , c:''}) ;
+                                        setContList(newValue);
+                                    }}>+ dom</button>
                 
-                        }}>- dom</button>
+                                    {(capitolo?.li_ma[capIndex]?.quiz.length > 0) ? 
                                     
-         
+                                        <button onClick={(e)=>{
+                                            e.preventDefault(); 
+                                            let newValue = Object.values(contList) ; 
+                                            newValue[actualElement].chapter[x].li_ma[capIndex].quiz.splice(capitolo.li_ma[capIndex].quiz.length -1, 1)
+                                            setContList(newValue);
+                                             
+                                        }}>- dom</button>
+                                        
+                                    : undefined}
+                                </div>
+                            )
+                                    
+                        })}
+    
+    
+
+                        <button onClick={(e)=>{
+                            e.preventDefault(); 
+                            let newValue = Object.values(contList) ;
+                            if(!capitolo?.li_ma) newValue[actualElement].chapter[x].li_ma = [];
+                            newValue[actualElement].chapter[x].li_ma.push({t: '' , quiz: []}) ;
+                            setContList(newValue);
+
+                            //plurySection
+                            let plury = [...plurySection];
+                            plury[x].push(1);
+                            setPlurySection(plury);
+                            
+                         
+                        }}>+ cap</button>
+                        
+                        {(capitolo?.li_ma?.length > 0) ? 
+                        
+                            <button onClick={(e)=>{
+                                e.preventDefault(); 
+                                let newValue = Object.values(contList) ; 
+                                newValue[actualElement].chapter[x].li_ma.pop()
+
+                                //plurySection
+                                let plury = [...plurySection];
+                                plury[x].pop()
+                                setPlurySection(plury);
+                                setContList(newValue);
+                                 
+                            }}>- cap</button>
+                        
+                        :undefined}
+                        
                     </div>
     
                 </li>
@@ -289,29 +357,35 @@ function AddChupter(props){
             <button onClick={(e) => { 
                 e.preventDefault(); 
                 let newValue = Object.values(contList);
-                newValue[actualElement].chapter.push({quiz:[]});
+                newValue[actualElement].chapter.push({});
                 setContList(newValue);
-                let posti = [...posto]
-                posti.push(1)
-                setPostoSezioni(posti)
 
+                //plurySection
+                let plury = [...plurySection]
+                plury.push([])
+                setPlurySection(plury)
                }}>+ mat</button>
 
-            <button onClick={(e) => { 
-                e.preventDefault(); 
-                if(elemento.chapter.length > 0){
+            {(elemento.chapter.length > 0) ? 
 
+                <button onClick={(e) => { 
+                    e.preventDefault(); 
                     let newValue = Object.values(contList);
                     newValue[actualElement].chapter.splice(elemento.chapter.length -1, 1);
                     setContList(newValue);
-                    let posti = [...posto]
-                    posti.pop()
-                    setPostoSezioni(posti)
-                }  
-            }}>- mat</button>
+
+                    //plurySection
+                    let plury = [...plurySection]
+                    plury.pop()
+                    setPlurySection(plury)
+                    
+                }}>- mat</button>
+            :undefined}
+
         </div>
     )
 }
+
 
 
 function Simulation(props){
@@ -377,45 +451,26 @@ function Simulation(props){
             <div>
             <label htmlFor='tdescription'>Descrizione Simulazione</label>
                 <textarea type="text" name="tdescription" id="tdescription" maxLength={229}
-                    value={element.d ?? ''}
+                    value={element?.d ?? ''}
                     onChange={(e) => {
                         let newValue = Object.values(contList);
                         newValue[actualElement].d = e.target.value
                         setContList(newValue)}}
                 />
             </div>
+            
             <div>
-                <p>durata simulazione</p>
-                <label htmlFor='timeOre'>ore</label>
-                <input type="number" name="timeOre" id="timeOre" max={24} required 
-                    value={element?.time?.o ?? 0}
+                <label htmlFor='timeMinuti'>durata simulazione in minuti</label>
+                <input type="number" name="timeMinuti" id="timeMinuti" min={0} required 
+                    value={element?.time ?? 0}
                     onChange={(e) => {
                         let newValue = Object.values(contList);
-                        if(parseInt(e.target.value) === 24 && parseInt(newValue[actualElement].time.m) !== 0){
-                            newValue[actualElement].time.m = 0;
+                    
+                        if(!e.target.value !== '0'){
+                            newValue[actualElement].time = e.target.value
+                            setContList(newValue)   
                         }
-                        newValue[actualElement].time.o = e.target.value
-                        setContList(newValue)}}
-                />
-            </div>
-            <div>
-                <label htmlFor='timeMinuti'>minuti</label>
-                <input type="number" name="timeMinuti" id="timeMinuti" max={60} required 
-                    value={element?.time?.m ?? 0}
-                    onChange={(e) => {
-                        let newValue = Object.values(contList);
-                       
-                        if(parseInt(newValue[actualElement].time.o) === 24){
-                            newValue[actualElement].time.m = 0;
-                            return setContList(newValue)
-                        }
-                        if(e.target.value === '60' && parseInt(newValue[actualElement].time.o) < 24){
-                            newValue[actualElement].time.m = 0;
-                            newValue[actualElement].time.o = parseInt(newValue[actualElement].time.o) + 1;
-                           
-                        }else{ newValue[actualElement].time.m = e.target.value}
-                        setContList(newValue)
-                        }}
+                     }}
                         
                 />
             </div>
@@ -551,8 +606,8 @@ function ContentCourse(props){
     
         elementNum.map(e => {if(e > elBigNum)   setElBigNum(parseInt(e) +1) } )
     }, [])
-    
-//da cambiare e reindirizzare all'eliminazione della simulazione
+
+
     async function deliteElementOnServer(id){
         let response = await fetch((env?.URL_SERVER || '' ) + `/api/simulation/${id}` , {
             method:'DELETE',
@@ -591,10 +646,18 @@ let altridati = []
             let fineNum = (60*60*24) * contList[actualElement]?.reset?.for + startNum;
             let fine = new Date(fineNum * 1000);
 
+
             altridati.push(
                 <div key="resetDati">
-                    <p>{`data inizio raccolta dati: ${start.getDate()}/${start.getMonth()+1}/${start.getFullYear()}`}</p>
-                    <p>{`data reset dati: ${fine.getDate()}/${fine.getMonth()+1}/${fine.getFullYear()}`}</p>
+                    {(contList[actualElement].reset.start)
+                    ? <p>{`data inizio raccolta dati: ${start.getDate()}/${start.getMonth()+1}/${start.getFullYear()}`}</p>                     
+                    :undefined
+                    }
+                    
+                    {(contList[actualElement].reset.start)
+                    ? <p>{`data reset dati: ${fine.getDate()}/${fine.getMonth()+1}/${fine.getFullYear()}`}</p>                  
+                    :undefined
+                    }
                     <p>
                         reset ogni {(contList[actualElement]?.reset?.for > 1) ? contList[actualElement]?.reset?.for + ' giorni' : 'giorno'} 
                     </p>
@@ -699,6 +762,7 @@ function CreateSimulation(){
 const [contList, setContList] = useState([])
 const [actualElement , setActualElement] = useState(undefined);
 const [elBigNum , setElBigNum] = useState(0);
+
 let UserForMaster = useRef(undefined);
 
 
@@ -747,7 +811,7 @@ let UserForMaster = useRef(undefined);
            
 
             if(resData.success){
-               
+
                 let newel = []
                 resData.simulations.map(e => {
 
@@ -832,3 +896,8 @@ let UserForMaster = useRef(undefined);
 
 
 export default CreateSimulation;
+
+
+
+
+

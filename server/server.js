@@ -67,7 +67,8 @@ const checkUserLogin = require('./app/middleware/check-user-login');
 app.use('/api/sign'  ,  signRouter);
 app.use('/api/corsi' ,  corsiRouter);
 app.use('/api/lesson',  lessonRouter);
-app.use('/api/simulation',  simulationRouter)
+app.use('/api/simulation',  simulationRouter);
+app.use('/api/card',  simulationRouter)
 app.use('/api/user'  ,  checkUserLogin() ,userRouter);
 app.use('/api/stripe'  , stripeRouter);
 app.use('/api/master', masterRouter);
@@ -78,16 +79,6 @@ app.post('/api/download' , (req,res) => {
     let base64Image = fs.readFileSync('app'+href, {encoding: 'UTF-8'} ,(err) => {if(err) console.log(err)})
     return res.json({url:base64Image})
 })
-
-app.post('/api/mail/userToUser' , async (req, res) => {
-    try{
-        let userTo = await userModel.findById({_id: req.body.userTo}).select('email');
-        if(!userTo) return res.json({success: false , msg: 'email utente (to) non trovata'});
-    
-        return res.json({success: true, userTo: userTo.email});
-    }catch(e){console.log(e); return res.json({success: 'error'});}
-})
-
 
 //----------------------------------------------------
 

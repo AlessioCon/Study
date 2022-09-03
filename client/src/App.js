@@ -34,6 +34,7 @@ import UserSimulationInfo from './routers/UserSimulationsInfo';
 import SettingUser from './component/dashbord/SettingUser';
 
 import Status from './routers/Status';
+import Messages from './component/dashbord/Messages';
 
 
 
@@ -92,6 +93,7 @@ let isCrSimulation = Boolean(user?.grade?.find(e => e === 'simulation'))
                     <Route path="corsi" element={<UserCorsi/>}/>
                     <Route path="simulazioni" element={<UserSimulations/>}/>
                     <Route path="simulazioni/:simId" element={<UserSimulationInfo/>}/>
+                    <Route path="msg" element={<Messages/>}/>
                 </Route>
                 <Route path="impostazioni/utente" element={user ? <SettingUser/> : <Navigate to="/login"/> }/>
                 <Route path="dashbord/crea-lezioni" element={(isSeller || isMaster) ? <CreateLesson/> : <Navigate to="/dashbord"/> }/>

@@ -22,6 +22,10 @@ router.put('/update' , userController.updateUser)
 
 router.post('/get_user_course' , userController.getUserCourse)//tutti i corsi acquistati dall'utente
 
+router.post('/send_msg' , userController.sendMsg)//invia msg all'utente
+router.post('/have_msg' , userController.haveMsg)//controlla se ha qualche msg non visto 
+router.post('/get_user_msg' , userController.getUserMsg)//prendi tutti i msg dell'utente 
+router.delete('/delete_user_msg' , userController.deleteUserMsg)
 
 
 router.get('/dashbord', (req, res) => {

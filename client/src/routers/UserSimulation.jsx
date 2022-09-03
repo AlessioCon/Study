@@ -1,7 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams } from "react-router-dom";
-import Section from "../component/Section"
-import MultiSection from "../component/MultiSection"
+import PlurySection from '../component/PlurySection'
 
 import env from "react-dotenv";
 
@@ -11,7 +10,7 @@ import Cookie from "../customHook/cookie"
 export default function PlaySimulation(){
     const [simulation, setSimulation] = useState(undefined);
     const [filter, setFilter] = useState([]);
-    const [posto, setPosto] = useState(1);
+    const [plurySection, setPlurySection] = useState([]);
     const [saveAns , setSaveAns] = useState(undefined);
     const [segnalaDom , setSegnalaDom] = useState(undefined)
     const [showCom , setShowCom] = useState(undefined)//per mostrare commenti
@@ -25,7 +24,6 @@ export default function PlaySimulation(){
     const [correction, setCorrection] = useState(undefined);
     const [userMaterie, setUserMaterie] = useState(undefined);//percentuale di risposte esatte per materia
     const [clickDom, setClickDom] = useState(undefined); //percentuale di quante volte gli utenti hanno dato una risposta
-    const [postoCorrecton , setPostoCorrecton] = useState([1, 1])
     let risposte = useRef({})  //risposte date dall'utente
     
 
@@ -46,12 +44,13 @@ export default function PlaySimulation(){
         if(secondi <= 0){
             if(minuti <= 0){
                 if(ore <=0){
+                    
                     startCorrecton();
                     setStop(true)
                     clearInterval(timerInterval.current);
                 }else{
                     ore = ore - 1;
-                    minuti = '60';
+                    minuti = '59';
                     secondi = '60';
                 }
             }else{
@@ -84,13 +83,10 @@ export default function PlaySimulation(){
         minR = 0;
         oreR = oreR + 1
     }
-
-
     if(secR <= 9)    secR = '0'+secR;
     if(minR <= 9)    minR = '0'+minR;
     if(oreR <= 9)    oreR = '0'+oreR;
       
-    
     timerRevers.current = [oreR, minR, secR]
     
     }
@@ -106,28 +102,80 @@ export default function PlaySimulation(){
                     'Access-Control-Allow-Credentials': true
                 }
             })
-            let data = await  respons.json();
-            setSimulation(data.data);
-            if(Boolean(data.data?.chapter?.length)){
-                let segnalaMat = []
-                let materie = []
-                data.data.chapter.map(mat => {
+            let dati = await  respons.json();
+            setSimulation(dati.data);
+            if(Boolean(dati.data?.chapter?.length)){
+                let segnalaMat = [];
+                let mostraDom = [];
+                let materie = [];
+                dati.data.chapter.map(mat => {
                     //per filtro
-                    materie.push({name: mat.ma, active: 'active' , dom: Array.from(mat.quiz, x=> 'active')});
+                    let capitoli = []
+                    mat.li_ma.map(cap => {
+                        capitoli.push({name: cap.t , active: 'active' , dom: Array(cap.quiz.length).fill('active')})
+                    })
+                    materie.push({name: mat.ma, active: 'active' , cap: capitoli });
 
                     //per segnalazione domanda e per stato commento
-                    segnalaMat.push({n: mat.ma , a: []})
+                    let allCap= [mat.li_ma.map(x => {
+                        
+                        return Array(x.quiz.length).fill(0)
+                    })]
 
+                    let allCapp= [mat.li_ma.map(x => {
+                        
+                        return Array(x.quiz.length).fill(0)
+                    })]
+
+                    segnalaMat.push(...allCap)
+                    mostraDom.push(...allCapp)
+                    
                 });
+                
+                setShowCom([...mostraDom]);
+                setSegnalaDom([...segnalaMat]);
                 setFilter(materie);
-                setSegnalaDom(segnalaMat);
-                setShowCom(segnalaMat)
-                setPostoCorrecton(data.data.chapter.map(x => 1));
             }
-        }
-        getSimulation();
 
-    }, [])
+            let simulation = dati.data
+            let respo = await fetch((env?.URL_SERVER || '' )+ '/api/simulation/get_save_answere',{
+                method: 'POST',
+            headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Credentials": true,
+            },
+            body: JSON.stringify({ 
+                user: Cookie.getCookie('user')._id,
+                simId: simulation._id,
+                })
+            })
+            let dato = await  respo.json();
+            setSaveAns(dato.ans || [])
+                
+            
+        }
+        if (!simulation) getSimulation();
+
+    }, [simulation])
+
+    //per PLURYSECTION Simulazione-On
+    useEffect(() => {
+        let mat = [];
+        let elemento = simulation
+        elemento?.chapter.forEach((materia) => {
+           mat.push(new Array(materia.li_ma.length).fill(1))
+        });
+        setPlurySection(mat)
+    }, [simulation])
+    //per PLURYSECTION Simulazione-Off
+    useEffect(() => {
+        let allArray = []
+        plurySection.map((x , index) => {
+            allArray.push(Array(x.length).fill(1))
+        })
+        setPlurySection(allArray)
+    }, [stop])
 
     async function startCorrecton(){
         let respons = await fetch((env?.URL_SERVER || '' )+ '/api/simulation/correction',{
@@ -152,7 +200,7 @@ export default function PlaySimulation(){
         setClickDom(data.p);
     }
 
-    async function saveAnswere(materia , domanda){
+    async function saveAnswere(materia , capitolo ,domanda){
         let response = await fetch((env?.URL_SERVER || '' ) + '/api/simulation/save_answere', {
             method: 'PUT',
             headers: {
@@ -162,7 +210,8 @@ export default function PlaySimulation(){
             },
             body: JSON.stringify({
                 simId: simulation._id,
-                indexMat: materia,
+                materia: materia[0],
+                capitolo: capitolo[0],
                 indexDom: domanda,
                 userId: Cookie.getCookie('user')._id
             })
@@ -171,103 +220,79 @@ export default function PlaySimulation(){
         alert(data.msg)
         if(data.success){
             if(data.cancell){
-                let indexDomanda =  saveAns[materia].a.findIndex(x => x === domanda)
-                saveAns[materia].a.splice(indexDomanda , 1);
+                let indexDomanda =  saveAns[materia[1]].cap[capitolo[1]].a.findIndex(x => x === domanda)
+                saveAns[materia[1]].cap[capitolo[1]].a.splice(indexDomanda , 1);
             }else{
-                if(!saveAns?.[materia]) saveAns[materia] = {n: simulation.chapter[materia].ma , a: []};
-                saveAns[materia].a.push(domanda);
+                let matIndex = saveAns?.findIndex(mat => mat.mat === materia[0]);
+                if(matIndex === -1){
+                    //se la materia non esiste
+                    saveAns.push({
+                        mat: materia[0],
+                        cap: [{n: capitolo[0], a: [domanda]}]
+                    })
+                }else{
+                    let capIndex = saveAns[matIndex].cap.findIndex(cap => cap.n === capitolo[0]);
+                    if(capIndex === -1){
+                        //se il capitolo non esiste
+                        saveAns[matIndex].cap.push({n: capitolo[0] , a: [domanda]})
+                    }else{
+                        saveAns[matIndex].cap[capIndex].a.push(domanda)
+                    }
+                }
+                
             }
             setSaveAns([...saveAns])
         }
     }
 
-    async function segnalaDomanda(materia , domanda , msg){
-
-        let response = await fetch((env?.URL_SERVER || '' ) + '/api/mail/userToUser', {
-            method: 'POST',
-            headers: {
-                Accept: "application/json",
-                "Content-Type": "application/json",
-                "Access-Control-Allow-Credentials": true,
-            },
-            body: JSON.stringify({
-                userFrom: Cookie.getCookie('user')._id,
-                userTo: simulation.access.c
-            })
-        })
-        let data = await response.json();
-        if(data.success){
-            let linkmail = "mailto:"+data.userTo
-            + "?subject=" + encodeURIComponent("segnalazione domanda")
-            + "&body=" + encodeURIComponent(`
-            motivo: ${msg}
-            la simulazione è " ${simulation.n} "  
-            la materia è " ${simulation.chapter[materia].ma} " 
-            la domanda è la numero " ${domanda+1} "`);
-
-            const link = document.createElement("a");
-            link.href = linkmail
-            //link.setAttribute("download", fileType); //or any other extension
-            document.body.appendChild(link);
-            link.click()
-
-            let indexDomanda = segnalaDom[materia].a.findIndex(x => x === domanda);
-            
-            if( indexDomanda !== -1){
+    async function segnalaDomanda(materia , cap ,dom){   
+            let indexDomanda = segnalaDom[materia[1]][cap[1]][dom]
+            if( indexDomanda !== 0){
                 alert('hai gia segnalato la domanda, grazie!');
             }else{
-                segnalaDom[materia].a.push(domanda);
+                segnalaDom[materia[1]][cap[1]][dom] = 1
+
+            let response = await fetch((env?.URL_SERVER || '' ) + '/api/user/send_msg', {
+                method: 'POST',
+                headers: {
+                    Accept: "application/json",
+                    "Content-Type": "application/json",
+                    "Access-Control-Allow-Credentials": true,
+                },
+                body: JSON.stringify({
+                    id: simulation.access.c,
+                    msg:[simulation.n, materia[0] , cap[0] , dom ],
+                    type: 'sim_dom_alert'
+                })
+            })
+            let data = await response.json();
+            if(data.success){
+                alert('domanda segnalata');
+            }else{
+                alert('qualcosa è andato storto');
+            }
+
+                
             }
             setSegnalaDom([...segnalaDom])
             
-    
-        }else{alert('qualcosa è andato storto')}
-
         
-       
 
         
     }
 
-    async function showCommentDom(materia , domanda , msg){
+    async function showCommentDom(materia , cap , dom){
         
-        let indexDomanda = showCom[materia].a.findIndex(x => x === domanda);
-           
-        if( indexDomanda !== -1){
-            showCom[materia].a.splice(indexDomanda , 1);
+        let indexDomanda = showCom[materia][cap][dom]
+        if( indexDomanda !== 0){
+            showCom[materia][cap][dom] = 0
         }else{
-            showCom[materia].a.push(domanda);
+            showCom[materia][cap][dom] = 1
         }
         setShowCom([...showCom])
-            
-
-
-        
+       
     }
     
-    if(simulation && !saveAns){
-        async function getSaveAnswer(){
-            let respons = await fetch((env?.URL_SERVER || '' )+ '/api/simulation/get_save_answere',{
-                method: 'POST',
-            headers: {
-                Accept: "application/json",
-                "Content-Type": "application/json",
-                "Access-Control-Allow-Credentials": true,
-            },
-            body: JSON.stringify({ 
-                user: Cookie.getCookie('user')._id,
-                simId: simulation._id,
-                })
-            })
-            let data = await  respons.json();
-            setSaveAns(data.ans || [])
-        }
-
-        getSaveAnswer();
-    }
-
-
-
     let bodySimulation = []
     if(!stop){
         if(!simulation){
@@ -277,89 +302,128 @@ export default function PlaySimulation(){
         }else{
             //start timer
             if (!timerInterval.current){
-                let ore , minuti;
+                let fullTime = parseInt(simulation.time)
+                let ore = parseInt(fullTime / 60)
+                let minuti = fullTime % 60
 
-                if(simulation.time.o === 0 || !simulation.time?.o){ore = '00';
-                }else if(simulation.time.o < 10){ ore = '0'+simulation.time.o;
-                }else{ore = simulation.time.o}
-                if(simulation.time.m === 0 || !simulation.time?.m){minuti = '00'; 
-                }else if(simulation.time.m < 10){ minuti = '0'+simulation.time.o;
-                }else{minuti = simulation.time.m}
+                if(!ore || ore === 0 ){ore = '00';
+                }else if(ore < 10){ ore = '0'+ore;
+                }
 
-                timer.current= [ore,minuti,'00']
+                if(!minuti || minuti === 0){minuti = '00'; 
+                }else if(minuti < 10){ minuti = '0'+minuti;
+                }
+
+                timer.current = [ore,minuti,'00']
                 timerInterval.current = setInterval(timeDown, 1000);
             }
             
-            
-            
             //creazione domande
-            let domande = [];
+            let materie = [];
             simulation.chapter.map((mat, matIndex) => {
-                let answere = saveAns?.find(x => x.n === mat.ma)
-                let segnalazione = segnalaDom?.find(x => x.n === mat.ma);
-                if(filter[matIndex].active !== 'active') return undefined ;
-                mat.quiz.map((dom , domIndex) => {
-                    let isDomSave = -1
-                    let isDomSegn = -1
-                    if(answere) isDomSave = answere.a.findIndex( inedxDom => inedxDom === domIndex );
-                    if(segnalazione) isDomSegn = segnalazione.a.findIndex( inedxDom => inedxDom === domIndex );
-                    if(filter[matIndex].dom[domIndex] !== 'active') return undefined;
+                let answereMat = saveAns?.find(x => x.mat === mat.ma);                
     
-                    return domande.push(
-                        <li key={dom.q+domIndex}>
-                            <p>{dom.q}</p>
-                            <form>
-                                {dom.answere.map((ris, risIndex) => (
-                                    <div key={'risposta'+risIndex}>
-                                        <label htmlFor={dom.q+'-'+domIndex+'-'+risIndex}>{ris.t}</label>
-                                        <input id={dom.q+'-'+domIndex+'-'+risIndex} name={dom.q+'-'+domIndex}
-                                            type='radio' value={risIndex}
-                                            onChange={e => {
-                                                if(!risposte.current?.[mat.ma]) risposte.current[mat.ma] = [];
-                                                risposte.current[mat.ma][domIndex] = risIndex;
-                                                setFilter([...filter])
-                                            }}
-                                        />
-                                    </div>
-                                ))}
-                                <label htmlFor={`'salta-${domIndex}`}>{'salta domanda'}</label>
-                                <input id={'salta'+'-'+domIndex} name={dom.q+'-'+domIndex}
-                                            type='radio' value={-1}
-                                            onChange={e => {
-                                                if(!risposte.current?.[mat.ma]) risposte.current[mat.ma] = [];
-                                                risposte.current[mat.ma][domIndex] = -1;
-                                                setFilter([...filter])
-                                            }}
-                                        />
-                            </form>
-                            <button 
-                                title={(isDomSave === -1) ? 'salva domanda' : 'cancella domanda dai salvati​'}
-                                onClick={e => {e.preventDefault() ; saveAnswere(matIndex , domIndex)}}>
-                                {(isDomSave === -1) ? '💿' : '📀​'}
-                            </button>
-                            <button 
-                                title={(isDomSegn === -1) ? 'segnala domanda' : 'domanda segnalata'}
-                                onClick={e => {
-                                    e.preventDefault() ;
-                                    let msg = prompt(`puoi dirci il motivo della segnalazione?
-                                    esempio:
-                                    1- risposte non corrette
-                                    2- errori di ortografia
-                                    3- bug
-                                    4- altro...
-                                    `) 
-                                    if(isDomSegn === -1) segnalaDomanda(matIndex , domIndex, msg)
-                                }}>
-                                {(isDomSegn === -1) ? '🙎‍♂️' : '🙋‍♂️​'}
-                            </button>
+                if(filter[matIndex].active !== 'active') return undefined ;
+                let capitolo = []
+                mat.li_ma.map((cap, capIndex) => {
+                    if(filter[matIndex].cap[capIndex].active !== 'active') return undefined;
+                    
+                    let answereCap = undefined;
+                    if(answereMat) answereCap = answereMat?.cap?.find(x => x.n === cap.t);
+
+                    let domande = []
+                    cap.quiz.map((dom, domIndex) => {
+                        if(filter[matIndex].cap[capIndex].dom[domIndex] !== 'active') return undefined;
+
+                        let isDomSave = -1;
+                        if(answereCap) isDomSave = answereCap?.a.findIndex(x => x === domIndex);
+                        
+                        domande.push(
+                            <li key={dom.q+matIndex+capIndex+domIndex}>
+                                <p>{dom.q}</p>
+                                <form>
+                                    {dom.answere.map((ris, risIndex) => (
+                                        <div key={'risposta'+risIndex}>
+                                            <label htmlFor={dom.q+'-'+domIndex+'-'+risIndex}>{ris.t}</label>
+                                            <input id={dom.q+'-'+domIndex+'-'+risIndex} name={dom.q+'-'+domIndex}
+                                                type='radio' value={risIndex}
+                                                onChange={e => {
+                                                    if(!risposte.current?.[mat.ma]) risposte.current[mat.ma] = [];
+                                                    let findCap = risposte.current[mat.ma].findIndex(x => x.name === cap.t)
+                                                    if(findCap === -1) {findCap = risposte.current[mat.ma].push({name: cap.t , dom:[]}) - 1} ;
+                                                    risposte.current[mat.ma][findCap].dom[domIndex] = risIndex;
+                                                    
+                                                    setFilter([...filter])
+                                                }}
+                                            />
+                                        </div>
+                                    ))}
+                                    <label htmlFor={`'salta-${domIndex}`}>{'salta domanda'}</label>
+                                    <input id={'salta'+'-'+domIndex} name={dom.q+'-'+domIndex}
+                                                type='radio' value={-1}
+                                                onChange={e => {
+
+                                                    if(!risposte.current?.[mat.ma]) risposte.current[mat.ma] = [];
+                                                    let findCap = risposte.current[mat.ma].findIndex(x => x.name === cap.t)
+                                                    if(findCap === -1) {findCap = risposte.current[mat.ma].push({name: cap.t , dom:[]}) - 1} ;
+                                                    risposte.current[mat.ma][findCap].dom[domIndex] = -1;
+
+                                                    setFilter([...filter])
+                                                }}
+                                            />
+                                </form>
+                                <button 
+                                    title={(isDomSave === -1 ) ? 'salva domanda' : 'cancella domanda dai salvati​'}
+                                    onClick={e => {
+                                        e.preventDefault() ; 
+                                        saveAnswere([mat.ma, matIndex] , [cap.t , capIndex], domIndex)}}>
+                                    {(isDomSave === -1) ? '💿' : '📀​'}
+                                </button>
+                                <div>
+                                    <button 
+                                        title='segnala domanda'
+                                        onClick={(e)=>{
+                                            e.preventDefault()
+                                            segnalaDomanda([mat.ma, matIndex], [cap.t, capIndex], domIndex)
+                                        }}>
+                                            {(segnalaDom?.[matIndex]?.[capIndex]?.[domIndex])
+                                            ? '🙋‍♂️' 
+                                            : '🙎‍♂️'
+                                        }
+                                    </button>
+                                </div>
+                            </li>
+                        )
+                    })
+
+                    capitolo.push(
+                        <li key={`${cap.t}-${matIndex}-${capIndex}`}>
+                            <p>{cap.t}</p>
+                            <ul>
+                                {<PlurySection
+                                    elementi= {domande}
+                                    divisione= {5}
+                                    down = {true}
+                                    postoSezioni = {[plurySection , setPlurySection]}
+                                    index= {[matIndex, capIndex]}//materia, capitolo
+                                />}
+                            </ul>
                         </li>
                     )
                 })
+
+                materie.push(
+                    <li key={mat.ma + matIndex}>
+                        <p>{mat.ma}</p>
+                        <ul>
+                            {capitolo}
+                        </ul>
+                    </li>
+                )
             })
-            
-    
+
             bodySimulation.push(
-                <div key="simulazione">
+                <div key="simulation">
                     <p>{simulation.n}</p>
                     <p>{(mod.current) ?  timerUpdate : undefined}</p>
                     <div>
@@ -377,35 +441,54 @@ export default function PlaySimulation(){
                                 >
                                     {`${x.name} ${(x.active === 'active') ? '✅' : '⭕'}`}
                                 </button>
-    
-                                {x.dom.map((dom, domIndex) => (
-                 
-                                    <button className={`${x.active}`} key={'domanda'+ domIndex}  
-                                        onClick={e => {
-                                            e.preventDefault()
-                                            if(filter[xIndex].dom[domIndex] === 'active'){
-                                                filter[xIndex].dom[domIndex] = 'deactive';
-                                            }else{ filter[xIndex].dom[domIndex] = 'active';}
-                                            setFilter([...filter])
-                                        }}
-                                    >
-                                    {`${domIndex + 1} ${(dom === 'active') ? '✅' : '⭕'}`}
-                                    {(risposte.current?.[x.name]?.[domIndex] !== undefined) ? 'fatta' : 'non fatta'}
-                                  
-                                    </button>
-                                ))}
+
+                                {x.cap.map((cap, capIndex) => {
+
+                                    return (
+                                    <div key={cap.name+capIndex}>
+                                        <div>
+                                            <button className={`${x.active}`}  
+                                            onClick={e => {
+                                                e.preventDefault()
+                                                if(filter[xIndex].cap[capIndex].active === 'active'){
+                                                    filter[xIndex].cap[capIndex].active = 'deactive';
+                                                }else{ filter[xIndex].cap[capIndex].active = 'active';}
+                                                setFilter([...filter])
+                                            }}
+                                        >
+                                        {`${cap.name} ${(cap.active === 'active') ? '✅' : '⭕'}`}
+                                            </button>
+                                        </div>
+                                        <div>
+                                            {cap.dom.map((dom, domIndex) => (
+                                                <button className={`${x.active}`} key={'domanda'+xIndex+capIndex+ domIndex}  
+                                                onClick={e => {
+                                                    e.preventDefault()
+                                                    if(filter[xIndex].cap[capIndex].dom[domIndex] === 'active'){
+                                                        filter[xIndex].cap[capIndex].dom[domIndex] = 'deactive';
+                                                    }else{ filter[xIndex].cap[capIndex].dom[domIndex] = 'active';}
+                                                    setFilter([...filter])
+                                                }}
+                                                >
+                                                {`${domIndex + 1} ${(dom === 'active') ? '✅' : '⭕'}`}
+                                                {(
+                                                    risposte.current?.[x.name]?.[capIndex]?.dom[domIndex] !== undefined &&
+                                                    risposte.current?.[x.name]?.[capIndex]?.dom[domIndex] !== -1
+                                                 ) ? 'fatta' : 'non fatta'}
+                                          
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    )
+                                })}
                             </div>
     
                         ))}
                     </div>
-                    <div>
-                        <Section
-                            elementi= {domande}
-                            divisione= {20}
-                            down= {true}
-                            postoSezioni = {[posto, setPosto]}
-                        />
-                    </div>
+                    <ul>
+                        {materie}
+                    </ul>
                     <button onClick={e => {
                         e.preventDefault();
                         startCorrecton();
@@ -414,6 +497,7 @@ export default function PlaySimulation(){
                     }}>Fine simulazione</button>
                 </div>
             )
+
         }
     }else{
         if(!correction){
@@ -429,170 +513,201 @@ export default function PlaySimulation(){
             }
 
             //percentuale risposte esatte test attuale (solo per l'utente)
-            let materieUser = []
-            let allMaterieAnswere= 0;
-            let allPoint = 0;
-            
+            let materieUser =[];
+            let allMaterie = []
+            let fullMaxPoint = 0
+            let fullFattiPoit = 0
             for(let materia in userMaterie){
-                let rispostePercentuale = userMaterie[materia][0];
-                let rGiuste = userMaterie[materia][1];
+                let subCap = [];
+                let allpMateria = 0
+                let allpFatti = 0
 
-                allMaterieAnswere += rispostePercentuale
-                allPoint += rGiuste
-
-                let percentuale  = (rGiuste*100 / rispostePercentuale).toFixed(2)
-
-                materieUser.push(<li key={materia}>{`${materia} = domande: ${rispostePercentuale} giuste: ${rGiuste} percentuale: ${percentuale}%`}</li>)
+                userMaterie[materia].map((cap, capIndex) => {
+                    allpMateria += cap.point[0]
+                    allpFatti   += cap.point[1]
+                    let percentuale = Number((cap.point[1] * 100 /cap.point[0]).toFixed(2));
+                    subCap.push(
+                        <li key={cap.name+capIndex}>
+                            <p>{cap.name} = domande: {cap.point[0]} , risposte giuste: {cap.point[1]}, risultato: {percentuale} %</p>
+                        </li>
+                    )
+                })
+                fullMaxPoint += allpMateria;  fullFattiPoit += allpFatti
+                let allPercentuale = Number((allpFatti * 100 /allpMateria).toFixed(2));
+                allMaterie.push(
+                    <li key={materia}>
+                        <p>{materia} = domande: {allpMateria} , risposte giuste: {allpFatti}, risultato: {allPercentuale} % </p>
+                        <ul>
+                            {subCap}
+                        </ul>
+                    </li>
+                )
             }
-            let percentualeAll  = (allPoint*100 / allMaterieAnswere).toFixed(2)
-            materieUser.push(<li key='tuttelematerie'>{`Tutte = domande: ${allMaterieAnswere} giuste: ${allPoint} percentuale: ${percentualeAll}%`}</li>)
+            
+            let percentualeAll  = (fullFattiPoit*100 / fullMaxPoint).toFixed(2)
+            materieUser.push(
+                <div key='tuttelematerie'>
+                    <p>responso corso = domande: {fullMaxPoint} , giuste: {fullFattiPoit} , percentuale: {percentualeAll}% </p>
+                    <ul>
+                        {allMaterie}
+                    </ul>                
+                </div>)
 
 
             //domande corrette
             let correzioneDom = [];
-            simulation.chapter.map((mat,matIndex) => {
-                let domande = [];
-                let answere = saveAns?.find(x => x.n === mat.ma);
-                let segnalazione = segnalaDom?.find(x => x.n === mat.ma);
-                let show = segnalaDom?.find(x => x.n === mat.ma);
-                mat.quiz.map((dom, domIndex) => {
-                    let rispostemat = [];
-                    let rispostaNonData = [];
-                    let isDomSave = -1;
-                    let isDomSegn = -1
-                    let showComment = -1
-                    if(answere) isDomSave = answere.a.findIndex( inedxDom => inedxDom === domIndex );
-                    if(segnalazione) isDomSegn = segnalazione.a.findIndex( inedxDom => inedxDom === domIndex );
-                    if(show) showComment = show.a.findIndex( inedxDom => inedxDom === domIndex );
-
-                    let commento = [];
-                    commento.push(
-                        <div id={"commento"+matIndex+'-'+domIndex} key={"commento"+matIndex+'-'+domIndex}>
-                            <button 
-                                onClick={e =>{ 
-                                    e.preventDefault();
-                                    showCommentDom(matIndex , domIndex)
-                                }}>{(showComment !== -1 ) ? 'nascondi commento' : 'mostra commento'}</button>
-                            <p style={{display:( (showComment !== -1) ? 'block': 'none')}}>{dom.c}</p>
-                        </div>
-                    )
-                    dom.answere.map((ris, risIndex) => {
-
-                        let rispostaData = risposte.current?.[mat.ma]?.[domIndex];
-                        let rispostaGiusta = (ris?.c) ? true : false
-
-                        let percentuale = clickDom[mat.ma][domIndex][risIndex];
-                            
-                       
-                        let segno = undefined;
-                        if(rispostaData !== undefined && rispostaData === risIndex){
-                            if(rispostaGiusta){
-                                segno = '✅ hai risposto bene';
-                            }else{
-                                segno = '❌ hai risposto male';
-                            }
-                        } 
-                        if(!segno && ris?.c) segno = '✔️  questa è la risposta giusta'                 
+            if(simulation){
+                //se la simulazione non è stata cancellata
+                simulation.chapter.map((mat,matIndex) => {
+                    let answereMat = saveAns?.find(x => x.mat === mat.ma);
                     
-                        if(risIndex === dom.answere.length -1){
-                            let percentuale = clickDom[mat.ma][domIndex][risIndex+1];
-                            if(rispostaData === undefined || rispostaData === -1){
-                                rispostaNonData.push(
-                                    <li key={ris.t+risIndex+'non'}>
-                                    {'risposta non data ❌'}
-                                    <span>||||||risposta untenti: {percentuale}%</span>
+                    let capitoli = []
+                    mat.li_ma.map((cap, capIndex) => {
+                        let capitoloR = risposte.current?.[mat.ma]?.[capIndex]
+    
+                        let answereCap = undefined;
+                        if(answereMat) answereCap = answereMat?.cap?.find(x => x.n === cap.t);
+    
+    
+                        let domande= []
+                        cap.quiz.map((dom, domIndex) => {
+                            let rData =  capitoloR?.dom[domIndex];
+                            let centOnline = clickDom[mat.ma][capIndex].domande[domIndex]
+                            
+                            let isDomSave = -1;
+                            if(answereCap) isDomSave = answereCap?.a.findIndex(x => x === domIndex);
+                            
+                            let risposte = []
+                            dom.answere.map((ans , ansIndex) => {
+                                let rCorrect = (ans?.c) ? true : false;
+                                let centAns= centOnline[ansIndex]
+    
+                                let simbolo ; 
+                                if(rCorrect) simbolo = '✔️ questa è la risposta giusta' 
+                                if(rData === ansIndex){
+                                    if(rCorrect){
+                                        simbolo = '✅ hai risposto correttamente'
+                                    }else{
+                                        simbolo = '❌ hai risposto male'
+                                    }
+                                }
+    
+                                risposte.push(
+                                    <li key={ans.t+ansIndex}>
+                                        {ans.t}
+                                        <span>{simbolo}</span>
+                                        <span>---percentuale utenti: {centAns}%</span>
+                                        
                                     </li>
                                 )
-                            }else{
-                                rispostaNonData.push(
-                                    <li key={ris.t+risIndex+'non'}>
-                                    {'risposta non data' }
-                                    <span>||||||risposta untenti: {percentuale}%</span>
-                                    </li>
-                                )
-                            }
-                            
-                            
-                        }
-                        rispostemat.push(
-                        <li key={ris.t+risIndex}>
-                            {ris.t + ' '}
-                            {(segno) ? segno + ' ' : ' '}
-                            <span>||||||risposta untenti: {percentuale}%</span>
-                        </li>)
+                            })
+    
+                            domande.push(
+                                <li key={dom.q+domIndex}>
+                                    <p>{dom.q}</p>
+                                    <ul>
+                                        {risposte}
+                                    </ul>
+                                    <p>
+                                        risposta non data 
+                                        {(rData === undefined || rData === -1 ) ? '❌' : undefined}
+                                        {'---percentuale utenti: '+ centOnline[dom.answere.length]+'%'}
+                                    </p>
+                                    <div>
+                                        <button onClick={(e)=>{
+                                            e.preventDefault()
+                                            showCommentDom(matIndex, capIndex, domIndex)
+                                        }}>
+                                            {(showCom?.[matIndex]?.[capIndex]?.[domIndex])
+                                            ? 'nascondi domanda'
+                                            : 'mostra domanda'
+                                        }
+                                        </button>
+                                        {(showCom?.[matIndex]?.[capIndex]?.[domIndex])
+                                            ? <p>{dom.c}</p>
+                                            :undefined
+                                        }
+                                       
+                                    </div>
+                                    <div>
+                                        <button 
+                                            title={(isDomSave === -1 ) ? 'salva domanda' : 'cancella domanda dai salvati​'}
+                                            onClick={e => {
+                                                e.preventDefault() ; 
+                                                saveAnswere([mat.ma, matIndex] , [cap.t , capIndex], domIndex)}}>
+                                            {(isDomSave === -1) ? '💿' : '📀​'}
+                                        </button>
+                                        <button 
+                                            title='segnala domanda'
+                                            onClick={(e)=>{
+                                                e.preventDefault()
+                                                segnalaDomanda([mat.ma, matIndex], [cap.t, capIndex], domIndex)
+                                            }}>
+                                                {(segnalaDom?.[matIndex]?.[capIndex]?.[domIndex])
+                                                ? '🙋‍♂️' 
+                                                : '🙎‍♂️'
+                                            }
+                                        </button>
+                                       
+                                    </div>
+                                </li>
+                            )
+                        })
+                        capitoli.push(
+                            <li key={cap.t+capIndex}>
+                                <p>{cap.t}</p>
+                                <ul>
+                                    {<PlurySection
+                                        elementi= {domande}
+                                        divisione= {5}
+                                        down = {true}
+                                        postoSezioni = {[plurySection , setPlurySection]}
+                                        index= {[matIndex, capIndex]}//materia, capitolo
+                                    />}
+                                </ul>
+                            </li>
+                        )
                     })
-                    domande.push(
-                        <li key={dom.q+domIndex}>
-                            <ul key={dom.q+domIndex}>
-                                {dom.q}
-                                {rispostemat}
-                                {(Boolean(rispostaNonData.length)) ?  rispostaNonData : undefined}
+                    correzioneDom.push(
+                        <li key={mat.ma+matIndex}>
+                            <p>{mat.ma}</p>
+                            <ul>
+                                {capitoli}
                             </ul>
-                            {commento}
-                            <button title={(isDomSave === -1) ? 'salva domanda' : 'cancella domanda dai salvati​'} 
-                                onClick={e => {e.preventDefault() ; saveAnswere(matIndex , domIndex)}}>
-                                {(isDomSave === -1) ? '💿' : '📀​'}
-                            </button>
-                            <button 
-                                title={(isDomSegn === -1) ? 'segnala domanda' : 'domanda segnalata'}
-                                onClick={e => {
-                                    e.preventDefault() ;
-                                    let msg = prompt(`puoi dirci il motivo della segnalazione?
-                                    esempio:
-                                    1- risposte non corrette
-                                    2- errori di ortografia
-                                    3- bug
-                                    4- altro...
-                                    `) 
-                                    if(isDomSegn === -1) segnalaDomanda(matIndex , domIndex, msg)
-                                }}>
-                                {(isDomSegn === -1) ? '🙎‍♂️' : '🙋‍♂️​'}
-                            </button>
                         </li>
                     )
+    
                 })
+            }else{
                 correzioneDom.push(
-                    <li key={mat.ma+matIndex}>
-                        {mat.ma}
-                        <ul>
-                            <MultiSection
-                                elementi= {domande} //lista elementi
-                                divisione= {10}   //numero di elementi per sezione
-                                down = {true}
-                                postoSezioni = {[postoCorrecton , setPostoCorrecton]}
-                                index= {matIndex}
-                            />
-                        </ul>
-                    </li>
+                    
+                    <p key={'simulazione-Cancellata'}>ci dispiace la simulazione è stata cancellata</p>
+                    
                 )
-               
-            })
+            }
+            
 
             bodySimulation.push(
-                <div key='simulazione'>
-                    <p >questa è la correzione</p>
+                <div key="simulazione">
+                    <p>questa è la correzione</p>
                     {(mod.current) ? undefined : <p>modalità facile</p>}
                     {timerVeiw}
                     <div>
                         <p>risultato percentuale per materia</p>
-                        <ul>
-                            {materieUser}
-                        </ul>
-                        <div>
-                            {correzioneDom}
-                        </div>
-                        
+                        {materieUser}
+                    </div>
+                    <div>
+                        {correzioneDom}
                     </div>
                 </div>
-                
-                
             )
+
         }
     }
 
     return(
         <div>
-            {(!stop) ? bodySimulation : bodySimulation}
+            {bodySimulation}
         </div>
     )
 }

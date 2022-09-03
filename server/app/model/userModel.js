@@ -52,16 +52,32 @@ const userSchema = new Schema({
         simId: {type:String , alias: 'simulationId'},
         stat: [{
             _id:false,
-            n: {type:String ,alias:'name'}, //name categoria
-            num: {type:Number, alias:'number'}//percentuale completata
+            mat: {type:String ,alias:'materia'},
+            cap: [{
+                _id: false,
+                n: {type:String, alias:'name'},
+                num: {type:Number, alias:'number'}//percentuale completata
+            }], //name categoria
+            
         }],
+
         dom:[{//domande salvate
             _id:false,
-            n: {type:String, alias:'name'},//nome categoria
-            a: [] // answere , indice di domanda
+            mat: {type:String, alias:'materia'},//nome materia
+            cap:[{
+                _id:false,
+                n: {type:String, alias:'name'},
+                a: [{type:Number}] // answere , indice di domanda
+            }],
         }],
         hit: {type:Number} //quante volte l'utente ha fatto il corso
-    }]
+    }],
+//messaggi per l'utente
+    msg:{
+        _id:false,
+        alert: {type:Boolean},
+        posta: []
+    }
 
 })
 

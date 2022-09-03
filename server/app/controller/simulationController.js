@@ -57,9 +57,9 @@ async function getSaveAnswere(req, res){
 
         let user = await userModel.findById({_id: req.body.user}).select('simu')
         if(!user) return res.json({success: false , msg:'utente non trovato'});
+        if(!user?.simu) return res.json({success: false , msg:'prima volta'})
 
-        let oneSim = user.simu.find(sim => sim.simId === req.body.simId).dom;
-
+        let oneSim = user.simu.find(sim => sim.simId === req.body.simId)?.dom;
         return res.json({success: true, ans: oneSim})
 
     }catch(e){console.log(e)}
@@ -74,9 +74,9 @@ async function createSimulation(req, res){
         let dati = req.body;
         let validator = new Validator();
     
-        dati.time.o = parseInt(dati.time.o) || 0;
-        dati.time.m = parseInt(dati.time.m) || 0;
-        if(dati.time.m === 0 && dati.time.o === 0) dati.time.o = 1
+        dati.time= parseInt(dati.time) || 30;
+       
+ 
     
         dati.d = dati.d ?? '';
         dati.n = dati.n ?? '';
@@ -87,16 +87,14 @@ async function createSimulation(req, res){
             name: dati.n,
             description: dati.d,
             bozza: dati.s,
-            timeO: dati.time.o,
-            timeM: dati.time.m
+            time: dati.time,
         }
     
         let option = {
             name       : "type:string|length:<:32|length:>:4",
             description: "type:string|length:<:230",
             bozza      : "type:boolean",
-            timeO      : "type:number|value:<:24",
-            timeM      : "type:number|value:<:60"
+            time       : "type:number|value:>:0", 
         }
     
         //primo controllo dei dati
@@ -161,6 +159,7 @@ async function createSimulation(req, res){
             chapter: dati.chapter,
             reset: reset,
             table: [],
+            hit: {h:0 , e:0}
         })
 
         await simulation.save();
@@ -175,9 +174,7 @@ async function updateSimulation(req, res){
         let dati = req.body;
         let validator = new Validator();
     
-        dati.time.o = parseInt(dati.time.o) || 0;
-        dati.time.m = parseInt(dati.time.m) || 0;
-        if(dati.time.m === 0 && dati.time.o === 0) dati.time.o = 1
+        dati.time = parseInt(dati.time) || 30;
     
         dati.d = dati.d ?? '';
         dati.n = dati.n ?? '';
@@ -188,16 +185,15 @@ async function updateSimulation(req, res){
             name: dati.n,
             description: dati.d,
             bozza: dati.s,
-            timeO: dati.time.o,
-            timeM: dati.time.m
+            time: dati.time,
+         
         }
     
         let option = {
             name       : "type:string|length:<:32|length:>:4",
             description: "type:string|length:<:230",
             bozza      : "type:boolean",
-            timeO      : "type:number|value:<:24",
-            timeM      : "type:number|value:<:60"
+            time      : "type:number|value:>:0",
         }
     
         //primo controllo dei dati
@@ -360,7 +356,7 @@ async function getAllUserSimulation(req,res){
 }
 
 async function correctionSimulation(req, res){
-
+try{
     let user = req.body.userId; let sim = req.body.simId ; let risp = req.body.resp;
 
     let answere = await simulationModel.findById({_id: sim}).select('_id chapter table hit');
@@ -376,6 +372,32 @@ async function correctionSimulation(req, res){
     let totalUserPoint = 0 //punti totali fatti dall'utente
 
 
+//controllo aggiornamenti (creatore ha aggiunto e l'utente aveva già dei dati)
+    let simUserIndex = userDb.simu.findIndex(x=> x.simId === sim);
+    if(simUserIndex !== -1){
+        //controllo materie
+        answere.chapter.map((mat) => {
+            let materiaIndex = userDb.simu[simUserIndex].stat.findIndex(x => x.mat === mat.ma)
+            if(materiaIndex !== -1){
+                mat.li_ma.map((cap) => {
+
+                    if(userDb.simu[simUserIndex].stat[materiaIndex].cap.findIndex(z => z.n === cap.t) === -1){
+                        userDb.simu[simUserIndex].stat[materiaIndex].cap.push({
+                           n: cap.t
+                        })
+                        
+                    }
+
+                })
+            }else{
+                userDb.simu[simUserIndex].stat.push({
+                    mat: mat.ma,
+                    cap: mat.li_ma.map(y => {return {n: y.t}})
+                })
+            }
+        })
+    }
+
     let correction = {} ;
     let percentuale = {}; //percentuale di risposte corrette per materia della simulazione per l'utente
     let Allpercent = {}; //percentuale quante volte gli utenti hanno risposto con quella domanda
@@ -383,115 +405,165 @@ async function correctionSimulation(req, res){
         let categoria = answere.chapter[x]
         correction[categoria.ma] = [];
         Allpercent[categoria.ma] = [];
-        percentuale[categoria.ma] = [categoria.quiz.length , 0]
+        percentuale[categoria.ma] = [];
 
-        for(let dom = 0 ; dom < categoria.quiz.length; dom++){
-            let domanda = categoria.quiz[dom];
-            Allpercent[categoria.ma].push([])
-            let rGiusta = domanda.answere.findIndex(ris => ris?.c)
+        for(let sub = 0 ; sub < categoria.li_ma.length; sub++){
 
-            domanda.answere.map((y,yindex) => {
-                Allpercent[categoria.ma][dom].push(y.p || 0)
-
-                if( risp[categoria.ma]?.[dom] !== null &&  
-                    risp[categoria.ma]?.[dom] !== undefined &&  
-                    yindex === risp[categoria.ma][dom]
-                ){
-
-                    Allpercent[categoria.ma][dom][yindex] += 1
-                }
-            })
+            let subCat = categoria.li_ma[sub];
+            correction[categoria.ma].push({name: subCat.t , domande: []})
+            Allpercent[categoria.ma].push({name: subCat.t , domande: []})
+            percentuale[categoria.ma].push({name: subCat.t , point: [subCat.quiz.length , 0]})
+            let indexCategoria = sub//risp[categoria.ma]?.findIndex(x => x.name === subCat.t)
             
-
-            //correzione
-            if(risp[categoria.ma]?.[dom] === undefined || risp[categoria.ma]?.[dom] === null ){
-                correction[categoria.ma].push(0)
-            }
-            else if(rGiusta === risp[categoria.ma][dom]){
-                correction[categoria.ma].push(1)
-                percentuale[categoria.ma][1] += 1
-                totalUserPoint += 1
-
-            }else if(risp[categoria.ma][dom] === -1 || risp[categoria.ma][dom] !== rGiusta){
-                //l'utente ha risposto male o l'utente non ha voluto rispondere
-                correction[categoria.ma].push(0)
-            }
-
-
-            //modifica punteggio risposte per il db
-            if (typeof risp[categoria.ma]?.[dom] === 'number' && risp[categoria.ma][dom] !== -1){
-                answere.chapter[x].quiz[dom].answere[risp[categoria.ma][dom]].p += 1
-            }
-        }
-    }
-
-
-    //calcolo percentuale totaledi risposte date da tutti gli utenti
-    perCent= {}
-    for( cat in Allpercent){
-        perCent[cat] = []
-        Allpercent[cat].map((x, index) => {
-            perCent[cat].push(x.map(punti => Number((100*punti / total).toFixed(2))))
-
-            let nonfatte = perCent[cat][index].reduce((x,y) => x+y)
-            perCent[cat][index].push( Number((100 - nonfatte).toFixed(2)))
-        })
-     
-    }
-
-    //salvataggio punteggio user in Simulazione
-    let userPointIndex = answere.table?.findIndex(user => user.user = userDb.user);
-    let [ore , min , sec] = req.body.time;
-    let d = new Date()
-    let objPoint = {
-        u: userDb.user,
-        p: totalUserPoint,
-        t: `${ore}:${min}:${sec}`,
-        mod:req.body.mod,
-        d:`${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`
-    }
-
+            for(let dom = 0 ; dom < subCat.quiz.length; dom++){
+                let domanda = subCat.quiz[dom];
+                let rGiusta = domanda.answere.findIndex(ris => ris?.c);
+                Allpercent[categoria.ma]?.[indexCategoria]?.domande.push([]);
+                
+                //aggiornamento delle risposte date da tutti gli utenti
+                domanda.answere.map((y,yindex) => {
+                    Allpercent[categoria.ma]?.[indexCategoria]?.domande[dom].push(y.p || 0)
+                   
+                    if( risp[categoria.ma]?.[indexCategoria]?.dom?.[dom] !== null &&  
+                        risp[categoria.ma]?.[indexCategoria]?.dom?.[dom] !== undefined &&  
+                        yindex === risp[categoria.ma]?.[indexCategoria]?.dom?.[dom]
+                    ){
+                        //per il client 
+                        Allpercent[categoria.ma][indexCategoria].domande[dom][yindex] += 1;
+                        //per il db 
+                       (answere.chapter[x].li_ma[sub].quiz[dom].answere[yindex]?.p !== undefined) 
+                           ? answere.chapter[x].li_ma[sub].quiz[dom].answere[yindex].p += 1 
+                           : answere.chapter[x].li_ma[sub].quiz[dom].answere[yindex].p = 0
+                    }
+                })
+                
+                //correzione
+                if(risp[categoria.ma]?.[indexCategoria]?.dom?.[dom] === undefined || 
+                   risp[categoria.ma]?.[indexCategoria]?.dom?.[dom] === null ){
+                    //risposta non trovata
+                    correction[categoria.ma][indexCategoria].domande.push(0)
+                }
+                else if(rGiusta === risp[categoria.ma]?.[indexCategoria]?.dom[dom]){
+                    //l'utente ha risposto correttamente
+                    
+                    correction[categoria.ma][indexCategoria].domande.push(1);
+                    totalUserPoint += 1;
+                    percentuale[categoria.ma][indexCategoria].point[1] += 1;
     
-    if(userPointIndex !== -1 && userPointIndex !== undefined ){
-        if(totalUserPoint > answere.table[userPointIndex].p){
-            answere.table[userPointIndex] = objPoint;
-        }
-    }else{ answere.table.push(objPoint)}
+                }else if(risp[categoria.ma]?.[indexCategoria]?.dom[dom] === -1 || 
+                         risp[categoria.ma]?.[indexCategoria]?.dom[dom] !== rGiusta)
+                {
+                    //l'utente ha risposto male o l'utente non ha voluto rispondere
+                    correction[categoria.ma][indexCategoria].domande.push(0)
+                }
 
-    
-    //salvataggio punteggio user Privato
-    if(!userDb?.simu) userDb.simu = [];
-    let indexSimUser = userDb.simu.findIndex(x => x.simId)
-    if(indexSimUser === -1){
-        let objpercent = [];
-        for(let mat in percentuale){
-            let p = Number((percentuale[mat][1]*100 / percentuale[mat][0]).toFixed(2))
-            objpercent.push({
-                n : mat,
-                num: p
+            }
+
+
+        }
+
+        ////calcolo percentuale totale di risposte date da tutti gli utenti
+        perCent= {}
+        for( cat in Allpercent){
+            perCent[cat] = [] //push({name: Allpercent[cat].name , domande: []})
+
+            Allpercent[cat].map((cap, capIndex) => {
+                perCent[cat].push({name: cap.name, domande:[]});
+
+                Allpercent[cat][capIndex].domande.map((x, index) => {
+                    perCent[cat][capIndex].domande.push(x.map(punti => Number((100*punti / total).toFixed(2))))
+
+                    let nonfatte = perCent[cat][capIndex].domande[index].reduce((x,y) => x+y)
+                    perCent[cat][capIndex].domande[index].push( Number((100 - nonfatte).toFixed(2)))
+                })
+
+
             })
         }
-        userDb.simu.push(
-            {
-                simId: sim,
-                hit: 1,
-                stat: objpercent
-            }
-        )
-    }else{
-        userDb.simu[indexSimUser].hit += 1
-        //cambio percentuale materia
-        userDb.simu[indexSimUser].stat.map((x, index) => {
-            let p = (x.num + Number((percentuale[x.n][1]*100 / percentuale[x.n][0]).toFixed(2)));
-            let pCent = Number((p /  userDb.simu[indexSimUser].hit).toFixed(2));
 
-            userDb.simu[indexSimUser].stat[index].num = pCent;
-        })
+        //salvataggio punteggio user in Simulazione
+        let userPointIndex = answere.table?.findIndex(user => user.user = userDb.user);
+        let [ore , min , sec] = req.body.time;
+        let d = new Date()
+        let objPoint = {
+            u: userDb.user,
+            p: totalUserPoint,
+            t: `${ore}:${min}:${sec}`,
+            mod:req.body.mod,
+            d:`${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`
+        }
+
+        if(userPointIndex !== -1 && userPointIndex !== undefined ){
+            if(totalUserPoint > answere.table[userPointIndex].p){ answere.table[userPointIndex] = objPoint;}
+        }else{ answere.table.push(objPoint)}
+
     }
 
-    await userDb.save()
-    await answere.save()
+
+    if(!userDb?.simu) userDb.simu = [];
+        let simulationUser = userDb.simu.findIndex(x => x.simId)
+        if(simulationUser !== -1 ){
+            
+            userDb.simu[simulationUser].hit += 1
+            let simulation = userDb.simu[simulationUser]
+            
+            simulation.stat.map((mat, matIndex) => {
+                
+                if(percentuale?.[mat.mat]){
+
+                    mat.cap.map((cap, capIndex) => {
+
+                        let realIndexcap = percentuale[mat.mat].findIndex(x => x.name === cap.name)
+                        
+                        if(realIndexcap !== -1){
+                           let breveCap = percentuale[mat.mat][realIndexcap].point;
+                           //se il capitolo è nuovo l'utente non ha punti quindi si inizia da qui la raccolta
+                           if(!cap?.num){
+                                userDb.simu[simulationUser].stat[matIndex].cap[capIndex].num = Number((100*breveCap[1]/breveCap[0]).toFixed(2))
+                           }else{
+                                let oldPoint = cap.num;
+                                let newPoint = Number((100 * breveCap[1] / breveCap[0]).toFixed(2))
+                                userDb.simu[simulationUser].stat[matIndex].cap[capIndex].num = Number(((oldPoint+newPoint)/2).toFixed(2))
+                           }                       
+                        }
+                    })
+                }
+                
+            })
+        }else{
+            //inizzializato
+            let lastIndex = userDb.simu.length
+            userDb.simu.push({
+                simId: sim,
+                stat: [],
+                dom:  [],
+                hit: 1 
+            })
+            let allMaterie = []
+            answere.chapter.map((mat, matIndex) => {
+                
+                let capitoli = []
+                mat.li_ma.map((cap, capIndex) => {
+
+                    let p = Number((100 * percentuale[mat.ma][capIndex].point[1] / cap.quiz.length).toFixed(2))
+                    capitoli.push({n:cap.t, num: p})
+                })
+
+                allMaterie.push({
+                    mat: mat.ma,
+                    cap: capitoli
+                })
+                
+            })
+           
+            userDb.simu[lastIndex].stat = allMaterie;
+        }
+
+    await userDb.save();
+    await answere.save();
     return res.json({success: true , correction: correction , percentualeUser: percentuale , p: perCent})
+}catch(e){console.log(e); res.json({success:'error'})}
+    
 
 
 
@@ -510,39 +582,46 @@ async function saveAnswereSimulation(req, res){
         let msg = 'domanda salvata';
         let cancell = false;
     
+        if(!user?.simu) user.simu = []
         let index = user.simu.findIndex(x => x.simId === req.body.simId);
-        if(index === -1){
+       
+        if(index === -1){ 
             user.simu.push({
                 simId: req.body.simId,
-                stat: simulation.chapter.map(x => {return {n: x.ma , num: 0} } ),
+                stat: [],
                 hit: 0,
-                dom: [{
-                    n: simulation.chapter[req.body.indexMat].ma ,
-                    a:[indexDom]
-                }]
+                dom: [{mat: req.body.materia, cap:[{n:req.body.capitolo , a:[req.body.indexDom]}]}]
             })
         }else{
-            let matIndex = user.simu[index].dom.findIndex(x => x.n === simulation.chapter[req.body.indexMat].ma);
-    
+
+            let matIndex = user.simu[index].dom.findIndex(mat => mat.mat === req.body.materia);
             if(matIndex === -1){
-                user.simu[index].dom.push(
-                    {
-                        n: simulation.chapter[req.body.indexMat].ma,
-                        a: [req.body.indexDom]
-                    }
-                ) 
-    
-                
+                //se la materia non esiste
+                user.simu[index].dom.push({ 
+                    mat: req.body.materia,
+                    cap: [{n: req.body.capitolo , a: [req.body.indexDom]}]
+                })
             }else{
-                //se non è stata già salvata salvala altrimenti cancellala
-                if(user.simu[index].dom[matIndex].a.findIndex(x => x === Number(req.body.indexDom)) === -1){
-                    user.simu[index].dom[matIndex].a.push(req.body.indexDom);
+                let capIndex = user.simu[index].dom[matIndex].cap.findIndex(cap => cap.n === req.body.capitolo);
+                if(capIndex === -1){
+                    //se il capitolo non esiste
+                    user.simu[index].dom[matIndex].cap.push({n: req.body.capitolo , a:[req.body.indexDom]})
                 }else{
-                    user.simu[index].dom[matIndex].a.splice(req.body.indexDom , 1);
-                    msg = 'la domanda è stata cancellata'
-                    cancell = true
+                    let domIndex = user.simu[index].dom[matIndex].cap[capIndex].a.findIndex(x => x === req.body.indexDom)
+                    if(domIndex === -1 ){
+                        //salva domanda perchè non c'è
+                        user.simu[index].dom[matIndex].cap[capIndex].a.push(req.body.indexDom)
+             
+                    }else{
+                        //domanda esistente
+                        user.simu[index].dom[matIndex].cap[capIndex].a.splice(domIndex, 1);
+                        msg = 'domanda cancellata';
+                        cancell = true;
+                    }
                 }
+
             }
+    
         }
     
     
@@ -589,24 +668,39 @@ async function getUserSimulationInfo(req, res){
         let userSim = user.simu.find(x => x.simId === req.body.simId);
 
         let simulation = await simulationModel.findById({_id: req.body.simId}).select('n chapter');
-        if(!simulation) return res.json({success:false , msg:'simulazine non trovata'})
+        //if(!simulation) return res.json({success:false , msg:'simulazine non trovata'})
 
         let date = {}
+        let materieSave = []
+        if(Boolean(simulation)){
+            userSim.dom.map((mat) => {
+                let simMateria = simulation.chapter.find(mate => mate.ma === mat.mat)
+                if(!simMateria) return ; 
+               
+                let capitoli = []
+                mat.cap.map((cap) => {
+                    let simCap = simMateria.li_ma.find(capi => capi.t === cap.n)
+                    if(!simCap) return;
+                    let domande = []
     
-        let answers = []
-        userSim?.dom.map((mat) => {
-            let answere = {n: mat.n , list: []}
-            let chapter = simulation.chapter.find(x => x.ma === mat.n)
-            mat.a?.map((dom) => {
-                answere.list.push(chapter.quiz[dom])
+                    cap.a.map((x) => {
+                        domande.push(simCap.quiz[x])
+                    })
+                    if(!Boolean(domande.length)) return;
+                    capitoli.push({n: cap.n, dom: domande})
+                })
+                if(!Boolean(capitoli.length)) return;
+                materieSave.push({mat: mat.mat, cap: capitoli})
             })
-            answers.push(answere)
-            
-        })
-        date.saveDom = answers
-        date.name = simulation.n
+        }else{
+            materieSave = false
+        }
+        
+        
+        date.saveDom = materieSave
+        date.name = simulation?.n || 'simulazione cancellata';
 
-        return res.json({success: true, simulation: date , userDate: userSim })
+        return res.json({success: true , userDate: userSim , simulation: date })
 
     }catch(e){console.log(e); return res.json({success:'error'})}
     
