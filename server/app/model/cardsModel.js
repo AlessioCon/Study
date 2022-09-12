@@ -14,15 +14,16 @@ const cardSchema = new Schema({
         _id:false,
         id: {type:String}, //id stripe
         sale: {
-            p: {type: Number , required: true , default: 0, alias:'sale.price'},
+            p: {type: Number , default: 0, alias:'sale.price'},
             o: {type: Number , default: 0, alias:'sale.outlet'},
         },
-        s: {type:Boolean, default:false , alias:'status'},// true = in vendita , false = bozza
-        buyers: [{_id:false, id: {type:String,}}] //id compratori
-    }
+        buyers: [] //id compratori
+    },
+    s: {type:Boolean, default:false , alias:'status'},// true = in vendita , false = bozza
+    block: {type:Boolean, default: false},
 });
 
 
 let Cards = mongoose.model('Card' , cardSchema);
 
-module.exports = Course;
+module.exports = Cards;

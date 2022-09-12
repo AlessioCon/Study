@@ -539,8 +539,21 @@ function Simulation(props){
                     }}
                        
                 />
-
             </div>
+
+            <div>
+                <label htmlFor='chStatus'>solo per corsi</label>
+                <input type="checkbox" name="chStatus" id="chStatus"
+                    checked={element.course ?? false}
+                    onChange={(e) => {
+                        let newValue = Object.values(contList);
+                        newValue[actualElement].course = e.target.checked;
+                        setContList(newValue);
+                    }}
+                       
+                />
+            </div>
+
 
             <button type="submit"
             onClick={(e) => {

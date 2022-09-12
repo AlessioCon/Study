@@ -4,6 +4,8 @@ const Validator = require('../../private_modules/validator');
 //MODEL
 const userModel = require('../model/userModel');
 const courseModel = require('../model/corsiModel');
+const simulationModel = require('../model/simulationModel');
+const cardModel = require('../model/cardsModel');
 const stripeController = require('./stripeController');
 const stripe = require('stripe')(process.env.Secret_Key);
 
@@ -108,8 +110,15 @@ async function getUser(req, res){
     try{
         let userDb = await userModel.findById({_id: req.body.id})
         if(!userDb) return res.json({success: false , msg: 'utente inesistente'})
+        let CourseName = []
+        if(userDb?.CourseBuy){
+            for(let x = 0 ; x < userDb.CourseBuy.length ; x++){
+                let course = await courseModel.findById({_id: userDb.CourseBuy[x].courseId}).select('_id t')
+                if(course) CourseName.push([course.t, course._id])
+            }
+        }
 
-        res.json({success: true , user: userDb})
+        res.json({success: true , user: userDb, courseName: CourseName })
 
     }catch(e){console.log(e)}
 }
@@ -168,11 +177,48 @@ async function payCourse(req , res){
         let userCourse = await userModel.findOne({_id:idUser , 'CourseBuy.courseId': idCourse})
         if(userCourse) return res.json({success: false, msg:'corso già posseduto'});
 
-        if(!idSub === 'regalo') await courseModel.updateOne({_id: idCourse} , {$inc: {'ven.n': +1}})
-        await courseModel.updateOne({_id: idCourse} , {$push: {'ven.ul': idUser}})
-        
 
-        await userModel.updateOne({_id:idUser}, {$push: {CourseBuy: {courseId: idCourse , sub: idSub}}})
+        //dare anche le simulazioni contenenti nel corso
+        let corsoSimu = await courseModel.findById({_id: idCourse}).select('simu');
+        if(corsoSimu?.simu && corsoSimu.simu.length > 0){
+            let user = await userModel.findById({_id: idUser}).select('simu');
+            console.log('simulazioni esistenti')
+            if(!user?.simu) user.simu = [];
+            let aggiorna = false //controlla se si è inserita una o più simulazioni;
+            for(let x = 0 ; x < corsoSimu.simu.length ; x++){
+                let simulation = await simulationModel.findById({_id: corsoSimu.simu[x]}).select('_id');
+                if(simulation){
+                    let haveSimu = user.simu.findIndex(x => x.simId === simulation._id.toString());
+                    
+                    if(haveSimu === -1){
+                        user.simu.push({simId: simulation._id.toString(), stat:[] , dom:[] , hit:0});      
+                        aggiorna = true  
+                    }
+                }
+            }
+            if(aggiorna) await user.save();
+        }
+
+        await courseModel.updateOne({_id: idCourse} , {$push: {'ven': idUser.toString()}})
+        await userModel.updateOne({_id: idUser.toString()}, {$push: {CourseBuy: {courseId: idCourse , sub: idSub}}})
+        
+        return res.json({success: true})
+    }catch(e){console.log(e)}
+}
+
+async function payDeck(req , res){
+    
+    try{
+        let idDeck = req.body.idDeck
+        let idUser = req.body?.idUser
+
+        //vedere se non esiste già un deck comprato dall'utente
+        let deckBuy = await cardModel.findById({_id: idDeck})
+        
+        if(deckBuy.stripe.buyers.includes(idUser)) return res.json({success: false, msg:'deck già posseduto'});
+
+        deckBuy.stripe.buyers.push(idUser);
+        await deckBuy.save();
         
         return res.json({success: true})
     }catch(e){console.log(e)}
@@ -207,6 +253,23 @@ async function fromIdToUser(req, res){
         return res.json({success: true , userList: listUser })
     }catch(e){console.log(e); res.json({success: false, msg:'error server'})}
 }
+
+
+
+async function fromUserToId(req, res){
+    try{
+        let list = req.body.listUser;
+  
+        let listUser = []
+        for(let x = 0 ; x < list.length ; x++){
+            let user = await userModel.find({user: list[x]}).select('_id');
+            if(user?.[0]) listUser.push(user[0]._id);
+        }
+
+        return res.json({success: true , idList: listUser })
+    }catch(e){console.log(e); res.json({success: false, msg:'error server'})}
+}
+
 
 async function updateUser(req, res){
     try{
@@ -490,8 +553,12 @@ module.exports = {
 
     haveCourse,
     payCourse,
+    payDeck,
+
     getUserSeller,
     fromIdToUser,
+    fromUserToId,
+
 
     sendMsg,
     haveMsg,

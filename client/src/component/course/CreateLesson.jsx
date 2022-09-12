@@ -533,6 +533,7 @@ function ContentLesson(props){
         })
         let data = await response.json();
         if(data.success !== true) alert('problema nella cancellazione della lezione , ricarica la pagina');
+        window.location.reload();
         return data;
     }
 
@@ -696,8 +697,8 @@ let UserForMaster = useRef(undefined);
                     e.point = e.p ?? 0;
 
                     if(e.f){
-                        let indexName = e.f.split('/').length -1
-                        e.file = {name: e.f.split('/')[indexName]}
+                        let NameArr = e.f.split(/\\/g);
+                        e.file = {name: NameArr[NameArr.length -1]}
                     }
 
                     
@@ -728,7 +729,7 @@ let UserForMaster = useRef(undefined);
 
         }else{lesson.quiz = [];}
 
-        if(Boolean(lesson.file.length)){ lesson.link = '';}
+        if(Boolean(lesson.file?.length)){ lesson.link = '';}
 
         let dati = lesson;
 

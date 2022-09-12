@@ -95,63 +95,69 @@ export default function PlaySimulation(){
     useEffect(()=>{
         async function getSimulation(){
             let respons = await fetch((env?.URL_SERVER || '' )+ '/api/simulation/simulations/'+param.nameSim,{
-                method: 'GET',
-                header: {
-                    accept:'application/json',
-                    'Content-type':'application/json',
-                    'Access-Control-Allow-Credentials': true
-                }
+                method : 'POST',
+                headers: {
+                    Accept: "application/json",
+                    "Content-Type": "application/json",
+                    "Access-Control-Allow-Credentials": true,
+                },
+                body: JSON.stringify({
+                    userId: Cookie.getCookie('user')._id , 
+                    start: true})
             })
             let dati = await  respons.json();
             setSimulation(dati.data);
-            if(Boolean(dati.data?.chapter?.length)){
-                let segnalaMat = [];
-                let mostraDom = [];
-                let materie = [];
-                dati.data.chapter.map(mat => {
-                    //per filtro
-                    let capitoli = []
-                    mat.li_ma.map(cap => {
-                        capitoli.push({name: cap.t , active: 'active' , dom: Array(cap.quiz.length).fill('active')})
-                    })
-                    materie.push({name: mat.ma, active: 'active' , cap: capitoli });
-
-                    //per segnalazione domanda e per stato commento
-                    let allCap= [mat.li_ma.map(x => {
+            if(dati.success){
+                if(Boolean(dati.data?.chapter?.length)){
+                    let segnalaMat = [];
+                    let mostraDom = [];
+                    let materie = [];
+                    dati.data.chapter.map(mat => {
+                        //per filtro
+                        let capitoli = []
+                        mat.li_ma.map(cap => {
+                            capitoli.push({name: cap.t , active: 'active' , dom: Array(cap.quiz.length).fill('active')})
+                        })
+                        materie.push({name: mat.ma, active: 'active' , cap: capitoli });
+    
+                        //per segnalazione domanda e per stato commento
+                        let allCap= [mat.li_ma.map(x => {
+                            
+                            return Array(x.quiz.length).fill(0)
+                        })]
+    
+                        let allCapp= [mat.li_ma.map(x => {
+                            
+                            return Array(x.quiz.length).fill(0)
+                        })]
+    
+                        segnalaMat.push(...allCap)
+                        mostraDom.push(...allCapp)
                         
-                        return Array(x.quiz.length).fill(0)
-                    })]
-
-                    let allCapp= [mat.li_ma.map(x => {
-                        
-                        return Array(x.quiz.length).fill(0)
-                    })]
-
-                    segnalaMat.push(...allCap)
-                    mostraDom.push(...allCapp)
+                    });
                     
-                });
-                
-                setShowCom([...mostraDom]);
-                setSegnalaDom([...segnalaMat]);
-                setFilter(materie);
-            }
-
-            let simulation = dati.data
-            let respo = await fetch((env?.URL_SERVER || '' )+ '/api/simulation/get_save_answere',{
-                method: 'POST',
-            headers: {
-                Accept: "application/json",
-                "Content-Type": "application/json",
-                "Access-Control-Allow-Credentials": true,
-            },
-            body: JSON.stringify({ 
-                user: Cookie.getCookie('user')._id,
-                simId: simulation._id,
+                    setShowCom([...mostraDom]);
+                    setSegnalaDom([...segnalaMat]);
+                    setFilter(materie);
+                }
+    
+                let simulation = dati.data
+                let respo = await fetch((env?.URL_SERVER || '' )+ '/api/simulation/get_save_answere',{
+                    method: 'POST',
+                headers: {
+                    Accept: "application/json",
+                    "Content-Type": "application/json",
+                    "Access-Control-Allow-Credentials": true,
+                },
+                body: JSON.stringify({ 
+                    user: Cookie.getCookie('user')._id,
+                    simId: simulation._id,
+                    })
                 })
-            })
-            let dato = await  respo.json();
-            setSaveAns(dato.ans || [])
+                let dato = await  respo.json();
+                setSaveAns(dato.ans || [])
+            }
+           
                 
             
         }

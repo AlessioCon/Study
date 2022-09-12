@@ -7,7 +7,7 @@ const corsoSchema = new Schema({
     sale: {
         p: {type: Number , required: true , default: 0, alias:'sale.price'},
         o: {type: Number , default: 0, alias:'sale.outlet'},
-        e: {type: Boolean , default: false , alias:'sale.end'}
+        e: {type: Boolean , default: false , alias:'sale.end'} //per gli abbonamenti 
     },
     //per la modifica del corso chi avra l'accesso
     access:{
@@ -39,6 +39,7 @@ const corsoSchema = new Schema({
     ],
 
     ven:[],
+    simu:[{type:String, alias:'simulation', _id:false}],//id simulazioni incluse nel pacchetto;
     
 
     sl :{type:String, alias:'slug'},

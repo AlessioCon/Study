@@ -18,9 +18,9 @@ async function downloadFile(href){
        })
      let data = await response.json();
      
- 
-     let fileTypeIndex = href.split('/').length -1;
-     let fileType = href.split('/')[fileTypeIndex]
+     let fileTypeIndex = href.split('\\')
+     let fileType = fileTypeIndex[fileTypeIndex.length -1]
+     
  
      const link = document.createElement("a");
      link.href = data.url;

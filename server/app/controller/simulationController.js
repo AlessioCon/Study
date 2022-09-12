@@ -9,18 +9,18 @@ const Validator = require('../../private_modules/validator');
 
 async function getAllSimulation(req, res){
     try{
-        let allSimulation = await simulationModel.find({s: {$nin:['bozza']}}).select('d n f time')
+        let allSimulation = await simulationModel.find({s: {$nin:['bozza']}, course: {$nin:[true]}}).select('d n f time')
         if(allSimulation.length === 0) return res.json({success: false, data :[] , msg: 'non ci sono simulazioni'});
 
         return res.json({success: true, data: allSimulation})
 
-    }catch(e){console.log(e)}
+    }catch(e){console.log(e); return res.json({success:'error'})}
     
 }
 
 async function getSingleSimulation(req, res){
     try{
-        let simulation = await simulationModel.findOne({n: req.params.name}).select('d n time chapter table hit reset access')
+        let simulation = await simulationModel.findOne({n: req.params.name})
         if(!simulation) return res.json({success: false, data :[] , msg: 'simulazione non trovata'});
 
         //controlla il reset dei dati
@@ -44,6 +44,15 @@ async function getSingleSimulation(req, res){
 
             }
         }
+        //se la simulazione viene avviata e non solo vista
+        if(req.body.start){
+            if(simulation.course){
+                let user = await userModel.findById({_id:req.body.userId}).select('simu');
+                let index = user.simu.findIndex(x => x === simulation._id.toString())
+                if(user.simu.findIndex(x => x.simId === simulation._id.toString()) === -1) return res.json({success:false, msg:'permesso negato'})
+            }
+        }
+        
        
         await simulation.save()
         return res.json({success: true, data: simulation})
@@ -81,6 +90,7 @@ async function createSimulation(req, res){
         dati.d = dati.d ?? '';
         dati.n = dati.n ?? '';
         dati.s = (dati.s === false || dati.s === undefined) ? false : true; //bozza
+        dati.course = dati.course || false
  
         //verifica dati
         let input = {
@@ -88,6 +98,7 @@ async function createSimulation(req, res){
             description: dati.d,
             bozza: dati.s,
             time: dati.time,
+            course: dati.course
         }
     
         let option = {
@@ -95,6 +106,7 @@ async function createSimulation(req, res){
             description: "type:string|length:<:230",
             bozza      : "type:boolean",
             time       : "type:number|value:>:0", 
+            course     : "type:boolean"
         }
     
         //primo controllo dei dati
@@ -159,7 +171,8 @@ async function createSimulation(req, res){
             chapter: dati.chapter,
             reset: reset,
             table: [],
-            hit: {h:0 , e:0}
+            hit: {h:0 , e:0},
+            course: dati.course
         })
 
         await simulation.save();
@@ -179,6 +192,7 @@ async function updateSimulation(req, res){
         dati.d = dati.d ?? '';
         dati.n = dati.n ?? '';
         dati.s = (dati.s === false || dati.s === undefined) ? false : true; //bozza
+        dati.course = dati.course || false;
     
         //verifica dati
         let input = {
@@ -186,6 +200,7 @@ async function updateSimulation(req, res){
             description: dati.d,
             bozza: dati.s,
             time: dati.time,
+            course: dati.course
          
         }
     
@@ -193,7 +208,8 @@ async function updateSimulation(req, res){
             name       : "type:string|length:<:32|length:>:4",
             description: "type:string|length:<:230",
             bozza      : "type:boolean",
-            time      : "type:number|value:>:0",
+            time       : "type:number|value:>:0",
+            course     : "type:boolean"
         }
     
         //primo controllo dei dati
@@ -261,7 +277,8 @@ async function updateSimulation(req, res){
             f: dati.pathDati ?? '',
             time: dati.time,
             chapter: dati.chapter,
-            reset: reset
+            reset: reset,
+            course: dati.course
         }
 
         await simulationModel.updateOne({_id: dati._id}, simulation  )

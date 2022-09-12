@@ -94,13 +94,12 @@ function CreateList(props){
     let actualElement = props.elemento;
     let nCapitolo = props.nCapitolo;
     let capitolo = contList[actualElement].chapter[nMateria].li_ma[nCapitolo];
-
-
+    
     let list = [];
 
     
     let dataList=[
-        <datalist key="list" id="list">
+        <datalist key="list" id="listlesson">
             {listLesson.map(e=>{ return <option key={e._id} value={e.n}/>})}
         </datalist> 
     ];
@@ -142,7 +141,7 @@ function CreateList(props){
     for(let x = 0; capitolo.lesson?.length > x ; x++){
         list.push(  
             <div key={"list"+capitolo.t+x}>
-                <input list="list" id={"list"+capitolo.t+x}
+                <input list="listlesson" id={"list"+capitolo.t+x}
                     value={capitolo.lesson[x][0] ?? ''}
                     onChange={(e)=>{
                         let newValue = Object.values(contList);
@@ -155,8 +154,9 @@ function CreateList(props){
 
                 <button onClick={(e) => {
                     e.preventDefault();
+                    console.log(contList)
                     let newValue = Object.values(contList);
-                    newValue[actualElement].chapter[nCapitolo].lesson.splice(x, 1);
+                    newValue[actualElement].chapter[nMateria].li_ma[nCapitolo].lesson.splice(x, 1);
                     setContList(newValue)
                 }}>X</button>
                 {(x >0) ? levettaSu(x) : null}
@@ -180,6 +180,7 @@ function AddChupter(props){
     let [contList , setContList] = props.contList;
     let actualElement = props.elemento;
     let elemento = contList[actualElement];
+
 
 
     let name = (props.name) ? props.name : 'addMoreInput'
@@ -317,12 +318,71 @@ function AddChupter(props){
 //}
 }
 
+function AddSimulation(props){
+    let siomulatioList = props.siomulatioList;
+
+    let [contList , setContList] = props.contList;
+    let actualElement = props.elemento;
+
+    let list = [];
+
+    let dataList= [
+        <datalist key="list" id="list">
+            {siomulatioList.map(e=>{ return <option key={e._id} value={e.n}/>})}
+        </datalist> 
+    ];
+
+    
+
+//sestemazione order per levette
+
+    for(let x = 0; contList[actualElement].simu.length > x ; x++){
+        list.push(  
+            <div key={"simulation"+x}>
+                <input list="list" id={"list"+x}
+                    value={contList[actualElement].simu[x][0] ?? ''}
+                    onChange={(e)=>{
+                        let newValue = Object.values(contList);
+                        let id = siomulatioList.find(sim => sim.n === e.target.value )?._id;
+                        newValue[actualElement].simu[x] = [e.target.value, id];
+                        setContList(newValue);
+                    }}
+                />
+                 {dataList}
+
+                <button onClick={(e) => {
+                    e.preventDefault();
+                    let newValue = Object.values(contList);
+                    newValue[actualElement].simu.splice(x, 1);
+                    setContList(newValue)
+                }}>X</button>
+        </div>
+        ) 
+    }
+    
+    return (
+        <div>
+            {list}
+            <button onClick={(e) => {
+                e.preventDefault()
+                let newValue = Object.values(contList);
+                newValue[actualElement].simu.push(['',''])
+                setContList(newValue);
+            }}>
+            +simu
+            </button>
+        </div>
+    )
+
+}
+
 function Course(props){
     let [contList , setContList] = props.contList;
     let actualElement = props.elemento;
     let element = contList[actualElement];
     let [listFile , setListFile] = props.listFile;
     let [limiti, setLimiti] = props.limiti;
+
 
     let inputFile = [
         <div key='file'>
@@ -434,6 +494,12 @@ function Course(props){
                 contList={[contList , setContList]}
                 actualElement = {props.elemento}
             /> : undefined}
+
+            <AddSimulation name="simulation" 
+                contList={props.contList} 
+                siomulatioList={props.simulationList}
+                elemento = {props.elemento}
+            />
            
 
             <AddChupter name="list" 
@@ -554,6 +620,7 @@ function ContentCourse(props){
                                         elemento={actualElement}
                                         listFile={[listFile, setListFile]}
                                         listLesson= {props.listLesson}
+                                        simulationList= {props.simulationList}
                                         limiti ={[limiti, setLimiti]}
                                         /> 
                                         : <p>seleziona elemento</p>}
@@ -566,7 +633,7 @@ function ContentCourse(props){
                     <button onClick={ e => {
                         e.preventDefault();
                         let newValue = Object.values(contList)
-                        newValue.push({t: `corso ${elBigNum}` , type:false , access:[] , chapter:[] })
+                        newValue.push({t: `corso ${elBigNum}` , type:false , access:[] , chapter:[] , simu:[]})
                         setContList(newValue);
                         setElBigNum(elBigNum +1);
                         setActualElement(newValue.length -1)
@@ -633,13 +700,13 @@ function ListUserBuyCourse(props){
     
     let userList = props.userList;
 
-    if(userList.length === 0){ 
+    if(userList?.length === 0){ 
         
         return <p>nessuno ha comprato il corso</p>
 
     }else{
         let user = []
-        for(let x = 0 ; x < userList.length ; x++){
+        for(let x = 0 ; x < userList?.length ; x++){
             user.push(
                 <p key={userList[x] + x} title={userList[x]}>{userList[x]}</p>
             )
@@ -664,7 +731,8 @@ function CreateCourse(){
 const [contList, setContList] = useState([])
 const [actualElement , setActualElement] = useState(undefined);
 const [elBigNum , setElBigNum] = useState(0);
-const [listLesson, setListLesson] = useState([])
+const [listLesson, setListLesson] = useState([]);
+const [simulationList, setSimulationList] = useState([]);
 const [regalaCorso, setRegalaCorso] = useState("");
 const [ msgRegalo ,setMsgRegalo] = useState('');
 const [stripeAmount, setStripeAmount] = useState(undefined);
@@ -719,12 +787,16 @@ let UserForMaster = useRef(undefined);
                 for(let e in resData.lesson){ newlessonList.push(resData.lesson[e])}
                 setListLesson(newlessonList);
             }
+
+            if( resData?.simulation && resData?.simulation?.length !== 0){ 
+                setSimulationList([...resData.simulation]);}
+            
             
 
             if(resData.success){
                
                 let newel = []
-                resData.data.map(e => {
+                resData.data.map((e , index) => {
                     let access = e.access.prof.map(el => {
                         return [el.n, el.g]
                     })
@@ -734,10 +806,16 @@ let UserForMaster = useRef(undefined);
                     e.s = (e.s === 'true') ? true : false;
 
                     if(e.img){
-                        let indexName = e.img.split('/').length -1;
-                        e.file = {name: e.img.split('/')[indexName]}
+                        let NameArr = e.img.split(/\\/g);
+                        e.file = {name: NameArr[NameArr.length -1]}
                     }
-
+                    
+                    //inserimento simulazione nome e id  
+                    if(resData?.simulatioName){
+                        e.simu = resData.simulatioName[index]
+                    }
+                   
+                    
                     
 
                     return newel.push(e)
@@ -768,6 +846,13 @@ let UserForMaster = useRef(undefined);
         }
         
         dati.access = access;
+
+        //controllo simulazioni uguali
+        let simulation = [];
+        lesson.simu.map(x => {
+            if(simulation.findIndex(y => y[0] === x[0]) === -1) simulation.push(x[1])
+        })
+        dati.simu = simulation
 
         let fetchUrl = '/api/corsi/create';
         let method   = 'POST';
@@ -844,7 +929,10 @@ let UserForMaster = useRef(undefined);
         if(data.success)  setStripeAmount(data.amount);
     }
 
-    if(Boolean(contList[actualElement]?.idStripe) && stripeAmount === undefined ) getStripeAmount();
+    useEffect(() => {
+        if(Boolean(contList[actualElement]?.idStripe)) getStripeAmount();
+    },[actualElement])
+    
 
     return (
         <div>
@@ -858,6 +946,7 @@ let UserForMaster = useRef(undefined);
                     actualElement={[actualElement, setActualElement]} 
                     elBigNum={[elBigNum, setElBigNum]}
                     listLesson={listLesson}
+                    simulationList={simulationList}
                     limiti={[limiti, setLimiti]}
                     UserForMaster = {UserForMaster}
                 />

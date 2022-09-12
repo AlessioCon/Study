@@ -1,5 +1,5 @@
 import {useState , useEffect, useRef} from 'react';
-import {useParams} from 'react-router-dom';
+import {Link, useParams} from 'react-router-dom';
 import Cookie from '../customHook/cookie'
 
 import PlurySection from '../component/PlurySection'
@@ -178,7 +178,6 @@ function SimulationInfo(){
                 })
             }
             
-
             return (
                 <div>
                     <h1>{nameSim.current[0]}</h1>
@@ -197,6 +196,7 @@ function SimulationInfo(){
                         </div>:
                         <p>non ci sono domande salvate</p>
                     }
+                   <Link  to={"../../simulazioni/"+nameSim.current[0]}>avvia simulazione</Link>
                     
                 </div>
             )

@@ -1,8 +1,7 @@
-const { userLogin } = require('./userController');
-
 const stripe = require('stripe')(process.env.Secret_Key);
 const userModel = require('../model/userModel');
 const curseModel = require('../model/corsiModel');
+const cardModel = require('../model/cardsModel');
 
 
 
@@ -126,6 +125,94 @@ async function stripeBlockProduct(id){
     
 }
 
+//creazione di un deck
+async function sellDeck(item){
+
+    try{
+        if(!item.idStripe){
+            //se l'idstripe è undefined significa che il deck non è stato ancora messo in vendita
+            
+            const product = await stripe.products.create({
+                name: item.title,
+                description:  'raccolta di card',
+                active: item.status,
+                metadata: {block: false},
+            })
+    
+            let amount = (item.outlet !== 0) ? item.outlet : item.price
+    
+            const price = await stripe.prices.create({
+                unit_amount: amount * 100,
+                currency: 'eur',
+                billing_scheme: "per_unit",
+                product: product.id,
+                tax_behavior:'inclusive',
+            })
+
+           
+
+            return {success:true, id: price.id , change: true , idChange:price.id}
+        }else{
+
+            let amount = (item.outlet !== 0) ? item.outlet : item.price;
+        
+            const priceFined = await stripe.prices.retrieve(
+                item.idStripe
+            );
+            
+            const product = await stripe.products.retrieve(
+                priceFined.product
+            )
+    
+            const updateProduct = await stripe.products.update(
+                product.id, {
+                    name: item.title,
+                    active: item.status
+                }
+            )
+            
+    
+            if(priceFined.unit_amount === amount * 100) return {success:true};
+    
+            //delite old price
+            await stripe.prices.update( item.idStripe ,{active: false});
+    
+            //create new price
+            const price = await stripe.prices.create({
+                unit_amount: amount * 100,
+                currency: 'eur',
+                billing_scheme: "per_unit",
+                product: updateProduct.id,
+                tax_behavior:'inclusive',
+            })
+    
+            return {success:true , id: price.id , change: true};
+
+        }
+        
+    }catch(e){console.log(e) ; return false}    
+
+}
+
+async function deleteDeck(id){
+    try{
+       
+
+        let price = await stripe.prices.retrieve(id)
+        if(!price) return false;
+
+        const product = await stripe.products.update(price.product ,
+                {active: false}
+        );
+        return true;
+          
+    }catch(e){console.log(e) ; return false}    
+
+}
+
+
+
+
 async function CreateSubscription(req, res){
     try{
         //retrive items
@@ -200,6 +287,66 @@ async function CreateSubscription(req, res){
                 clientSecret: subscription.latest_invoice.payment_intent.client_secret,
             }
           });
+        
+
+        
+    }catch(e){if(e) console.log(e)}   
+}
+
+async function BuyDeck(req, res){
+    try{
+        //retrive items
+        const item = req.body.idStripe;
+        const user  = req.body.idUser;
+        let usetStripe = await userModel.findById({_id: user}).select('-grade -CourseBuy -simu -msg');
+
+        let deck = await cardModel.findOne({'stripe.id': item}).select('c stripe');
+        if(!deck) return res.json({success: false, msg:'deck non trovato'});
+    
+
+         //userCreatore deck
+         let userDeck = await  userModel.findById({_id: deck.c}.select('-grade -CourseBuy -simu -msg'));
+         if(!userDeck) return res.json({success: false, msg:'creatore deck non trovato'});
+
+         //trova la quota da pagare
+         let amount = (deck.stripe.sale.o || deck.stripe.sale.p);
+
+         //calcolare quanto dare all'utente venditore
+        let amount_percent = (amount*91/100).toFixed(2);
+
+
+        const paymentIntent = await stripe.paymentIntents.create({
+            amount: amount*100,
+            currency: 'eur',
+            customer: usetStripe.idStripe,
+            automatic_payment_methods: {enabled: true},
+            shipping:{
+                address:{
+                    city: usetStripe.address.c,
+                    country: usetStripe.address.cc,
+                    line1: usetStripe.address.s,
+                    postal_code: usetStripe.address.cap,
+                    state: 'italy'
+                },
+            name: usetStripe.name.f +' '+ usetStripe.name.l
+            },
+
+            transfer_data: {
+                destination: userDeck.idSS,
+                amount: amount_percent*100
+            },
+            receipt_email: usetStripe.email,
+            metadata: {
+                txcUser: usetStripe.txc,
+                userStripe: userDeck.idStripe,
+            }
+        });
+
+
+        return res.json({
+            success: true,
+            clientSecret: paymentIntent.client_secret
+        });
         
 
         
@@ -360,6 +507,35 @@ async function amountProduct(req, res){
     }catch(e){console.log(e)}
 }
 
+//tramite paiment-intent generalmente per i deck
+async function amountProductPI(req, res){
+    try{
+        //se è chiamato direttamente o tramite altro controller
+        let idStripe = req?.body?.idStripe || req
+
+        const paymentIntent = await stripe.paymentIntents.search({
+            query: `status:\'succeeded\' AND metadata[\'userStripe\']:\'${idStripe}\'`,
+          });
+        
+
+        let amountArray = paymentIntent.data.map(x => {return x.amount})
+        let amount = 0;
+        amountArray.map(x => amount += x);
+
+        amount = (amount / 100).toFixed(2);
+        
+
+        if(req.body?.idStripe){
+            return res.json({success: true , amount: amount})
+        }else{
+            return {success: true , amount: amount}
+        }
+        
+
+
+    }catch(e){console.log(e)}
+}
+
 
 async function webHook(request, response){
     const endpointSecret = process.env.PrivateHook || "whsec_Si7CHmAjqti3V17OXC0mFkKeoWSaKvJF";
@@ -425,9 +601,16 @@ module.exports = {
     StripeUpdateProduct,
     StripeDeleteProduct,
     stripeBlockProduct,
+
+    sellDeck,
+    deleteDeck,
+
+
     amountProduct,
+    amountProductPI,
 
     CreateSubscription,
+    BuyDeck,
     
 
     stripeNewCustomer,

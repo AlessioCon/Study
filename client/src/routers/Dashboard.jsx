@@ -58,13 +58,16 @@ function Dashbord(){
         return(<p>caricamento...</p>)
     }
 
+    let isSeller = user.grade.find(e => e === 'seller');
+    let isCorsiV = user.grade.find(e => e === 'course');//è un venditore di corsi
+    let isSimuV  = user.grade.find(e => e === 'simulation')//è un venditore di simulazioni
     let accessVenditore = user.grade.find(e => e === 'seller' || e === 'sellerPending');
     let accessCorsiVenditore = user.grade.find(e => e === 'seller' );
 
     let cookieSeller = Cookie.getCookie('newSeller')?.seller;
 
     let isMaster = user.grade.find(e => e === 'master');
-    let isSimulator = user.grade.find(e => e === 'simulation');
+
     return (
 
         <div className='dashboard'>
@@ -77,19 +80,23 @@ function Dashbord(){
                     <li><NavLink  className={({ isActive }) => isActive ? "dashbord-select" : null} to="utente">Utente</NavLink></li>
                     <li><NavLink  className={({ isActive }) => isActive ? "dashbord-select" : null} to="corsi">Corsi</NavLink></li>
                     <li><NavLink  className={({ isActive }) => isActive ? "dashbord-select" : null} to="simulazioni">Simulazioni</NavLink></li>
-                    {(accessCorsiVenditore || cookieSeller) ? 
+                    <li><NavLink  className={({ isActive }) => isActive ? "dashbord-select" : null} to="card">Cards</NavLink></li>
+                    {(isSeller || cookieSeller || isSimuV) ? 
                         <li className='sub-nav'>
                             <a href="/" onClick={e => {
                                e.preventDefault();
                                e.target.classList.toggle('active')
-                               }}>Crea Corsi</a>
+                               }}>Creatore
+                            </a>
                             <ol>
-                                <li><Link  to="crea-corso">Corsi</Link></li>
-                                <li><Link  to="crea-lezioni">Lezioni</Link></li>
+                                {(isCorsiV && isSeller) ? <li><Link  to="crea-corso">Corsi</Link></li> : undefined }
+                                {(isCorsiV && isSeller) ? <li><Link  to="crea-lezioni">Lezioni</Link></li> : undefined }
+                                {(isSimuV)  ? <li><Link to="crea-simulazioni">Simulazioni</Link></li> : undefined }
+                            
                             </ol>
                         </li> 
-                        : null}
-                    {(isSimulator) ?<li> <Link to="crea-simulazioni">Crea simulazioni</Link></li> : undefined}
+                    : null}
+
                     <li className='sub-nav'>
                         <a href="/" onClick={e => {
                            e.preventDefault();

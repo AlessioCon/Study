@@ -45,6 +45,7 @@ async function downloadFile(href){
             </div>
     )
 }
+
 function CourseUser(params){
     let user = params.user
     let course = params.course
@@ -237,7 +238,6 @@ function SimulationUser(params){
     let user = params.user
     let simulations = params.simulations
     const [postoSimulazioni, setPostoSimulazioni] = useState(1);
-
     async function simulationBlock(idSimulation , btn){
         if(!btn.classList.contains('btn-pending')){
             try{
@@ -297,13 +297,76 @@ function SimulationUser(params){
     )
 }
 
+function DeckUser(params){
+    let user = params.user
+    let deck = params.deck
+    const [postoDeck, setPostoDeck] = useState(1);
 
+    async function deckBlock(idDeck , btn){
+        if(!btn.classList.contains('btn-pending')){
+            try{
+                let btntext= btn.innerText
+                btn.innerText = '';
+                btn.classList.add('btn-pending');
+        
+                let response= await fetch((env?.URL_SERVER || '') + '/api/master/block_deck', {
+                    method: 'POST',
+                    headers: {
+                        Accept: "application/json",
+                        "Content-Type": "application/json",
+                        "Access-Control-Allow-Credentials": true,
+                    },
+                    body: JSON.stringify({ idDeck: idDeck})
+                })
+                let data = await response.json();
+                alert(data.msg)
+        
+                btn.innerText = btntext;
+                btn.classList.remove('btn-pending');
+            }catch(e){console.log(e)}
+        }
+        }
 
+    let listaDeck = []
+    deck?.map((e, index)=> {
+    return listaDeck.push(
+        <li className='flex-content' key={e.t +' - ' +index}>
+            <span title='nome deck'>{e.t}</span>
+            <span title='stato deck'>stato: {(e?.block || !e.s ) ? 'non attivo' : 'attivo'}</span>
+            <span title='prezzo attuale'>{e.outlet > 0 ? 'in sconto a: '+ e.outlet  : e.price} €</span>
+            <span title='quante volte è stato comprato'> {e.nBuy} </span>
+            <span>
+                <button onClick={btn => {
+                    btn.preventDefault();
+                    deckBlock(e._id , btn.target)
+                }}>{(e.block) ? 'Sblocca' : 'Blocca'} Deck</button>
+    
+            </span>
+            
+            
+        </li>
+        )
+    })
+    return (
+            <div>
+                <p>Deck</p>
+                <Link to={"../../dashbord/card?user="+user._id}>Modifica un deck</Link>
+                {Boolean(listaDeck?.length) ? <Sezione
+                    elementi={listaDeck}
+                    divisione={10}
+                    down={true}
+                    postoSezioni={[postoDeck, setPostoDeck]}
+                /> : null}
+            </div>
+    )
+}
 
 export default function MasterViewUser(){
     let [user , setUser] = useState(null);
     let [course, setCourse] = useState(null);
     let [simulations , setSimulations] = useState(null);
+    let [decks , setDecks] = useState(null);
+    const [courseBuy, setCourseBuy] = useState(undefined);
     let param = useParams();
     
     useEffect(()=>{
@@ -319,8 +382,13 @@ export default function MasterViewUser(){
             })
             let data = await response.json()
             
-            if(data.user.grade.find(x => x === 'seller' || 'sellerBlock ' || 'sellerPending')) getCourse();
+            if(data.user.grade.find(x => x === 'course')) getCourse();
             if(data.user.grade.find(x => x === 'simulation' || 'simulationBlock')) getSimulation()
+            if(data.user.grade.find(x => x === 'card')) getDeck();
+            if(data.success){ 
+
+                if(data.courseName.length > 0) setCourseBuy(data.courseName)
+            }
 
 
             if(data.success) setUser(data.user);
@@ -339,7 +407,7 @@ export default function MasterViewUser(){
             body: JSON.stringify({id: param.user})
         })
         let data = await response.json();
-        if(data.success){ setCourse(data.data)
+        if(data.success){  setCourse(data.data)
         }else{ setCourse([])}
 
     }
@@ -359,14 +427,95 @@ export default function MasterViewUser(){
         }else{ setSimulations([])}
     }
 
+    async function getDeck(){
+        let response = await fetch((env?.URL_SERVER || '') + '/api/card/getDeckForMaster', {
+            method: 'POST',
+            headers:{
+                accept:'application/json',
+                'Content-Type': 'application/json',
+                "Access-Control-Allow-Credentials": true,
+            },
+            body: JSON.stringify({id: param.user})
+        })
+        let data = await response.json();
+       
+        if(data.success){ setDecks(data.deck)
+        }else{ setDecks([])}
+    }
+
+    async function deliteUserCourse(index , btn){
+        let sicuro = prompt('sicuro di voler cancellare il corso a questo utente , digita "si"')
+        if(sicuro.toLowerCase() === 'si'){
+            if(!btn.classList.contains('btn-pending')){
+                let textBtn = btn.innerHTML;
+                btn.classList.remove('btn-pendding');
+
+                fetch((env?.URL_SERVER || '' ) + '/api/master/delite_user_course' , {
+                    method : 'POST',
+                    headers: {
+                        Accept: "application/json",
+                        "Content-Type": "application/json",
+                        "Access-Control-Allow-Credentials": true,
+                    },
+                    body: JSON.stringify({
+                        userId: user._id,
+                        courseId: courseBuy[index][1]
+                    })
+                })
+                .then(jsonD => {return jsonD.json()})
+                .then(response =>{
+                    if(response.success){
+
+                        courseBuy.splice(index, 1);
+                        setCourseBuy(...courseBuy);
+                        
+                    }else{
+                        alert(response.msg);
+                    }
+    
+                    btn.classList.remove('btn-pendding');
+                    btn.innerHTML = textBtn;
+                })
+            }
+        }
+    }
+
+
 
     
     return(
         <div>
             <h1>Vedi utente</h1>
             <User user={user}/>
-            {(course) ? <CourseUser user={user} course = {course}/> : undefined}
-            {(simulations) ? <SimulationUser user={user} simulations = {simulations}/> : undefined}
+            {(course && user.grade.includes('course')) ? <CourseUser user={user} course = {course}/> : undefined}
+            {(simulations && (user.grade.includes('simulation') || user?.grade?.includes('simulationBlock'))) ? <SimulationUser user={user} simulations = {simulations}/> : undefined}
+            {(decks && user.grade.includes('card'))? <DeckUser user={user} deck = {decks}/> : undefined}
+            
+            {(courseBuy)
+            ?
+            <div>
+                <p>corsi posseduti</p>
+                <ul>
+                    {
+                    courseBuy.map((course, index) => {
+
+                        return (
+                            <li key={course[0]}>
+                                {course[0]}
+                                <button onClick={(e) => {e.preventDefault() ; deliteUserCourse(index, e.target)}}>
+                                    ellimina corso all'utente</button>
+                                
+                            </li>
+                        )
+                    })
+                    }
+                </ul>
+
+            </div>
+                
+
+
+            :undefined}
         </div>
         
     )

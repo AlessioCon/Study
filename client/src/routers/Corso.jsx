@@ -33,7 +33,7 @@ if(stripe){
             setMessage("stiamo processando il pagamento");
             break;
           case "requires_payment_method":
-            setMessage("il pagamento non è andato a buon fine , per favore riprova.");
+            setMessage("inserisci il metodo di pagamento");
             break;
           default:
             setMessage("qualcosa è andato storto.");
@@ -129,7 +129,8 @@ function PayStripe(prop){
 
 export default function Corso(){
     const [corso , setCorso] = useState(0);    
-    const [button , setButton] = useState(null)
+    const [button , setButton] = useState(null);
+    const [simulation , setSimulation] = useState([])
     const [clientSecret ,setClientSecret] = useState(null);
     const [subScriptionId , setSubScriptionId] = useState(null);
 
@@ -149,7 +150,9 @@ export default function Corso(){
                 })
                 let data = await response.json();
                 if(!data.success || data.data.s === 'true') return;
+                setSimulation(data.simulation);
                 return setCorso(data.data);
+                
     
             }catch(e){console.log(e);}
         }
@@ -193,13 +196,49 @@ export default function Corso(){
             if(!data.success) return false;
             setClientSecret(data.data.clientSecret);
             setSubScriptionId(data.data.subscriptionId);
-            //return {clientSecret: data.data.clientSecret , subscriptionId : data.data.subscriptionId}
-    
     
         }catch(e){if(e) console.log(e)}
     }
 
    
+
+//simulazioni
+    let simulationDisplay = []
+    simulation.map( (sim , simIndex) => {
+        let materie = []
+         sim[1].map((mat, matIndex)=>{
+
+            let capitoli = []
+            mat[1].map((cap, capIndex) => {
+
+                capitoli.push(
+                    <li key={cap[0]+capIndex}>
+                        <p>{cap[0]}</p>
+                        <p>quantità domande: 1</p>
+                    </li>
+                )
+            })
+            materie.push(
+                <li key={mat[0]+matIndex}>
+                    <p>{mat[0]}</p>
+                    <ul>
+                       { capitoli}
+                    </ul>
+                </li>
+            )
+         })
+         simulationDisplay.push(
+         <li key={sim[0]+simIndex}>
+            <p>{sim[0]}</p>
+            <ul>
+                {materie}
+            </ul>
+         </li>)
+    })
+
+
+
+
     //sistema pulsante
     let buttonDisplay;
     switch(button){
@@ -211,7 +250,6 @@ export default function Corso(){
                 <button onClick={async (e) => {
                     e.preventDefault() ;
                     await buyCurse(corso.idStripe);
-                    //if(data) window.open("/subscribe?clientSecret="+data.clientSecret+'&&idCourse='+corso._id+'&&subId='+data.subscriptionId, "_self");
                 }}>
                     compra corso
                 </button>)
@@ -284,6 +322,14 @@ export default function Corso(){
                         </li>)
                     })}
                     </ul>
+                    {(simulation.length !== 0) 
+                    ? 
+                    <div>
+                        <p>comprando il corso riceverai automaticamente le seguenti simulazioni</p>
+                        {simulationDisplay}
+                    </div>
+                    :undefined
+                    }
                     
                 </div>
                 {buttonDisplay}

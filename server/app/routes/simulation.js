@@ -3,8 +3,8 @@ const router = express.Router();
 
 const simulationController = require('../controller/simulationController')
 
-router.get('/' , simulationController.getAllSimulation)
-router.get('/simulations/:name' , simulationController.getSingleSimulation)
+router.get('/' , simulationController.getAllSimulation);
+router.post('/simulations/:name' , simulationController.getSingleSimulation);
 
 router.post('/create', simulationController.createSimulation) //crea simulazione
 router.put('/update', simulationController.updateSimulation) //modifica simulazione

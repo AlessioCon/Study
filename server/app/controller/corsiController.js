@@ -1,16 +1,17 @@
-let fs = require('fs');
+let fs = require('fs/promises');
 let path = require('path');
 
 const Validator = require('../../private_modules/validator');
 
 const userModel = require('../model/userModel');
 const courseModel = require('../model/corsiModel');
-const lessonModel = require('../model/lezioniModel')
-const stripeController = require('./stripeController')
+const lessonModel = require('../model/lezioniModel');
+const simulationModel = require('../model/simulationModel');
+const stripeController = require('./stripeController');
 
 async function getAllCourse(req,res){
     try{
-        let allCourse = await courseModel.find({s: {$nin:['true']}}).select('t id sale img sl s');
+        let allCourse = await courseModel.find({s: {$nin:['true']}}).select('t id sale img sl s simu');
         if(!allCourse) return res.json({success:false , data:'corsi non disponibili'});
 
         res.json({success:true, data:allCourse});
@@ -41,11 +42,24 @@ async function getAllUserCourse(req,res){
         };
 
         let lessonUser = await lessonModel.find({s: {$nin:['bozza']} , $or: [{'access.c': req.body.id}, {'access.prof.n':req.body.id}]}).select('n _id');
+        let simulationUser = await simulationModel.find({s: {$nin:['bozza']} ,  course: true , $or: [{'access.c': req.body.id}, {'access.prof.n':req.body.id}]}).select('n _id');
 
+        //cambio nome simulazione già inserita
+        let simulationName = []
+        for(let x = 0 ; x < allCourse.length; x++){
+            let simu = allCourse[x].simu;
 
+            let simul = []
+            for(let y = 0; y < simu.length; y++){
+                let simulation = await simulationModel.findById({_id: simu[y]}).select('n _id');
+                if(simulation){ simul.push([simulation.n , simulation._id.toString()]) }
+            }
+            simulationName.push(simul)
+        }
 
-        res.json({success:true, data:allCourse, lesson:lessonUser});
+        res.json({success:true, data:allCourse, lesson:lessonUser, simulation: simulationUser || [] , simulatioName: simulationName});
     }catch(e){
+        console.log(e)
         res.json({success:false, data:'error server'});
     }
 }
@@ -55,7 +69,23 @@ async function getOneCourse(req, res){
     try{
         let course = await courseModel.findOne({sl: req.params.slug})
         if(!course) return res.json({success:false , data:'corso non torvato'});
-        res.json({success: true, data:course})
+        if(!course?.simu) course.simu = [];
+        //dati necessari per le simulazioni
+        simulation = [];
+        for(let x = 0 ; x < course.simu.length ; x++){
+            let simu = await simulationModel.findById({_id: course.simu[x]}).select('n d chapter')
+            let materie = []
+            simu.chapter.map(mat => {
+                let capitoli = [];
+                mat.li_ma.map(cap => {
+                    capitoli.push([cap.t, cap.quiz.length])
+                })
+                materie.push([mat.ma, capitoli])
+            })
+            simulation.push([simu.n , materie])
+        }
+
+        res.json({success: true, data:course , simulation: simulation})
 
     }catch(e){console.log(e); return res.json({success:false , data:'errore db'})}
 }
@@ -103,30 +133,21 @@ async function updateCourse(req , res){
         let Var = validator.controll(input, option);
         if(Var.err) return res.json({success:false , data:Var.msg});
 
-        //sistema di memorizzazione file
-        let filePrecedente = await courseModel.findOne({_id: req.body._id}).select('img');
-        if(filePrecedente.img && dati.file?.file) await fs.unlink(path.join(__dirname , '../'+filePrecedente.img ), (err) => {if(err) console.log(err)});
         
-
         //sistema di memorizzazione file
-        if(dati?.img  && dati.img !== ''){fs.unlinkSync(__dirname + '/..'+ dati.img) ; dati.img = ''}
+        if(dati.file?.file && dati.file.file != 'not'){
 
-        if(dati.file?.file === 'not') dati.pathDati = '';
-
-        if(dati.file?.file && dati.file?.file != 'not'){
-            let pathName = path.join(__dirname, `../public/upload/course/${dati.access.creator}/` )
-            let pathCourse = path.join(pathName+dati.t.replaceAll(' ','-')) 
-            let pathComplite = path.join(pathCourse+'/'+dati.file.name.replaceAll(' ','-')) 
-            
-            //dcrivere nome utente e nome corso
-            if(!fs.existsSync(pathName)){ fs.mkdirSync(pathName)}
-            if(!fs.existsSync(pathCourse)){ fs.mkdirSync(pathCourse)}
-    
-            fs.writeFile(pathComplite , dati.file.file ,{ flag: 'a+' } , err => {
-                if(err) console.log('file non inviato '+ err)
-            })
-            if(dati.file.file && pathComplite !== dati.img) dati.pathDati = `/public/upload/course/${dati.access.creator}/${dati.t.replaceAll(' ','-')}/${dati.file.name.replaceAll(' ','-')}`;
+            let response = await fileSave(dati.file, dati.access.creator , dati.t);
+            if(!response) return res.json({success:false , msg:'problema nel caricare il file'});
+            dati.pathDati = response;
+        }else{
+            if(dati?.img && dati.img !== ''){
+                await fs.rm(dati.img);
+                dati.img = '';
+                dati.pathDati = '';
+            }
         }
+
 
         //controllo dei prof che hanno accesso
         let prof = [];
@@ -173,7 +194,8 @@ async function updateCourse(req , res){
             sl: dati.sl,
             s: dati.s,
             img: dati.pathDati,
-            idStripe: dati.idStripe
+            idStripe: dati.idStripe,
+            simu: dati.simu
         }
         
         
@@ -181,14 +203,10 @@ async function updateCourse(req , res){
         let idStripe = await stripeController.StripeUpdateProduct(course);
         if(!idStripe) res.json({success: false, dati:'corso non salvato per stripe'});
         
-        
-        
-
 
         course.idStripe = idStripe.id
 
 //-------------------
-
 
         await courseModel.updateOne({_id: dati._id}, course );
 
@@ -199,10 +217,8 @@ async function updateCourse(req , res){
 }
 
 async function createCourse(req, res){
-    
     try{
         let validator = new Validator();
-
 
         let dati = req.body;
         
@@ -260,21 +276,10 @@ async function createCourse(req, res){
 
         //sistema di memorizzazione file
         if(dati.file?.file){
-            let pathName = path.join(__dirname, `../public/upload/course/${dati.access.creator}/` )
-            let pathCourse = path.join(pathName+dati.t.replaceAll(' ','-')) 
-            let pathComplite = path.join(pathCourse+'/'+dati.file.name.replaceAll(' ','-')) 
-            
-            //srivere nome utente e nome corso
-            if(!fs.existsSync(pathName)){ fs.mkdirSync(pathName)}
-            if(!fs.existsSync(pathCourse)){ fs.mkdirSync(pathCourse)}
-    
-            fs.writeFile(pathComplite , dati.file.file ,{ flag: 'a+' } , err => {
-                if(err) console.log('file non inviato '+ err);
-            })
-            dati.pathDati = `/public/upload/course/${dati.access.creator}/${dati.t.replaceAll(' ','-')}/${dati.file.name.replaceAll(' ','-')}`;
+            let response = await fileSave(dati.file, dati.access.creator , dati.t);
+            if(!response) return res.json({success:false , msg:'problema nel caricare il file'});
+            dati.pathDati = response;
         }
-
-
         
         let controlTitle = courseModel.findOne({t:dati.t}).select('_id');
         if(controlTitle._id) return res.json({success: false, dati:'titolo corso già in uso'});
@@ -291,17 +296,16 @@ async function createCourse(req, res){
             slug: dati.sl,
             s:dati.s,
             img: dati.pathDati,
+            simu: dati.simu
         })
 
 
-//stripe implementation
-       let idStripe = await stripeController.StripeCreateProduct(course);
-       if(!idStripe) res.json({success: false, dati:'corso non salvato per stripe'});
-
-
+        //stripe implementation
+        let idStripe = await stripeController.StripeCreateProduct(course);
+        if(!idStripe) res.json({success: false, dati:'corso non salvato per stripe'});    
         course.idStripe = idStripe.id
 
-//-------------------
+        //-------------------
         await course.save();  
         return res.json({success:true , data:'course is live'})
 
@@ -320,7 +324,14 @@ async function deleteCourse(req, res){
 
         //sistema di memorizzazione file
         let filePrecedente = await courseModel.findOne({_id: req.params.id}).select('img');
-        if(filePrecedente.img) await fs.unlink(path.join(__dirname , '../'+filePrecedente.img) , (err) => console.log(err));
+        if(filePrecedente?.img && filePrecedente.img !== ''){
+            try{
+                await fs.rm(filePrecedente.img);
+                await fs.rmdir(path.join(filePrecedente.img, '../'));
+            }catch(e){console.log('non è stato possibile cancellare il file')}
+        }
+
+        
 
         //cancellazione da stripe
         await stripeController.StripeDeleteProduct(req.body.idStripe);
@@ -361,10 +372,25 @@ async function getModifyCourse(req, res){
 
     
         let lessonUser = await lessonModel.find({s: {$nin:['bozza']} , $or: [{'access.c': req.body.id}, {'access.prof.n':req.body.id}]}).select('n _id');
+        let simulationUser = await simulationModel.find({s: {$nin:['bozza']} ,  course: true , $or: [{'access.c': req.body.id}, {'access.prof.n':req.body.id}]}).select('n _id');
 
-        return res.json({success:true, data:full , lesson:lessonUser});
+        //cambio nome simulazione già inserita
+        let simulationName = []
+        for(let x = 0 ; x < full.length; x++){
+            let simu = full[x].simu;
+
+            let simul = []
+            for(let y = 0; y < simu.length; y++){
+                let simulation = await simulationModel.findById({_id: simu[y]}).select('n _id');
+                if(simulation){ simul.push([simulation.n , simulation._id.toString()]) }
+            }
+            simulationName.push(simul)
+        }
+
+        return res.json({success:true, data:full , lesson:lessonUser, simulation: simulationUser || [] , simulatioName: simulationName});
 
     }catch(e){
+        console.log(e)
         res.json({success:false, data:'error server'});
     }
 }
@@ -494,6 +520,51 @@ async function accessoCorso(user, idCourse){
     }catch(e){console.log(e); return {success:err, date:'errore controllo utente accesso al corso'}}
 }
 
+//memorizzazione di un file
+async function fileSave(file , creator , title){
+    //creator nome creatore   //title   titolo del corso    //file    nome del file
+    
+    let pathName = path.join(__dirname, `../public/upload/course/${creator}/`);
+    let pathCourse = path.join(pathName , title.replaceAll(' ','-'));
+    let pathComplite = path.join(pathCourse , file.name.replaceAll(' ','-'));
+
+    //controllare se le cartelle esistono
+    try{
+        //directory id creatore
+        try{ await fs.mkdir(pathName);}
+        catch(err){
+            if(err.code !== 'EEXIST'){ 
+                console.log(`errore nel trovare la directori < ${pathName} >`);
+                return false
+            };
+        }
+        //directory id > nome_corso
+        try{ await fs.mkdir(pathCourse);}
+        catch(err){
+            if(err.code !== 'EEXIST'){ 
+                console.log(`errore nel trovare la directori < ${pathCourse} >`);
+                return false
+            };
+        }
+        //cancellare i possibili file pre-esistenti
+        let AllFile = await fs.readdir(pathCourse)
+        for(file of AllFile){
+            try{
+                let pathForFile = path.join(pathCourse , file)
+                await fs.rm(pathForFile);
+            }catch(e){console.log(`il file ${file} non è stato concellato`) ; return false}
+        }
+
+        //inserire il nuovo file
+        await fs.writeFile(pathComplite, String(file.file) ,{flag:'w'});
+        return pathComplite;
+    }catch(e){console.log('problema nel caricare il file sul server') ; console.log(e);return false}
+    
+
+
+}
+
+
 
 module.exports = {
     getAllCourse,
@@ -507,5 +578,4 @@ module.exports = {
     answersControl,
     saveProgress,
     getAllUserCourse
-
 }

@@ -1,4 +1,4 @@
-let fs = require('fs');
+let fs = require('fs/promises');
 let path = require('path');
 
 const Validator = require('../../private_modules/validator');
@@ -47,22 +47,14 @@ async function save(req, res){
         let validator = new Validator()
 
         let dati = req.body;
-        
+
         //sistema di memorizzazione file
         if(dati.file?.file){
-            let pathName = path.join(__dirname, `../public/upload/lesson/${dati.access.creator}/` )
-            let pathCourse = path.join(pathName+dati.ltitle.replaceAll(' ','-')) 
-            let pathComplite = path.join(pathCourse+'/'+dati.file.name.replaceAll(' ','-')) 
-            
-            //dcrivere nome utente e nome corso
-            if(!fs.existsSync(pathName)){ fs.mkdirSync(pathName)}
-            if(!fs.existsSync(pathCourse)){ fs.mkdirSync(pathCourse)}
-    
-            fs.writeFile(pathComplite , dati.file.file ,{ flag: 'a+' } , err => {
-                if(err) console.log('file non inviato '+ err)
-            })
-            dati.pathDati = `/public/upload/lesson/${dati.access.creator}/${dati.ltitle.replaceAll(' ','-')}/${dati.file.name.replaceAll(' ','-')}`;
+            let response = await fileSave(dati.file , dati.access.creator , dati.ltitle );
+            if(!response) return res.json({success:false , msg:'non è stato possibile salvare i dati'});
+            dati.pathDati = response;
         }
+
 
         //eccezioni dati 
         dati.time = dati.time ?? 0;
@@ -162,29 +154,18 @@ async function update(req,res){
         let dati = req.body;
 
         //sistema di memorizzazione file
-        let filePrecedente = await lessonModel.findOne({_id: req.body._id}).select('f')
-        if(filePrecedente.f && dati.file?.file) await fs.unlink(path.join(__dirname , '../'+filePrecedente.f) , (err) => {if(err) console.log(err)});
-        
-
-        //sistema di memorizzazione file
-        if(dati?.f  && dati.f !== ''){fs.unlinkSync(__dirname + '/..'+ dati.f) ; dati.f = ''}
-
-        if(dati.file?.file === 'not') dati.pathDati = '';
-
         if(dati.file?.file && dati.file?.file !== 'not'){
-            let pathName = path.join(__dirname, `../public/upload/lesson/${dati.access.creator}/` )
-            let pathCourse = path.join(pathName+dati.ltitle.replaceAll(' ','-')) 
-            let pathComplite = path.join(pathCourse+'/'+dati.file.name.replaceAll(' ','-')) 
-            
-            //dcrivere nome utente e nome corso
-            if(!fs.existsSync(pathName)){ fs.mkdirSync(pathName)}
-            if(!fs.existsSync(pathCourse)){ fs.mkdirSync(pathCourse)}
-    
-            fs.writeFile(pathComplite , dati.file.file ,{ flag: 'a+' } , err => {
-                if(err) console.log('file non inviato '+ err)
-            })
-            if(dati.file.file && pathComplite !== dati.f) dati.pathDati = `/public/upload/lesson/${dati.access.creator}/${dati.ltitle.replaceAll(' ','-')}/${dati.file.name.replaceAll(' ','-')}`
+            let response = await fileSave(dati.file , dati.access.creator , dati.ltitle );
+            if(!response) return res.json({success:false , msg:'non è stato possibile salvare i dati'});
+            dati.pathDati = response;
+        }else{
+            if(dati?.f && dati.f !== ''){
+                await fs.rm(dati.f);
+                dati.f = '';
+                dati.pathDati = '';
+            }
         }
+
 
         dati.time = dati.time ?? 0;
         dati.timeText = dati.timeText ?? 'ore';
@@ -288,8 +269,12 @@ async function deleteLesson(req,res){
 
         //sistema di memorizzazione file
         let filePrecedente = await lessonModel.findOne({_id: req.params.id}).select('f')
-        if(filePrecedente.f) await fs.unlink(path.join(__dirname , '../'+filePrecedente.f) , (err) => console.log(err));
-                
+        if(filePrecedente?.f && filePrecedente.f !== ''){
+            try{
+                await fs.rm(filePrecedente.f);
+                await fs.rmdir(path.join(filePrecedente.f, '../'));
+            }catch(e){console.log('non è stato possibile cancellare il file')}
+        }
 
         let response = await lessonModel.deleteOne({_id: req.params.id});
         if(!Boolean(response.deletedCount)) return res.json({success:false, msg:'lesson not found'})
@@ -337,13 +322,50 @@ async function accessLesson(idUser, idlesson){
     }catch(e){console.log(e); return {success:err, date:'errore controllo utente accesso al corso'}}
 }
 
+//memorizzazione di un file
+async function fileSave(file , creator , title){
+    //creator nome creatore   //title   titolo del corso    //file    nome del file
+    
+    let pathName = path.join(__dirname, `../public/upload/lesson/${creator}/`);
+    let pathCourse = path.join(pathName , title.replaceAll(' ','-'));
+    let pathComplite = path.join(pathCourse , file.name.replaceAll(' ','-'));
+
+    //controllare se le cartelle esistono
+    try{
+       
+        //directory id creatore
+        try{await fs.mkdir(pathName, {recorsive: true})}
+        catch(err){
+            if(err.code !== 'EEXIST'){ 
+                console.log(`errore nel trovare la directori < ${pathName} >`);
+                return false
+            };
+        }
+        //directory id > nome_corso
+        try{ await fs.mkdir(pathCourse);}
+        catch(err){
+            if(err.code !== 'EEXIST'){ 
+                console.log(`errore nel trovare la directori < ${pathCourse} >`);
+                return false
+            };
+        }
+        //cancellare i possibili file pre-esistenti
+        let AllFile = await fs.readdir(pathCourse)
+        for(file of AllFile){
+            try{
+                let pathForFile = path.join(pathCourse , file)
+                await fs.rm(pathForFile);
+            }catch(e){console.log(`il file ${file} non è stato concellato`) ; return false}
+        }
+
+        //inserire il nuovo file
+        await fs.writeFile(pathComplite, String(file.file) ,{flag:'w'});
+        return pathComplite;
+    }catch(e){console.log('problema nel caricare il file sul server') ; console.log(e);return false}
+    
 
 
-
-
-
-
-
+}
 
 
 module.exports = {

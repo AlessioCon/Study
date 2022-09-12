@@ -24,6 +24,14 @@ function listCourse(corsi, filter){
                     <p>{corso.t}</p>
                     <p>{corso.sale.p} €</p>
                     <p>{corso.sale.o} €</p>
+                    {(corso?.simu && corso?.simu.length !== 0) 
+                    ? <p>{(corso?.simu.length > 1) 
+                        ? 'previste '+corso?.simu.length+' simulazioni private' 
+                        : 'prevista 1 simulazione privata'}</p>
+                    :undefined
+
+                    }
+                    
                     </NavLink>
                 )}
             </div>

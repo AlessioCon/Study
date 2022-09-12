@@ -15,12 +15,13 @@ export default function Simulation(){
     useEffect(()=>{
         async function getSimulation(){
             let respons = await fetch((env?.URL_SERVER || '' )+ '/api/simulation/simulations/'+param.name,{
-                method: 'GET',
+                method: 'POST',
                 header: {
                     accept:'application/json',
                     'Content-type':'application/json',
                     'Access-Control-Allow-Credentials': true
-                }
+                },
+                body:JSON.stringify({start: false})
             })
             let data = await  respons.json();
             setSimulation(data.data);
@@ -89,8 +90,9 @@ export default function Simulation(){
 
     return(
         <div>
-            {(1 === 1) ? bodySimulation : undefined} 
-            <form onSubmit={e => {e.preventDefault(); startSimulation(e)}}>
+            {bodySimulation}
+            {(simulation)
+            ?<form onSubmit={e => {e.preventDefault(); startSimulation(e)}}>
                 <p>scegli se attivare il timer</p>
                 <div>
                     <label htmlFor='time' >timer si</label>
@@ -104,6 +106,11 @@ export default function Simulation(){
                 </div>
                 <button>inizia</button>
             </form>
+            :undefined
+            
+            
+            }
+            
             
         </div>
     )

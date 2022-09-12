@@ -9,8 +9,9 @@ const stripeController = require('../controller/stripeController')
 const checkUserLogin = require('../middleware/check-user-login');
 
 
-router.post('/create-subscription' , checkUserLogin(), stripeController.CreateSubscription)
-router.post('/amount_product' , stripeController.amountProduct)
+router.post('/create-subscription' , checkUserLogin(), stripeController.CreateSubscription);
+router.post('/buy-deck' , checkUserLogin(), stripeController.BuyDeck);
+router.post('/amount_product' , stripeController.amountProduct);
 
 
 

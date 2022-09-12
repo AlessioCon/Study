@@ -9,6 +9,7 @@ const stripeController  = require('../controller/stripeController');
 
 router.post('/getuser',  userController.getUser)
 router.post('/payCourse' , userController.payCourse);//utente ha pagato il corso con successo
+router.post('/payDeck' , userController.payDeck);//utente ha pagato il deck con successo
 
 router.get('/haveCourse/:id/:idCourse' , userController.haveCourse); //controllare se ha il corso
 router.post('/getseller' , userController.getUserSeller);
@@ -17,6 +18,7 @@ router.post('/seller/strip_update_info' , stripeController.updateInfoSeller)
 router.post('/seller/stripe_login' , stripeController.stripeLogin)
 
 router.post('/fromIdToUser' , userController.fromIdToUser)
+router.post('/fromUserToId' , userController.fromUserToId)
 
 router.put('/update' , userController.updateUser)
 

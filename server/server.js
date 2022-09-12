@@ -1,6 +1,6 @@
 const express = require('express');
 const passport = require('passport');
-const fs = require('fs');
+const fs = require('fs/promises');
 const cors = require('cors');
 const path = require('path')
 let userModel = require('./app/model/userModel')
@@ -56,6 +56,7 @@ app.use(passport.session());
 const signRouter = require('./app/routes/sign');
 const userRouter = require('./app/routes/user');
 const corsiRouter = require('./app/routes/corsi');
+const cardRouter = require('./app/routes/card');
 const lessonRouter = require('./app/routes/lesson');
 const simulationRouter = require('./app/routes/simulation');
 const stripeRouter = require('./app/routes/stripe');
@@ -68,16 +69,16 @@ app.use('/api/sign'  ,  signRouter);
 app.use('/api/corsi' ,  corsiRouter);
 app.use('/api/lesson',  lessonRouter);
 app.use('/api/simulation',  simulationRouter);
-app.use('/api/card',  simulationRouter)
+app.use('/api/card',  cardRouter);
 app.use('/api/user'  ,  checkUserLogin() ,userRouter);
 app.use('/api/stripe'  , stripeRouter);
 app.use('/api/master', masterRouter);
 
-app.post('/api/download' , (req,res) => {
+app.post('/api/download' , async (req,res) => {
 
     let href= req.body.href
-    let base64Image = fs.readFileSync('app'+href, {encoding: 'UTF-8'} ,(err) => {if(err) console.log(err)})
-    return res.json({url:base64Image})
+    let base64 = await fs.readFile(href, {encoding: 'UTF-8'})
+    return res.json({url:base64})
 })
 
 //----------------------------------------------------

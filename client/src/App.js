@@ -14,7 +14,6 @@ import Corso    from './routers/Corso';
 import Simulations    from './routers/Simulations';
 import Simulation    from './routers/Simulation';
 
-
 import Header   from './component/Header';
 
 import UserDashbord from './component/dashbord/UserDashbord';
@@ -24,6 +23,7 @@ import CreateSimulation from './component/course/CreateSimulation';
 import UserSeller from './component/dashbord/UserSeller';
 import MasterDashbord from './component/dashbord/MasterDashbord';
 import MasterViewUser from './component/dashbord/MasterViewUser';
+import Card    from './component/dashbord/Card';
 
 import UserCorsi from './routers/UserCorsi'
 import UserCorso from './routers/UserCorso';
@@ -34,6 +34,7 @@ import UserSimulationInfo from './routers/UserSimulationsInfo';
 import SettingUser from './component/dashbord/SettingUser';
 
 import Status from './routers/Status';
+import ItemStatus from './routers/ItemStatus';
 import Messages from './component/dashbord/Messages';
 
 
@@ -73,9 +74,11 @@ function App (){
 
 
 
-let isMaster = Boolean(user?.grade?.find(e => e === 'master'))
-let isSeller = Boolean(user?.grade?.find(e => {if(e === 'seller' || e === 'sellerPending') return true}))
-let isCrSimulation = Boolean(user?.grade?.find(e => e === 'simulation'))
+let isMaster = user?.grade?.find(e => e === 'master')
+let isSeller = user?.grade?.find(e => {if(e === 'seller' || e === 'sellerPending') return true})//per menu stripe principalmente
+let isSellerV=   user?.grade?.find(e => e === 'seller')//venditore effettivo
+let isCourseV =  user?.grade?.find(e => e === 'course');
+let isSimuV = user?.grade?.find(e => e === 'simulation')
 
     return(
         <BrowserRouter>
@@ -94,11 +97,12 @@ let isCrSimulation = Boolean(user?.grade?.find(e => e === 'simulation'))
                     <Route path="simulazioni" element={<UserSimulations/>}/>
                     <Route path="simulazioni/:simId" element={<UserSimulationInfo/>}/>
                     <Route path="msg" element={<Messages/>}/>
+                    <Route path="card" element={<Card/>}/>
                 </Route>
                 <Route path="impostazioni/utente" element={user ? <SettingUser/> : <Navigate to="/login"/> }/>
-                <Route path="dashbord/crea-lezioni" element={(isSeller || isMaster) ? <CreateLesson/> : <Navigate to="/dashbord"/> }/>
-                <Route path="dashbord/crea-corso" element={(isSeller || isMaster) ? <CreateCourse/> : <Navigate to="/dashbord"/>}/>
-                <Route path="dashbord/crea-simulazioni" element={(isCrSimulation || isMaster) ? <CreateSimulation/> : <Navigate to="/dashbord"/>}/>
+                <Route path="dashbord/crea-lezioni" element={((isSellerV && isCourseV) || isMaster) ? <CreateLesson/> : <Navigate to="/dashbord"/> }/>
+                <Route path="dashbord/crea-corso" element={((isSellerV && isCourseV) || isMaster) ? <CreateCourse/> : <Navigate to="/dashbord"/>}/>
+                <Route path="dashbord/crea-simulazioni" element={(isSimuV || isMaster) ? <CreateSimulation/> : <Navigate to="/dashbord"/>}/>
 
                 <Route path="master/view/:user"  element={isMaster ? <MasterViewUser/> : <Navigate to="/dashbord"/>}/>
 
@@ -111,6 +115,7 @@ let isCrSimulation = Boolean(user?.grade?.find(e => e === 'simulation'))
         
 
                 <Route path="stripe/status" element={<Status/>}/>
+                <Route path="stripe/itemStatus" element={<ItemStatus/>}/>
 
                 <Route path="user/corso/:idUser/:idCorso" element={user ? <UserCorso/> : <Navigate to="/login"/>}/>
                 <Route path="user/simulation/:nameSim" element={user ? <UserSimulation/> : <Navigate to="/login"/>}/>
