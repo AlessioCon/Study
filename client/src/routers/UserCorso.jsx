@@ -16,22 +16,23 @@ async function downloadFile(href){
              href: href,
          })
        })
-     let data = await response.json();
-     
+     let blobPdf = await response.blob();
+   
      let fileTypeIndex = href.split('\\')
      let fileType = fileTypeIndex[fileTypeIndex.length -1]
-     
- 
-     const link = document.createElement("a");
-     link.href = data.url;
-     link.setAttribute("download", fileType); //or any other extension
-     document.body.appendChild(link);
-     link.click()    
-     
- 
- 
+
+     const reader = new FileReader();
+     reader.readAsDataURL(blobPdf);
+
+     reader.onload = () =>{    
+        const link = document.createElement("a");
+        link.href = reader.result;
+        link.setAttribute("download", fileType); //or any other extension
+        document.body.appendChild(link);
+        link.click()                           
+    }
      }catch(e){console.log(e)}
- };
+};
 
 
 

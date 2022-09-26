@@ -24,6 +24,7 @@ const userSchema = new Schema({
     grade: [{type: String, default: 'user'}],
     idStripe: {type: String},
     idSS: {type: String , alias:'isStripeSeller'},//id del venditore
+    insta: {type:String, alias: 'instagram'},
 
 
     /*gestione corsi*/

@@ -1,14 +1,19 @@
 const express = require('express');
+const fileUpload = require('express-fileupload');
+const helmet = require('helmet');
 const passport = require('passport');
 const fs = require('fs/promises');
+const fsStream = require('fs').createReadStream
 const cors = require('cors');
 const path = require('path')
-let userModel = require('./app/model/userModel')
+let userModel = require('./app/model/userModel');
 
 
 
 
 const app = express();
+app.use(helmet());
+app.use(fileUpload());
 
 require('dotenv').config();
 const port = process.env.PORT || 8080;
@@ -75,10 +80,20 @@ app.use('/api/stripe'  , stripeRouter);
 app.use('/api/master', masterRouter);
 
 app.post('/api/download' , async (req,res) => {
-
-    let href= req.body.href
-    let base64 = await fs.readFile(href, {encoding: 'UTF-8'})
-    return res.json({url:base64})
+ try{
+    let read = fsStream(req.body.href);
+    //nome
+    
+    let NameArr = req.body.href.split(/\\/g);
+    let attName = NameArr[NameArr.length -1];
+    
+    read.on('open', () => {
+        res.attachment(attName);
+        read.pipe(res)
+    });
+    read.on('error' , err => console.log(err))
+ }catch(e){console.log('errore server ooo '+e), res.json({success:'error'})};
+   
 })
 
 //----------------------------------------------------
@@ -144,6 +159,9 @@ io.on("connection", (socket) => {
 })
 
 serverIo.listen(process.env.PortIo, () => console.log(`SocketIo on port ${process.env.PortIo}`));
+
+
+
 
 
 

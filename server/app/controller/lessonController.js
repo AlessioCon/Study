@@ -48,14 +48,6 @@ async function save(req, res){
 
         let dati = req.body;
 
-        //sistema di memorizzazione file
-        if(dati.file?.file){
-            let response = await fileSave(dati.file , dati.access.creator , dati.ltitle );
-            if(!response) return res.json({success:false , msg:'non è stato possibile salvare i dati'});
-            dati.pathDati = response;
-        }
-
-
         //eccezioni dati 
         dati.time = dati.time ?? 0;
         dati.timeText = dati.timeText ?? 'ore';
@@ -133,11 +125,18 @@ async function save(req, res){
             time: dati.time + ' ' + dati.timeText,
             access: dati.access,
             quiz: (dati.quiz) ? dati.quiz : null,
-            file: dati.pathDati ?? '',
             point: dati.point
         })
 
-        await lesson.save();
+        let lessonId = await lesson.save();
+         //sistema di memorizzazione file
+         if(dati.file?.file){
+            let response = await fileSave(dati.file , dati.access.creator , lessonId._id.toString() );
+            if(!response) return res.json({success:false , msg:'non è stato possibile salvare i dati'});
+            dati.pathDati = response;
+        }
+        lessonId.file = dati.pathDati || '';
+        await lessonId.save();
         return res.json({success:true , data:'lesson is live'})
 
     }catch(e){
@@ -155,7 +154,7 @@ async function update(req,res){
 
         //sistema di memorizzazione file
         if(dati.file?.file && dati.file?.file !== 'not'){
-            let response = await fileSave(dati.file , dati.access.creator , dati.ltitle );
+            let response = await fileSave(dati.file , dati.access.creator , dati._id );
             if(!response) return res.json({success:false , msg:'non è stato possibile salvare i dati'});
             dati.pathDati = response;
         }else{
@@ -359,7 +358,8 @@ async function fileSave(file , creator , title){
         }
 
         //inserire il nuovo file
-        await fs.writeFile(pathComplite, String(file.file) ,{flag:'w'});
+        const base64Data = file.file.split('base64,')[1];
+        await fs.writeFile(pathComplite, base64Data ,{encoding: 'base64'});
         return pathComplite;
     }catch(e){console.log('problema nel caricare il file sul server') ; console.log(e);return false}
     

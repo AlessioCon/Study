@@ -325,6 +325,37 @@ async function blockDeck(req, res){
     }catch(e){console.log(e)}
 }
 
+async function sendMsgGlobal(req, res){
+    try{
+        let master = await masterRetrive(req.body.idMaster)
+        if(master.success === false) return res.json({success: false , msg: master.msg})
+  
+        let allUser = await userModel.find({_id: {$nin: [req.body.idMaster]}}).select('_id');
+        if(!allUser) return res.json({success: false , msg:'utenti non trovati'});
+
+
+        for (let x = 0 ; x < allUser.length; x++){
+            let user = await userModel.findById({_id: allUser[x]._id.toString()})
+            if(!user) continue;
+
+            if(!user?.msg) user.msg = {alert: true, posta: []};
+            user.msg.alert = true;
+            user.msg.posta.unshift(
+                {
+                    tipe: req.body.msg.type,
+                    msg: [...req.body.msg.body]
+                }
+            )
+            if(user.msg.posta.length > 100) user.msg.posta = user.msg.posta.slice(0,100);
+     
+            await user.save();
+        }
+
+
+        return res.json({success: true , msg: 'messaggio inviato correttamente'})
+    }catch(e){console.log(e); return res.json({success:'error'})}
+}
+
 
 
 
@@ -352,5 +383,6 @@ module.exports = {
     blockSimulation,
 
     allCreatorCards,
-    blockDeck
+    blockDeck,
+    sendMsgGlobal
 }

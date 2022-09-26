@@ -1,5 +1,5 @@
 let path = require('path');
-let fs = require('fs');
+let fs = require('fs/promises');
 
 let userModel = require('../model/userModel');
 let simulationModel = require('../model/simulationModel');
@@ -81,6 +81,12 @@ async function getSaveAnswere(req, res){
 async function createSimulation(req, res){
     try{
         let dati = req.body;
+
+        if(/[^a-z-]/g.test(dati.pack.toLowerCase())){ return res.json({success:false , msg:'formato raccolta non valido'})}
+        dati.pack = dati.pack.toLowerCase();
+
+
+
         let validator = new Validator();
     
         dati.time= parseInt(dati.time) || 30;
@@ -139,22 +145,6 @@ async function createSimulation(req, res){
         }
     
         dati.access.user = user;
-
-        //sistema di memorizzazione file
-        if(dati.file?.file){
-            let pathName = path.join(__dirname, `../public/upload/simulation/${dati.access.c}/` )
-            let pathCourse = path.join(pathName+dati.n.replaceAll(' ','-')) 
-            let pathComplite = path.join(pathCourse+'/'+dati.file.name.replaceAll(' ','-')) 
-            
-            //dcrivere nome utente e nome corso
-            if(!fs.existsSync(pathName)){ fs.mkdirSync(pathName)}
-            if(!fs.existsSync(pathCourse)){ fs.mkdirSync(pathCourse)}
-    
-            fs.writeFile(pathComplite , dati.file.file ,{ flag: 'a+' } , err => {
-                if(err) console.log('file non inviato '+ err)
-            })
-            dati.pathDati = `/public/upload/simulation/${dati.access.c}/${dati.n.replaceAll(' ','-')}/${dati.file.name.replaceAll(' ','-')}`;
-        }
     
     
         //controllo db
@@ -163,10 +153,11 @@ async function createSimulation(req, res){
 
         const simulation = new simulationModel({
             name: dati.n,
+            pack: dati.pack,
             description: dati.d,
             status: (dati.s) ? 'bozza' : 'pubblico',
             access: dati.access,
-            file: dati.pathDati ?? '',
+            file: '',
             time: dati.time,
             chapter: dati.chapter,
             reset: reset,
@@ -175,7 +166,19 @@ async function createSimulation(req, res){
             course: dati.course
         })
 
-        await simulation.save();
+        let simulationId = await simulation.save();
+
+        //sistema di memorizzazione file
+        if(dati.file?.file){
+            let response = await fileSave(dati.file, dati.access.c , simulationId._id.toString());
+            if(!response) return res.json({success:false , msg:'problema nel caricare il file'});
+            dati.pathDati = response;
+            simulationId.file = dati.pathDati || '';
+            await simulation.save();
+        }
+       
+
+
         return res.json({success:true , data:'la simulazione è stata salvata'})
 
     }catch(e){console.log(e); res.json({success:'errorr'})}
@@ -185,6 +188,11 @@ async function createSimulation(req, res){
 async function updateSimulation(req, res){
     try{
         let dati = req.body;
+
+        if(/[^a-z-]/g.test(dati.pack.toLowerCase())){ return res.json({success:false , msg:'formato raccolta non valido'})}
+        dati.pack = dati.pack.toLowerCase();
+
+
         let validator = new Validator();
     
         dati.time = parseInt(dati.time) || 30;
@@ -240,23 +248,17 @@ async function updateSimulation(req, res){
         dati.access.user = user;
 
         //sistema di memorizzazione file
-        if(dati?.f  && dati.f !== ''){fs.unlinkSync(__dirname + '/..'+ dati.f) ; dati.f = ''}
+        if(dati.file?.file && dati.file.file != 'not'){
 
-        if(dati.file?.file === 'not') dati.pathDati = '';
-
-        if(dati.file?.file && dati.file?.file !== 'not'){
-            let pathName = path.join(__dirname, `../public/upload/simulation/${dati.access.c}/` )
-            let pathCourse = path.join(pathName+dati.n.replaceAll(' ','-')) 
-            let pathComplite = path.join(pathCourse+'/'+dati.file.name.replaceAll(' ','-')) 
-            
-            //dcrivere nome utente e nome corso
-            if(!fs.existsSync(pathName)){ fs.mkdirSync(pathName)}
-            if(!fs.existsSync(pathCourse)){ fs.mkdirSync(pathCourse)}
-    
-            fs.writeFile(pathComplite , dati.file.file ,{ flag: 'a+' } , err => {
-                if(err) console.log('file non inviato '+ err)
-            })
-            if(dati.file.file && pathComplite !== dati.f) dati.pathDati = `/public/upload/simulation/${dati.access.c}/${dati.n.replaceAll(' ','-')}/${dati.file.name.replaceAll(' ','-')}`
+            let response = await fileSave(dati.file, dati.access.c , dati._id);
+            if(!response) return res.json({success:false , msg:'problema nel caricare il file'});
+            dati.pathDati = response;
+        }else{
+            if(dati?.f && dati.f !== ''){
+                await fs.rm(dati.f);
+                dati.f = '';
+                dati.pathDati = '';
+            }
         }
     
         //controllo db
@@ -271,6 +273,7 @@ async function updateSimulation(req, res){
 
         const simulation = {
             n: dati.n,
+            pack: dati.pack,
             d: dati.d,
             s: (dati.s) ? 'bozza' : 'pubblico',
             access: dati.access,
@@ -318,9 +321,13 @@ async function deleteSimulation(req, res){
         
 
         //sistema di memorizzazione file
-        let filePrecedente = simulation.f || undefined;
-        if(filePrecedente) await fs.unlink(path.join(__dirname , '../'+filePrecedente) , (err) => console.log(err));
-
+        let filePrecedente = await simulationModel.findOne({_id: req.params.id}).select('f');
+        if(filePrecedente?.f && filePrecedente.f !== ''){
+            try{
+                await fs.rm(filePrecedente.f);
+                await fs.rmdir(path.join(filePrecedente.f, '../'));
+            }catch(e){console.log('non è stato possibile cancellare il file')}
+        }
 
         let resp = await simulationModel.findByIdAndDelete(req.params.id);
         if(!resp) return res.json({success: false , date:'corso non trovato per X'});
@@ -341,9 +348,9 @@ async function deletePublicDate(req, res){
     
     
         simulation.table = []
-        simulation.chapter.map((cap , capIndex) => {
-            cap.quiz.map((dom, domIndex) => {
-                dom.answere.map((answere , ansindex) => {
+        simulation.chapter?.map((cap , capIndex) => {
+            cap.quiz?.map((dom, domIndex) => {
+                dom.answere?.map((answere , ansindex) => {
                     simulation.chapter[capIndex].quiz[domIndex].answere[ansindex].p = 0
                 })
             })
@@ -518,7 +525,8 @@ try{
 
 
     if(!userDb?.simu) userDb.simu = [];
-        let simulationUser = userDb.simu.findIndex(x => x.simId)
+        let simulationUser = userDb.simu.findIndex(x => x.simId === sim)
+        
         if(simulationUser !== -1 ){
             
             userDb.simu[simulationUser].hit += 1
@@ -655,26 +663,102 @@ async function getUserSimulations(req , res){
         if(!user) return res.json({success: false, msg: 'utente non trovato'})
 
         let simulations = []
+        let macroStatistiche = []
         if(Boolean(user?.simu.length)){
             for(let sim = 0 ; sim < user.simu.length ; sim++){
 
                 let simu = {
                     n: 'simulazione cancellata!',
                     hit: user.simu[sim].hit,
-                    simId: user.simu[sim].simId
+                    simId: user.simu[sim].simId,
                 }
 
-                let simulation = await simulationModel.findById({_id: user.simu[sim].simId}).select('n');
-                if(simulation) simu.n = simulation.n;
+                let simulation = await simulationModel.findById({_id: user.simu[sim].simId}).select('n pack');
+
+                if(simulation){ 
+                    simu.n = simulation.n;
+                    if(user.simu[sim]?.stat){
+                       
+                        let indexPack = macroStatistiche.findIndex(x => x.pack === simulation.pack);
+                        if(indexPack === -1) indexPack = macroStatistiche.push({ pack: simulation.pack , materie:[]}) - 1
+    
+                        user.simu[sim].stat.forEach(materia => {
+                            console.log()
+                            let indexMateria = macroStatistiche[indexPack].materie.findIndex(x => x.materia === materia.mat);
+                            if(indexMateria === -1 ) indexMateria = macroStatistiche[indexPack].materie.push({ materia: materia.mat , capitoli:[]}) - 1
+    
+ 
+                            materia.cap.forEach(capitolo => {
+                                let indexCapitolo = macroStatistiche[indexPack].materie[indexMateria].capitoli.findIndex(x => x.capitolo === capitolo.n);
+                                if(indexCapitolo === -1 ){
+                                    
+                                    macroStatistiche[indexPack].materie[indexMateria].capitoli.push({ capitolo: capitolo.n , num: capitolo.num})                      
+                                }else{
+                                    let percentuale = (macroStatistiche[indexPack].materie[indexMateria].capitoli[indexCapitolo].num +  capitolo.num)/2
+
+                                    macroStatistiche[indexPack].materie[indexMateria].capitoli[indexCapitolo].num =  Number.parseInt(percentuale)
+                                }
+                                
+                            })
+                        })
+                    }
+
+                }
                 
                 simulations.push(simu)
             }
         }
 
-        return res.json({success: true , simulations: simulations})
+
+        return res.json({success: true , simulations: simulations , macro: macroStatistiche})
 
     }catch(e){console.log(e); return res.json({success: 'error'})}
 }
+
+
+//memorizzazione di un file
+async function fileSave(file , creator , title){
+    //creator nome creatore   //title   titolo del corso    //file    nome del file
+    
+    let pathName = path.join(__dirname, `../public/upload/simulation/${creator}/`);
+    let pathCourse = path.join(pathName , title.replaceAll(' ','-'));
+    let pathComplite = path.join(pathCourse , file.name.replaceAll(' ','-'));
+
+    //controllare se le cartelle esistono
+    try{
+        //directory id creatore
+        try{ await fs.mkdir(pathName);}
+        catch(err){
+            if(err.code !== 'EEXIST'){ 
+                console.log(`errore nel trovare la directori < ${pathName} >`);
+                return false
+            };
+        }
+        //directory id > nome_corso
+        try{ await fs.mkdir(pathCourse);}
+        catch(err){
+            if(err.code !== 'EEXIST'){ 
+                console.log(`errore nel trovare la directori < ${pathCourse} >`);
+                return false
+            };
+        }
+        //cancellare i possibili file pre-esistenti
+        let AllFile = await fs.readdir(pathCourse)
+        for(file of AllFile){
+            try{
+                let pathForFile = path.join(pathCourse , file)
+                await fs.rm(pathForFile);
+            }catch(e){console.log(`il file ${file} non è stato concellato`) ; return false}
+        }
+
+        //inserire il nuovo file
+        const base64Data = file.file.split('base64,')[1];
+        await fs.writeFile(pathComplite, base64Data ,{encoding: 'base64'});
+        return pathComplite;
+    }catch(e){console.log('problema nel caricare il file sul server') ; console.log(e);return false}
+
+}
+
 
 async function getUserSimulationInfo(req, res){
     try{

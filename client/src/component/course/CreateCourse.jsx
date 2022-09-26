@@ -933,6 +933,42 @@ let UserForMaster = useRef(undefined);
         if(Boolean(contList[actualElement]?.idStripe)) getStripeAmount();
     },[actualElement])
     
+    async function sendMsgForUserSeller(form){
+        let btn = form.elements['btn-msgForUser']
+        if(btn.classList.contains('btn-pending')) return ;
+        btn.innerText = '';
+        btn.classList.add('btn-pending');
+
+        let msg = {
+            type: 'for_user_buy_course', 
+            body: [contList[actualElement].t , form.elements['msgForUser'].value]
+        }
+        try{
+            let response = await fetch((env?.URL_SERVER || '') + '/api/user/send_msg_course' , {
+                method: 'POST',
+                headers:{
+                    Accept: "application/json",
+                    "Content-Type": "application/json",
+                    "Access-Control-Allow-Credentials": true,
+                },
+                body: JSON.stringify({
+                    idCourse: contList[actualElement]._id,
+                    msg: msg
+                })
+            })
+            let data = await response.json();
+            if(data.success) return alert(data.msg);
+            
+            alert('errore , ricarica la pagina o prova più tardi')
+        }catch(e){
+            alert('errore , ricarica la pagina o prova più tardi')
+        }finally{
+            btn.classList.remove('btn-pending');
+            btn.innerText = 'invia';
+            form.elements['msgForUser'].value = '';
+        }
+    }
+
 
     return (
         <div>
@@ -976,6 +1012,15 @@ let UserForMaster = useRef(undefined);
                 </form>
 
                 <ListUserBuyCourse userList={contList?.[actualElement]?.ven}/>
+                
+                <form onSubmit={(e) => {e.preventDefault() ; sendMsgForUserSeller(e.target)}}>
+                    <label>manda un messaggio a tutti gli utenti che hanno acquistato il corso</label>
+                    <textarea minLength={10} maxLength={2000} id='msgForUser'/>
+                    <button type='submit' title="invia messaggio" id='btn-msgForUser'>invia</button>
+                </form>
+                
+                
+
             </div> : undefined}
         </div> 
             

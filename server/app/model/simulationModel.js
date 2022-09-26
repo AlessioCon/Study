@@ -9,6 +9,7 @@ let simulationModel = new Schema({
     f:  {type:String, alias: 'file'}, //contiene solo l'indirizzo del file caricato
     block: {type:Boolean}, //blocco da parte del master
     course: {type:Boolean}, //simulazione solo per corsi 
+    pack: {type:String},//reindirizzamento dati in un unico pack
 
     reset:{
         _id:false,

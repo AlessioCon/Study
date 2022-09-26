@@ -22,5 +22,7 @@ router.post('/block_simulation', masterControll.blockSimulation);
 
 router.post('/all_cardSimulator', masterControll.allCreatorCards);
 
+router.post('/send_msg_master' , masterControll.sendMsgGlobal);//manda un msg globale
+
 
 module.exports = router

@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams } from "react-router-dom";
-import PlurySection from '../component/PlurySection'
+import MultiSection from '../component/MultiSection'
 
 import env from "react-dotenv";
 
@@ -10,7 +10,7 @@ import Cookie from "../customHook/cookie"
 export default function PlaySimulation(){
     const [simulation, setSimulation] = useState(undefined);
     const [filter, setFilter] = useState([]);
-    const [plurySection, setPlurySection] = useState([]);
+    const [multiSection, setMultiSection] = useState([]);
     const [saveAns , setSaveAns] = useState(undefined);
     const [segnalaDom , setSegnalaDom] = useState(undefined)
     const [showCom , setShowCom] = useState(undefined)//per mostrare commenti
@@ -170,17 +170,17 @@ export default function PlaySimulation(){
         let mat = [];
         let elemento = simulation
         elemento?.chapter.forEach((materia) => {
-           mat.push(new Array(materia.li_ma.length).fill(1))
+           mat.push(1)
         });
-        setPlurySection(mat)
+        setMultiSection(mat)
     }, [simulation])
     //per PLURYSECTION Simulazione-Off
     useEffect(() => {
         let allArray = []
-        plurySection.map((x , index) => {
-            allArray.push(Array(x.length).fill(1))
+        multiSection.map((x) => {
+            allArray.push(1)
         })
-        setPlurySection(allArray)
+        setMultiSection(allArray)
     }, [stop])
 
     async function startCorrecton(){
@@ -406,13 +406,7 @@ export default function PlaySimulation(){
                         <li key={`${cap.t}-${matIndex}-${capIndex}`}>
                             <p>{cap.t}</p>
                             <ul>
-                                {<PlurySection
-                                    elementi= {domande}
-                                    divisione= {5}
-                                    down = {true}
-                                    postoSezioni = {[plurySection , setPlurySection]}
-                                    index= {[matIndex, capIndex]}//materia, capitolo
-                                />}
+                                {domande}
                             </ul>
                         </li>
                     )
@@ -422,7 +416,13 @@ export default function PlaySimulation(){
                     <li key={mat.ma + matIndex}>
                         <p>{mat.ma}</p>
                         <ul>
-                            {capitolo}
+                        <MultiSection
+                            elementi= {capitolo}
+                            divisione= {5}
+                            down = {true}
+                            postoSezioni = {[multiSection , setMultiSection]}
+                            index= {matIndex}//materia, capitolo
+                        />
                         </ul>
                     </li>
                 )
@@ -452,20 +452,6 @@ export default function PlaySimulation(){
 
                                     return (
                                     <div key={cap.name+capIndex}>
-                                        <div>
-                                            <button className={`${x.active}`}  
-                                            onClick={e => {
-                                                e.preventDefault()
-                                                if(filter[xIndex].cap[capIndex].active === 'active'){
-                                                    filter[xIndex].cap[capIndex].active = 'deactive';
-                                                }else{ filter[xIndex].cap[capIndex].active = 'active';}
-                                                setFilter([...filter])
-                                            }}
-                                        >
-                                        {`${cap.name} ${(cap.active === 'active') ? '✅' : '⭕'}`}
-                                            </button>
-                                        </div>
-                                        <div>
                                             {cap.dom.map((dom, domIndex) => (
                                                 <button className={`${x.active}`} key={'domanda'+xIndex+capIndex+ domIndex}  
                                                 onClick={e => {
@@ -485,7 +471,7 @@ export default function PlaySimulation(){
                                                 </button>
                                             ))}
                                         </div>
-                                    </div>
+                            
                                     )
                                 })}
                             </div>
@@ -663,13 +649,7 @@ export default function PlaySimulation(){
                             <li key={cap.t+capIndex}>
                                 <p>{cap.t}</p>
                                 <ul>
-                                    {<PlurySection
-                                        elementi= {domande}
-                                        divisione= {5}
-                                        down = {true}
-                                        postoSezioni = {[plurySection , setPlurySection]}
-                                        index= {[matIndex, capIndex]}//materia, capitolo
-                                    />}
+                                    {domande}
                                 </ul>
                             </li>
                         )
@@ -678,7 +658,13 @@ export default function PlaySimulation(){
                         <li key={mat.ma+matIndex}>
                             <p>{mat.ma}</p>
                             <ul>
-                                {capitoli}
+                            {<MultiSection
+                                elementi= {capitoli}
+                                divisione= {5}
+                                down = {true}
+                                postoSezioni = {[multiSection, setMultiSection]}
+                                index= {matIndex}//materia, capitolo
+                            />}
                             </ul>
                         </li>
                     )

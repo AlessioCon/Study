@@ -438,6 +438,17 @@ function Simulation(props){
     return(
         <div>
             <div>
+                <label htmlFor='raccoltaDati'>inserisci il nome della raccolta , per i dati acquisiti (es. veterinaria)</label>
+                <input type="text" name="raccoltaDati"  id="raccoltaDati"
+                    value={element?.pack || ''} 
+                    onChange={(e) => {
+                        let newValue = Object.values(contList);
+                        newValue[actualElement].pack = e.target.value
+                        setContList(newValue)}}
+                />
+            </div>
+
+            <div>
                 <label htmlFor='tSimulation'>Titolo Simulazione</label>
                 <input type="text" name="tSimulation" id="tSimulation" minLength={4} maxLength={31} required
                     value={element?.n ?? ''}
@@ -706,7 +717,7 @@ let altridati = []
                 <button onClick={ e => {
                     e.preventDefault();
                     let newValue = Object.values(contList)
-                    newValue.push({n: `simulazione ${elBigNum}` ,  access:[] , chapter:[] , time:{o:0 , m:0} , reset:{ active:false}})
+                    newValue.push({n: `simulazione ${elBigNum}` ,  pack:'globale', access:[] , chapter:[] , time:{o:0 , m:0} , reset:{ active:false}})
                     setContList(newValue);
                     setElBigNum(elBigNum +1);
                     setActualElement(newValue.length -1)
@@ -828,16 +839,13 @@ let UserForMaster = useRef(undefined);
                 let newel = []
                 resData.simulations.map(e => {
 
-
                     e.creator = e.access.c;
                     e.access = e.access.user || [];
                     e.s = (e.s === 'bozza') ? true : false;
 
                     if(e?.f){
-                        let indexName = e.f.split('/').length -1;
-                        e.file = {name: e.f.split('/')[indexName]}
-                    }else{
-                        e.f = ""
+                        let NameArr = e.f.split(/\\/g);
+                        e.file = {name: NameArr[NameArr.length -1]}
                     }
 
                     return newel.push(e)
@@ -859,8 +867,15 @@ let UserForMaster = useRef(undefined);
         let access = {
             user: lesson.access ?? null,
             c: (dati._id) ? dati.creator : UserForMaster.current || Cookie.getCookie('user')._id
+        };
+
+        (! dati?.pack) ? dati.pack = 'globale' : dati.pack = dati.pack.toLowerCase();
+        if(/[^a-z-]/g.test(dati.pack)){
+            //simboli trovati 
+            alert('formato non valito per la raccolta: è consentito solo l\'uso di lettere minuscole e del trattino ( - ) , lo spazio o altri simboli non sono consentiti');
+            return
         }
-        
+
         dati.access = access;
 
         let fetchUrl = '/api/simulation/create';

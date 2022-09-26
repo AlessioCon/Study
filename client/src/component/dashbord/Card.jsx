@@ -55,7 +55,26 @@ function CheckoutForm(prop){
     )
 }
 
+async function downloadFile(href , set){
+    try{
+        let response = await fetch((env?.URL_SERVER || '') + '/api/download', {
+            method: "POST",
+            headers: {'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                href: href,
+            })
+        })
+        let blobImg = await response.blob();
+        const reader = new FileReader();
 
+        reader.onload = () =>{                           
+            set(['name', reader.result, false]);
+        }
+        
+        reader.readAsDataURL(blobImg);
+         
+     }catch(e){console.log('errore download')}
+};
 
 
 
@@ -67,7 +86,7 @@ export default function Decks(){
 
     const [currentDeck, setCurrentDeck] = useState(undefined);
     const [currentCard , setCurrentCard] = useState(false);//permette la modifica della card
-    const [currentDeckShop , setCurrentDeckShop] = useState(false);//permette la visualizzazione della schermata delle card in vendita
+    const [currentDeckShop , setCurrentDeckShop] = useState(null);//permette la visualizzazione della schermata delle card in vendita
 
     const [listDecks ,setListDecks] = useState([])//tutti i deck in formato html (react)
     const [listCards ,setListCards] = useState([])//tutte le card in formato html (react)
@@ -75,6 +94,11 @@ export default function Decks(){
 
     const [titleCard, setTitleCard] = useState('');
     const [bodyCard, setBodyCard] = useState('');
+    const [cardimg, setCardimg] = useState(null);
+
+    const [retroCard, setRetroCard] = useState('');
+    const [retroCardimg, setRetroCardimg] = useState(null);
+    const [colorCard, setColorCard] = useState('#ff11ff')
     const [change, setChange] = useState(false); //controllo stato salvataggio decks
 
     const [deckShop, setDeckShop] = useState(undefined); //i deck in vendita
@@ -150,10 +174,11 @@ export default function Decks(){
     useEffect(() => {
         if(master === 'verifica') return
         let btn = document.getElementById("btn-load");
-        //non c'è nessun deck in vendita
-        if(!btn) return
-        btn.classList.add('btn-load');
-        btn.innerHTML = ''
+      
+        if(btn){
+            btn.classList.add('btn-load');
+            btn.innerHTML = ''
+        }
         fetch((env?.URL_SERVER || '')+'/api/card/getDeckSeller', {
             method : 'POST',
             headers: {
@@ -165,8 +190,10 @@ export default function Decks(){
         })
         .then((datejson) => datejson.json())
         .then(dati => {
-            btn.classList.remove('btn-load');
-            btn.innerHTML = 'carica altri decks';
+            if(btn){
+                btn.classList.remove('btn-load');
+                btn.innerHTML = 'carica altri decks';
+            }
 
             if(dati.decks.length < 10) setContinueFrom(false);
             if(!dati.success) return setDeckShop([]);
@@ -201,7 +228,7 @@ export default function Decks(){
                     ?<button title="cancella deck"
                         onClick={(e) => {
                             e.preventDefault(); 
-                            delietDeck(deck)
+                            delietDeck(deck , deckIndex)
                         }}
                     >❌</button>
                     :undefined
@@ -216,6 +243,42 @@ export default function Decks(){
 
     //display All card of deck
     useEffect(() => {
+
+        function leftBtn(index){
+            if(index === 0) return undefined
+            return (
+                <button title="sposta la carta a sinistra" onClick={(e) =>{
+
+                    let card = decks[currentDeck].cards[index]
+                    decks[currentDeck].cards.splice(index , 1)
+                    decks[currentDeck].cards.splice(index-1 , 0 , card)
+                  
+                    setDecks([...decks])
+
+
+                }}>
+                      👈 
+                </button>
+            )
+        }
+        function rigthBtn(index){
+            if(index >= decks[currentDeck].cards.length) return undefined;
+            return (
+                <button title="sposta la carta a destra" onClick={() =>{
+
+                    let card = decks[currentDeck].cards[index]
+                    decks[currentDeck].cards.splice(index , 1)
+                    decks[currentDeck].cards.splice(index + 1 , 0 , card)
+                
+                    setDecks([...decks])
+                }}>
+                  👉
+                </button>
+            )
+        }
+
+
+
         if(!Array.isArray(decks)) return ;
         //cambia i dati di vendita
         if(isCardV.current){
@@ -232,19 +295,25 @@ export default function Decks(){
         let list = []
         filter.map((card , cardIndex) => {  
             list.push(
-                <div key={card.t+cardIndex}>
+                <div key={card.t+cardIndex} style={{backgroundColor: card?.cc || '#ffffff'}}>
                     <p>{card.t}</p>
                     <p>{card.b}</p>
                     
-                    
+                    {decks[currentDeck].c === userId.current ? leftBtn(cardIndex) : null}
                     <button title={decks[currentDeck].c === userId.current ?'modifica' : 'zoom +'} onClick={(e) => {
-                        e.preventDefault();
+                       e.preventDefault();
                         setTitleCard(card.t);
                         setBodyCard(card.b);
+                        setRetroCard(card.bb);
+                        setColorCard(card?.cc || '#ffffff');
+                        setCardimg(card?.fimg || null);
+                        setRetroCardimg(card?.bimg || null);
                         setCurrentCard(cardIndex);
                     }}>
                     {decks[currentDeck].c === userId.current ?'⚙️' : '🔎'}
                     </button>
+                    {decks[currentDeck].c === userId.current ? rigthBtn(cardIndex) : null}
+
                     
                     
                        
@@ -337,7 +406,11 @@ export default function Decks(){
         //costruzione nuovo deck
         decks[currentDeck].cards.push({
             t:`card ${bigNum}`, 
-            b: 'nuova card...'
+            b: 'nuova card...',
+            bb: 'retro...',
+            cc: '#ffffff',
+            fImg:'',
+            bImg:'',
         })
         setCardSearch('');
         setDecks([...decks]);
@@ -363,20 +436,18 @@ export default function Decks(){
             },
             body: JSON.stringify({
                 userId: userId.current,
-                deck:deckToSave,
+                deck: deckToSave,
             })
         })
         let dati = await response.json();
         alert(dati.msg)
         if(dati.success){
             if(dati.id){
-                console.log('aggiorna id ')
                 decks[currentDeck]._id = dati.id;
                 setDecks([...decks]);
             };
 
             if(dati.stripeId){
-                console.log('aggiorna idStirpe ')
                 decks[currentDeck].stripe.id = dati.stripeId;
                 setDecks([...decks]);
             }
@@ -387,7 +458,7 @@ export default function Decks(){
        
     }
 
-    async function delietDeck(deck){
+    async function delietDeck(deck , index){
 
         let promptR = prompt('sicuro di vole cancellare il deck , digita "si"')
         if(!promptR || promptR.toLowerCase() !== 'si') return ;
@@ -410,7 +481,7 @@ export default function Decks(){
             dati = await response.json();
         }
         if(dati.success){
-            decks.splice(currentDeck , 1);
+            decks.splice(index , 1);
             setDecks([...decks])
             setCurrentDeck(undefined)
             if(change) setChange(false);
@@ -453,14 +524,12 @@ export default function Decks(){
                 })
                 let dati = await response.json();
                 if(dati.success){
-                    if(dati.id){
-                        console.log('aggiorna id ')
+                    if(dati.id){   
                         decks[currentDeck]._id = dati.id;
                         setDecks([...decks]);
                     };
         
                     if(dati.stripeId){
-                        console.log('aggiorna idStirpe ')
                         decks[currentDeck].stripe.id = dati.stripeId;
                         setDecks([...decks]);
                     }
@@ -493,6 +562,14 @@ export default function Decks(){
         let modifayCard = []
         if(currentCard !== false){
             if(decks[currentDeck]?.c === userId.current){
+                if(cardimg && typeof cardimg === 'string') {
+                       downloadFile(cardimg, setCardimg)
+                }
+                if(retroCardimg && typeof retroCardimg === 'string') {
+                    downloadFile(retroCardimg, setRetroCardimg)
+             }
+                //console.log(retroCardimg)
+
                 modifayCard.push(
                     <form onSubmit={(e) => {e.preventDefault(); saveDeck()}} key="modifica-Card">
                         <button type='button' title='torna indietro' onClick={(e) => {
@@ -502,24 +579,123 @@ export default function Decks(){
                                 ⬅️
                         </button>
                         <div>
-                            <label htmlFor="titleCard">modifica il titolo</label>
-                            <input type='text' id='titleCard' name="titleCard" required={true} minLength={3} maxLength={64}
-                                value={titleCard}
-                                onChange={(e) => {setTitleCard(e.target.value); setChange(true)}}
+                            <label htmlFor="colorCard">colore card</label>
+                            <input type='color' id='colorCard' name="colorCard" required={true} minLength={3} maxLength={64}
+                                value={colorCard}
+                                onChange={(e) => {setColorCard(e.target.value); setChange(true)}}
                             />
                         </div>
-                        <div>
-                            <label htmlFor="bodyCard">modifica body</label>
-                            <textarea type='text' id='bodyCard' name="bodyCard"  maxLength={1000} required={true}
-                                value={bodyCard}
-                                onChange={(e) => {setBodyCard(e.target.value); setChange(true)}}
-                            />
+                        <div className="card" style={{backgroundColor: colorCard || '#ffffff'}}>
+                            <div className="front">
+                                <div>
+                                    <label htmlFor="titleCard">modifica il titolo</label>
+                                    <input type='text' id='titleCard' name="titleCard" required={true} minLength={3} maxLength={64}
+                                        value={titleCard}
+                                        onChange={(e) => {setTitleCard(e.target.value); setChange(true)}}
+                                    />
+                                </div>
+                                <div>
+                                    <label htmlFor="bodyCard">modifica body</label>
+                                    <textarea type='text' id='bodyCard' name="bodyCard"  maxLength={1000} required={true}
+                                        value={bodyCard}
+                                        onChange={(e) => {setBodyCard(e.target.value); setChange(true)}}
+                                    />
+                                </div>
+
+
+
+                                <div>
+                                    <label htmlFor='filesFront'>inserisci immagine</label>
+                                    <input type="file" id="filesFront" name="filesFront" accept=".png, .jpeg, .jpg" style={{display:'none'}}
+                                        onChange={(e) => {
+                                            for (const key in e.target.files){
+                                                if(!isNaN(key)){
+                                            
+                                                if(e.target.files[key].size < (1*1048576)){
+                                                    //nome file ottenuto
+                                                    let reader = new FileReader();
+                            
+                                                    reader.onload = () =>{                       
+                                                        setCardimg([e.target.files[key].name, reader.result]);
+                                                        setChange(true);
+                                                    }
+                                                    reader.readAsDataURL(e.target.files[key]);
+                                                }else{ 
+                                                    alert('inserire file minori di 1mb');
+                                                }
+                                            }}
+                                        }}
+                                    />
+                        
+                                    <img src={cardimg ? cardimg[1] : '../public/img-load.jpg'} style={{maxWidth:"100px" , maxHeight:"100px"}}/>
+                                    <button
+                                        style={{display:(cardimg) ? 'inline' : 'none'}}
+                                        onClick={e => {
+                                            e.preventDefault();
+                                            setChange(true);
+                                            setCardimg(null);
+                                        }}
+                                    >X</button>
+                                </div>
+
+                               
+                            </div>
+                            <div className="back">
+                                <div>
+                                    <label htmlFor="retroCard">modifica retro</label>
+                                    <textarea type='text' id='retroCard' name="retroCard"  maxLength={1000} required={true}
+                                        value={retroCard}
+                                        onChange={(e) => {setRetroCard(e.target.value); setChange(true)}}
+                                    />
+                                </div>
+
+                                <div>
+                                    <label htmlFor='filesBack'>inserisci immagine</label>
+                                    <input type="file" id="filesBack" name="filesBack" accept=".png, .jpeg, .jpg" style={{display:'none'}}
+                                        onChange={(e) => {
+                                            for (const key in e.target.files){
+                                                if(!isNaN(key)){
+                                            
+                                                if(e.target.files[key].size < (1*1048576)){
+                                                    //nome file ottenuto
+                                                    let reader = new FileReader();
+                            
+                                                    reader.onload = () =>{                                    
+                                                        setRetroCardimg([e.target.files[key].name, reader.result]);
+                                                        setChange(true);
+                                                    }
+                                                    reader.readAsDataURL(e.target.files[key]);
+                                                }else{ 
+                                                    alert('inserire file minori di 1mb');
+                                                }
+                                            }}
+                                        }}
+                                    />
+                                    
+                                    <img src={retroCardimg ? retroCardimg[1] : '../public/img-load.jpg'} style={{maxWidth:"100px" , maxHeight:"100px"}}/>
+                                    <button
+                                        style={{display:(cardimg) ? 'inline' : 'none'}}
+                                        onClick={e => {
+                                            e.preventDefault();
+                                            setChange(true);
+                                            setCardimg(null);
+                                        }}
+                                    >X</button>
+                                </div>
+                            </div>
+                                
                         </div>
+                        
+
                         <button type='submit' title='salva'
                             onClick={(e) => {
                                 e.preventDefault(); 
                                 decks[currentDeck].cards[currentCard].t = titleCard;
                                 decks[currentDeck].cards[currentCard].b = bodyCard;
+                                decks[currentDeck].cards[currentCard].bb = retroCard;
+                                decks[currentDeck].cards[currentCard].cc = colorCard;
+                                decks[currentDeck].cards[currentCard].fileFront = cardimg
+                                decks[currentDeck].cards[currentCard].fileBack = retroCardimg;
                         
                                 setDecks([...decks]);
                                 setCurrentCard(false);
@@ -549,9 +725,19 @@ export default function Decks(){
                         }}>
                                 ⬅️
                         </button>
-                        <div>
-                            <p>{titleCard}</p>
-                            <p>{bodyCard}</p>
+                        <div className="card" style={{backgroundColor: colorCard}}
+                            onClick={(e)=> {
+                              e.currentTarget.classList.toggle('retro')
+                          }}>
+                            <div>
+                                <p>{titleCard}</p>
+                                <p>{bodyCard}</p>
+                            </div>
+                            <div>
+                                <p>{retroCard}</p>
+                            </div>
+                           
+
                         </div>
                     </div>)
             }
@@ -658,7 +844,6 @@ export default function Decks(){
     }
 
 
-
     return (
         <div>
             {(master === 'verifica') 
@@ -672,7 +857,7 @@ export default function Decks(){
                     <div>
                         <p>compra i deck che fanno al caso tuo</p>
                         {listDecksShop}
-                        {currentDeckShop !== false
+                        {currentDeckShop !== null
                         ?
                         <div>
                             <button title='esci' onClick={e => setCurrentDeckShop(false)}>⬅️</button>

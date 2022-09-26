@@ -71,16 +71,26 @@ export default function Messages (){
 
         let messaggi = []
         msg.map((x, xIndex) => {
+            let titolo;
             let testo;
             switch(x.tipe){
                 case 'sim_dom_alert':
+                    titolo = `segnalazione per la simulazione "${x.msg[0]}"`;
                     testo = `segnalazione nella materia: ${x.msg[1]}, capitolo: ${x.msg[2]}, domanda: ${x.msg[3]}`;
+                    break
+                case 'for_user_buy_course':
+                    titolo = `circolare per il corso: "${x.msg[0]}"`;
+                    testo = x.msg[1]
+                    break
+                case 'for_all_user_by_master':
+                    titolo = `Da YouTestPlus`;
+                    testo = x.msg[0]
                     break
             }
 
             messaggi.push(
                 <div key={'messaggio'+x.type+xIndex}>
-                    <p>segnalazione in {x.msg[0]}</p>
+                    <p>{titolo}</p>
                     <p>{testo}</p>
                     <button
                     title='cancella messaggio'
@@ -132,3 +142,11 @@ export default function Messages (){
 
     )
 }
+
+
+
+
+/*
+* for_user_buy_course  = per gli utenti che hanno comprato il corso
+* sim_dom_alert        = segnalazione domanda di una simulazione
+*/

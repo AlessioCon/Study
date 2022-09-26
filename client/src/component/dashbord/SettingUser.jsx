@@ -21,7 +21,9 @@ export default function SettingUser(){
     let [address, setAddress] = useState('caricamento...');
     let [cap, setCap] = useState('caricamento...');
     let [email, setEmail] = useState('caricamento...');
+    let [instagram, setInstagram] = useState('caricamento...')
     let [password, setPassword] = useState('');
+    
 
     useEffect(() => {
 
@@ -47,6 +49,7 @@ export default function SettingUser(){
                 dataAge.current = resetD[2]+'-'+resetD[1]+'-'+resetD[0];
                 txc.current = u.txc;    setCity(u.address.c);    setCap(u.address.cap);
                 setCell(u.cell.n); setAddress(u.address.s);  setEmail(u.email);
+                setInstagram(u?.insta || '');
 
             }catch(e){console.log(e)}
         }
@@ -65,7 +68,7 @@ export default function SettingUser(){
                     oldPassword = prompt('scrivi la tua vecchia password')
                 }
         
-                let response= await fetch((env?.URL_SERVER || '') + '/user/update', {
+                let response= await fetch((env?.URL_SERVER || '') + '/api/user/update', {
                     method: 'PUT',
                     headers: {
                         Accept: "application/json",
@@ -124,6 +127,14 @@ return (
                 label='user' 
                 variabile={[username, setUserName]} 
                 propInput={{type: 'text', minLength:3 ,maxLength:15, required:true }/*'type="text"-minLength=3-maxLength=15-required=true'*/}
+                fetch={saveInfo}
+            />
+
+            <SingleInput 
+                nome='instagram'
+                label='inserisci il tuo username instagram per essere contattato' 
+                variabile={[instagram, setInstagram]} 
+                propInput={{type:'text' , minLength:3}}
                 fetch={saveInfo}
             />
 

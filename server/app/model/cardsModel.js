@@ -8,7 +8,11 @@ const cardSchema = new Schema({
     cards: [{
         _id:false,
         t: {type:String , alias:'title'},//titolo card
-        b: {type:String, alias:'body'}//corpo card
+        b: {type:String, alias:'body'},//corpo card
+        bb: {type:String, alias:'body-beck'},
+        cc: {type:String, alias:'color'},
+        fimg: String,
+        bimg: String,
     }],
     stripe: {
         _id:false,

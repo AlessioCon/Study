@@ -137,7 +137,7 @@ async function updateCourse(req , res){
         //sistema di memorizzazione file
         if(dati.file?.file && dati.file.file != 'not'){
 
-            let response = await fileSave(dati.file, dati.access.creator , dati.t);
+            let response = await fileSave(dati.file, dati.access.creator , dati._id);
             if(!response) return res.json({success:false , msg:'problema nel caricare il file'});
             dati.pathDati = response;
         }else{
@@ -273,13 +273,6 @@ async function createCourse(req, res){
                 })
             }
         }
-
-        //sistema di memorizzazione file
-        if(dati.file?.file){
-            let response = await fileSave(dati.file, dati.access.creator , dati.t);
-            if(!response) return res.json({success:false , msg:'problema nel caricare il file'});
-            dati.pathDati = response;
-        }
         
         let controlTitle = courseModel.findOne({t:dati.t}).select('_id');
         if(controlTitle._id) return res.json({success: false, dati:'titolo corso già in uso'});
@@ -295,7 +288,6 @@ async function createCourse(req, res){
             chapter: dati.chapter,
             slug: dati.sl,
             s:dati.s,
-            img: dati.pathDati,
             simu: dati.simu
         })
 
@@ -306,7 +298,16 @@ async function createCourse(req, res){
         course.idStripe = idStripe.id
 
         //-------------------
-        await course.save();  
+        let curseId = await course.save();  
+        //sistema di memorizzazione file
+        if(dati.file?.file){
+            let response = await fileSave(dati.file, dati.access.creator , curseId._id.toString());
+            if(!response) return res.json({success:false , msg:'problema nel caricare il file'});
+            dati.pathDati = response;
+        }
+        curseId.img = dati.pathDati || '';
+        await curseId.save();
+
         return res.json({success:true , data:'course is live'})
 
 
@@ -556,7 +557,8 @@ async function fileSave(file , creator , title){
         }
 
         //inserire il nuovo file
-        await fs.writeFile(pathComplite, String(file.file) ,{flag:'w'});
+        const base64Data = file.file.split('base64,')[1];
+        await fs.writeFile(pathComplite, base64Data ,{encoding: 'base64'});
         return pathComplite;
     }catch(e){console.log('problema nel caricare il file sul server') ; console.log(e);return false}
     

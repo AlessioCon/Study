@@ -296,6 +296,21 @@ async function updateUser(req, res){
     
                 return res.json({success: true, msg:'user cambiato'})
                 break;
+            case 'instagram':
+            //validazione dato
+            let validatorInsta = new Validator();
+            let inputInsta ={ insta  : req.body.data }
+            let optionInsta = {insta :"type:string|length:>:3"}
+
+            let VarInsta = validatorInsta.controll(inputInsta, optionInsta)
+            if (VarInsta['err']) return res.json({success:false , msg: Var['msg']});
+    
+
+            user.insta = req.body.data;
+            await user.save();
+
+            return res.json({success: true, msg:'nome instagram cambiato'})
+            break;
             
             case 'cell':
                 //validazione dato
@@ -500,6 +515,36 @@ async function sendMsg(req, res){
        return res.json({success: true})
     }catch(e){console.log(e); return res.json({success:'error'})}
 }
+
+async function sendMsgCourse(req, res){
+    try{
+        console.log(req.body)
+       let allUser = await courseModel.findById({_id: req.body.idCourse}).select('ven');
+       if(!allUser) return res.json({success: false , msg:'corso non trovato'});
+
+        for (let x = 0 ; x <allUser.ven.length; x++){
+            let user = await userModel.findById({_id: allUser.ven[x]})
+            if(!user) return res.json({success:false, msg: 'user non trovato'})
+
+            if(!user?.msg) user.msg = {alert: true, posta: []};
+            user.msg.alert = true;
+            user.msg.posta.unshift(
+                {
+                    tipe: req.body.msg.type,
+                    msg: [...req.body.msg.body]
+                }
+            )
+            if(user.msg.posta.length > 100) user.msg.posta = user.msg.posta.slice(0,100);
+     
+            await user.save();
+       }
+
+
+       return res.json({success: true , msg: 'messaggio inviato correttamente'})
+    }catch(e){console.log(e); return res.json({success:'error'})}
+}
+
+
 async function haveMsg(req,res){
     try{
         let user = await userModel.findById({_id: req.body.id}).select('msg');
@@ -561,6 +606,7 @@ module.exports = {
 
 
     sendMsg,
+    sendMsgCourse,
     haveMsg,
     getUserMsg,
     deleteUserMsg

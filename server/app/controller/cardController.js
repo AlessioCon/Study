@@ -1,6 +1,8 @@
 const cardModel = require('../model/cardsModel');
-
 let Validator = require('../../private_modules/validator');
+const fs = require('fs/promises');
+const { Buffer } = require('buffer')
+const path = require('path');
 
 const stripeController = require('../controller/stripeController');
 
@@ -91,17 +93,20 @@ async function saveDeck(req,res){
         if(Var.err) return res.json({success:false , data:Var.msg});
 
         //controllo per ogni carta del deck
-        deck.cards.map(x => {
+        deck.cards.map((x, index)=> {
+            if(! /^#+([a-zA-Z0-9]{6,6})$/.test(x.cc)) deck.cards[index].cc = '#ffffff';
             let validator = new Validator();
 
             let input = {
                 title: x.t,
-                body: x.b
+                body: x.b,
+                retro: x.bb
             }
 
             let option = {
                 title         : "type:string|length:<:65",
                 body          : "type:string|length:<:1000",
+                retro         : "type:string|length:<:1000"
             }
 
             let Var = validator.controll(input, option);
@@ -172,6 +177,32 @@ async function saveDeck(req,res){
             if(stripe.id) stripeId = stripe.id;
         }
 
+       
+        //sistema di memorizzazione file
+        try{
+            for(let x = 0 ; x < deck.cards.length ; x++){
+                if(deck.cards[x]?.fileFront && deck.cards[x]?.fileFront?.[2] !== false){
+                    let responsef = await fileSave(deck.cards[x].fileFront, deck.c , deckDb._id.toString() , deck.cards[x].t, true);
+                    if(!responsef) return res.json({success:false , msg:'problema nel caricare il file'});
+                    
+                    deckDb.cards[x].fimg = responsef;    
+                }
+
+                if(deck.cards[x]?.fileBack && deck.cards[x]?.fileBack?.[2] !== false){
+                    
+                    let responseb = await fileSave(deck.cards[x].fileBack, deck.c , deckDb._id.toString() , deck.cards[x].t , false);
+                    if(!responseb) return res.json({success:false , msg:'problema nel caricare il file'});
+
+                    deckDb.cards[x].bimg = responseb;    
+                }
+                
+
+            }
+        }finally{await deckDb.save()}
+        
+
+        
+
         return res.json({success: true, msg:msg , id: id , stripeId:stripeId})
 
     }catch(e){console.log(e); return res.json({success: 'error' , msg:'errore nel server'})}
@@ -188,6 +219,14 @@ async function deleteDeck(req,res){
             if(!stripe) return res.json({success: false , msg:'problema nella cancellazione prodotto'})
         }
 
+        //sistema di memorizzazione file
+        let filePrecedente = await cardModel.findOne({_id: req.body.deckId}).select('_id c ');
+        try{
+            await fs.rm(path.join(__dirname, `../public/upload/deck/${filePrecedente.c}/`, filePrecedente._id.toString()), { recursive: true })
+        }catch(e){
+            if(e.code !== 'ENOENT') console.log(e)}
+            
+        
         let response = await cardModel.findByIdAndDelete({_id: req.body.deckId});
         if(!response) return res.json({success: false , msg:'problema nella cancellazione del deck, prova più tardi'})
 
@@ -198,7 +237,64 @@ async function deleteDeck(req,res){
 
 
 
+//memorizzazione di un file
+async function fileSave(file , creator , title , card , first){
+    
+    //creator nome creatore   //title   id del deck    //file    nome del file  //card = titolo card
+    //first indica se è la prima carta cosi da poter cancellare le vecchie
 
+    let pathName = path.join(__dirname, `../public/upload/deck/${creator}/`);
+    let pathDeck = path.join(pathName , title);
+    let pathCard = path.join(pathDeck , card.replaceAll(' ', '-'));
+    let pathComplite = path.join(pathCard , file[0].replaceAll(' ','-'));
+
+    //controllare se le cartelle esistono
+    try{
+        //directory id creatore
+        try{ await fs.mkdir(pathName);}
+        catch(err){
+            if(err.code !== 'EEXIST'){ 
+                console.log(`errore nel trovare la directori < ${pathName} >`);
+                return false
+            };
+        }
+        //directory id > id_deck
+        try{ await fs.mkdir(pathDeck);}
+        catch(err){
+            if(err.code !== 'EEXIST'){ 
+                console.log(`errore nel trovare la directori < ${pathDeck} >`);
+                return false
+            };
+        }
+        //directory id > nome_card
+        try{ await fs.mkdir(pathCard);}
+        catch(err){
+            if(err.code !== 'EEXIST'){ 
+                console.log(`errore nel trovare la directori < ${pathCard} >`);
+                return false
+            };
+        }
+
+        //cancellare i possibili file pre-esistenti
+        if(first){
+            let AllFile = await fs.readdir(pathCard)
+            for(file of AllFile){
+                try{
+                    let pathForFile = path.join(pathCard , file)
+                    await fs.rm(pathForFile);
+                }catch(e){console.log(`il file ${file} non è stato concellato`) ; return false}
+            }
+        }
+        
+        //inserire il nuovo file
+        const base64Data = file[1].split('base64,')[1];
+        await fs.writeFile(pathComplite, base64Data ,{encoding: 'base64'});
+        return pathComplite;
+    }catch(e){console.log('problema nel caricare il file sul server') ; console.log(e);return false}
+    
+
+
+}
 
 
 
@@ -209,7 +305,5 @@ module.exports= {
     getDeckForMaster,
 
     saveDeck,
-    deleteDeck,
-
-    
+    deleteDeck,    
 }
