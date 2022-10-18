@@ -61,8 +61,10 @@ function Dashbord(){
     let isSeller = user.grade.find(e => e === 'seller');
     let isCorsiV = user.grade.find(e => e === 'course');//è un venditore di corsi
     let isSimuV  = user.grade.find(e => e === 'simulation')//è un venditore di simulazioni
+    let isGamerV  = user.grade.find(e => e === 'gamer')//è un creatore di giochi
     let accessVenditore = user.grade.find(e => e === 'seller' || e === 'sellerPending');
-    let accessCorsiVenditore = user.grade.find(e => e === 'seller' );
+    
+   
 
     let cookieSeller = Cookie.getCookie('newSeller')?.seller;
 
@@ -92,7 +94,7 @@ function Dashbord(){
                                 {(isCorsiV && isSeller) ? <li><Link  to="crea-corso">Corsi</Link></li> : undefined }
                                 {(isCorsiV && isSeller) ? <li><Link  to="crea-lezioni">Lezioni</Link></li> : undefined }
                                 {(isSimuV)  ? <li><Link to="crea-simulazioni">Simulazioni</Link></li> : undefined }
-                            
+                                {(isGamerV)  ? <li><Link to="crea-game">Gioco</Link></li> : undefined }
                             </ol>
                         </li> 
                     : null}
@@ -107,6 +109,7 @@ function Dashbord(){
                         </ol>
                     </li>
                     {(accessVenditore) ? <li><NavLink  className={({ isActive }) => isActive ? "dashbord-select" : undefined} to="venditore">Venditore</NavLink></li> : null}
+                    <li><NavLink  className={({ isActive }) => isActive ? "dashbord-select" : undefined} to="game">gioco</NavLink></li>
                     <li><a href="/" onClick={(e) => userLogOut(e)}>LogOut</a></li>
                 </ol>
             </nav>

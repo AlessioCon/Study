@@ -654,3 +654,74 @@ header {
   border-left: 1px solid black;
   text-align: center;
 }
+
+
+
+
+/*GAME*/
+.cont_ruota{
+  position: relative;
+  background-color: #1a1a1a;
+}
+.ruota{
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background-color: yellow;
+}
+
+.ruota .pack{
+  width: 25%;
+  height: 25%;
+  position: absolute;
+  background-color: palevioletred;
+}
+
+.ruota .pack:nth-child(1){ left: 50%; transform: translate(-50% , 25%);}
+.ruota .pack:nth-child(2){ right: 0px; bottom:50%; transform: translate(-25%, 50%);}
+.ruota .pack:nth-child(3){  left: 50%; bottom:0px; transform: translate(-50%, -25%);}
+.ruota .pack:nth-child(4){  bottom:50%; transform: translate(25%, 50%);}
+
+.cont_ruota .freccia{
+  height: 40%;
+  width: 20px;
+  position: absolute;
+  top: 50%;
+  left:50%;
+  transform: translateX(-50%)  rotate(-180deg);
+  transform-origin: center top;
+  background-color: blue;
+  border-radius: 50px;
+  animation-play-state: running;
+  animation-duration: 1s;
+  animation-fill-mode: forwards;
+}
+/*  animation: stopRuota4 1s linear  forwards;*/
+.cont_ruota .freccia.start{
+  animation-name: giraLARuota;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+.cont_ruota .freccia.stop{
+  animation-timing-function: ease-out;
+  animation-iteration-count:initial;
+}
+.cont_ruota .freccia.stop.stop1{  animation-name: stopRuota1;}
+.cont_ruota .freccia.stop.stop2{  animation-name: stopRuota2;}
+.cont_ruota .freccia.stop.stop3{  animation-name: stopRuota3;}
+.cont_ruota .freccia.stop.stop4{  animation-name: stopRuota4;}
+
+
+
+@keyframes giraLARuota {
+  0%   { transform: translate(-50% ,0px)  rotate(-180deg)}
+  50%  {transform: translate(-50% ,0px)  rotate(0deg)}
+  100% {transform: translate(-50% ,0px)  rotate(180deg)}
+}
+@keyframes stopRuota1 {100%   { transform: translateX(-50%)  rotate(-180deg)}}
+@keyframes stopRuota2 {100%   { transform: translateX(-50%)  rotate(-90deg)}}
+@keyframes stopRuota3 {100%   { transform: translateX(-50%)  rotate(180deg)}}
+@keyframes stopRuota4 {100%   { transform: translateX(-50%)  rotate(90deg)}}

@@ -25,9 +25,15 @@ export default function MasterDashbord(){
     let [cardList, setCardList] = useState(null)
     let [cardSearch, setCardSearch] = useState('')
 
+    let [newUserGame, setNewUserGame] = useState('');
+    let [game, setGame] = useState()//valore grezzo di tutti i creatori di simulazioni (non formattato in html)
+    let [gameList, setGameList] = useState(null)
+    let [gameSearch, setGameSearch] = useState('')
+
     let [posto , setPostoSezioni] = useState(1) //per sellerlist
     let [postosSim, setPostoSim] = useState(1) //per simululatorList
-    let [postosCard, setPostoCard] = useState(1) //per simululatorList
+    let [postosCard, setPostoCard] = useState(1) //per cardList
+    let [postoGame, setPostoGame] = useState(1) //per gameList
 
     const [userGeneric, setUserGeneric] = useState(false) //oidentifica lo stato di ricerca di un utente generico
 
@@ -49,6 +55,7 @@ export default function MasterDashbord(){
             allSeller(data.user._id);
             allCreatorSimulation(data.user._id);
             allCardSimulation(data.user._id)
+            allCreatorGame(data.user._id)
             setMaster(data.user)
         }
         if (master === null) getMaster();
@@ -118,6 +125,33 @@ export default function MasterDashbord(){
         }
         
     }
+    async function newGamer(update, info, btn){
+        if(!btn.classList.contains('btn-pending')){
+            try{
+                btn.innerText = '';
+                btn.classList.add('btn-pending');
+        
+                let response= await fetch((env?.URL_SERVER || '') + '/api/master/new_gamer', {
+                    method: 'POST',
+                    headers: {
+                        Accept: "application/json",
+                        "Content-Type": "application/json",
+                        "Access-Control-Allow-Credentials": true,
+                    },
+                    body: JSON.stringify({
+                        idMaster: master._id,
+                        user: info,
+                    })
+                })
+                let data = await response.json();
+                alert(data.msg)
+        
+                btn.innerText = 'salva';
+                btn.classList.remove('btn-pending');
+            }catch(e){console.log(e)}
+        }
+        
+    }
 
 
     async function allSeller(idMaster){
@@ -159,6 +193,19 @@ export default function MasterDashbord(){
         let data = await response.json();
         setCard(data.list);
     }
+    async function allCreatorGame(idMaster){
+        let response = await fetch((env?.URL_SERVER || '') + '/api/master/all_creator_game', {
+            method:'POST',
+            headers: {
+                accept:'application/json',
+                'Content-Type':'application/json',
+                'Access-Control-Allow-Credentials': true
+            },
+            body: JSON.stringify({idMaster: idMaster})
+        })
+        let data = await response.json();
+        setGame(data.list);
+    }
 
 
     async function blockSeller(idSeller , btn){
@@ -197,6 +244,35 @@ export default function MasterDashbord(){
                 btn.classList.add('btn-pending');
         
                 let response= await fetch((env?.URL_SERVER || '') + '/api/master/block_creator_simulaton', {
+                    method: 'POST',
+                    headers: {
+                        Accept: "application/json",
+                        "Content-Type": "application/json",
+                        "Access-Control-Allow-Credentials": true,
+                    },
+                    body: JSON.stringify({
+                        idMaster: master._id,
+                        idUser: idUser
+                    })
+                })
+                let data = await response.json();
+                alert(data.msg)
+        
+                btn.innerText = btntext;
+                btn.classList.remove('btn-pending');
+            }catch(e){console.log(e)}
+        }
+
+    }
+    async function blockCreatoreGame(idUser , btn){
+        console.log('ok')
+        if(!btn.classList.contains('btn-pending')){
+            try{
+                let btntext= btn.innerText
+                btn.innerText = '';
+                btn.classList.add('btn-pending');
+        
+                let response= await fetch((env?.URL_SERVER || '') + '/api/master/block_creator_game', {
                     method: 'POST',
                     headers: {
                         Accept: "application/json",
@@ -257,7 +333,6 @@ export default function MasterDashbord(){
         
 
     }
-
 
 
     function filterSeller(value){
@@ -326,21 +401,47 @@ export default function MasterDashbord(){
         let filter = card.filter(e => reg.test(e.user.toLowerCase()));
         let list = []
         filter.map(u => {
-            let userBlock = u.grade.includes('sellerBlock');
+            let userBlock = u.grade.includes('gamerBlock');
             return list.push(
                 <li className='flex-content' key={u.user}>
                    <span title="nome completo">{u.nome}</span>
                    <span title="username">{u.user}</span>
-                   <span title="card attive">{u.active_card}</span>
-                   <span title="guadagno totale">{u.amount} €</span>
                    <span>
-                    {(userBlock)  ? <p title={"utente bloccato, aggiungilo nel campo \"aggiungi venditore card\""}>utente bloccato</p> : <button onClick={e => {
+                    {(userBlock)  ? <p title={"utente bloccato, aggiungilo nel campo \"aggiungi creatore giochi\""}>utente bloccato</p> : <button onClick={e => {
                             e.preventDefault()
-                            let confirm = prompt(`sei sicuro di voler bloccare "${u.user}" come venditore? digita: si`)
+                            let confirm = prompt(`sei sicuro di voler bloccare "${u.user}" come creatore? digita: si`)
                             if(confirm !=='si') return ;
                             blockSeller(u._id, e.target)
                             }
-                    }>Blocca venditore</button>}
+                    }>Blocca Creatore</button>}
+                    
+                    <a href={"../master/view/"+u._id} title="visita il profilo">profilo</a>
+                   </span>
+                </li>
+            )
+        })
+        setCardList(list)
+    }
+    if(card && !cardList) filterCard()
+
+    function filterGame(value){
+        let reg = new RegExp(value?.toLowerCase() || '');
+        let filter = game.filter(e => reg.test(e.user.toLowerCase()));
+        let list = []
+        filter.map(u => {
+            let userBlock = u.grade.includes('gamerBlock');
+            return list.push(
+                <li className='flex-content' key={u.user}>
+                   <span title="nome completo">{u.name.f +" "+ u.name.l}</span>
+                   <span title="username">{u.user}</span>
+                   <span>
+                    {(userBlock)  ? <p title={"utente bloccato, aggiungilo nel campo \"aggiungi venditore card\""}>utente bloccato</p> : <button onClick={e => {
+                            e.preventDefault()
+                            let confirm = prompt(`sei sicuro di voler bloccare "${u.user}" come creatore? digita: si`)
+                            if(confirm !=='si') return ;
+                            blockCreatoreGame(u._id, e.target)
+                            }
+                    }>Blocca creatore</button>}
                     
                     <a href={"../master/view/"+u._id} title="visita il profilo">profilo</a>
                    </span>
@@ -348,9 +449,9 @@ export default function MasterDashbord(){
                 </li>
             )
         })
-        setCardList(list)
+        setGameList(list)
     }
-    if(card && !cardList) filterCard()
+    if(game && !gameList) filterGame()
 
 
 
@@ -488,6 +589,34 @@ export default function MasterDashbord(){
                         divisione={10}
                         down={true}
                         postoSezioni={[postosCard, setPostoCard]}
+                    /> : <p>caricamento...</p>}
+                </div>
+                
+            </div>
+
+            <div>
+                <h2>Sezione Game</h2>
+                <SingleInput 
+                    nome='newGame'
+                    label='aggiungi un creatore di giochi tramite username' 
+                    variabile={[newUserGame, setNewUserGame]} 
+                    propInput={{type: 'text', minLength:3 ,maxLength:15, required:true }}
+                    fetch={newGamer}
+                />
+                 <div>
+                    <p>lista creatori di giochi</p>
+                    <form className='form-search'>
+                        <label htmlFor='gameSearch'>filtra per nome utente</label>
+                        <input type="search" id="gameSearch" name="gameSearch" value={gameSearch}
+                            onChange={e => {setGameSearch(e.target.value) ; filterGame(e.target.value)}}
+                        />
+                        
+                    </form>
+                    {(game) ?<Section
+                        elementi={gameList}
+                        divisione={10}
+                        down={true}
+                        postoSezioni={[postoGame, setPostoGame]}
                     /> : <p>caricamento...</p>}
                 </div>
                 

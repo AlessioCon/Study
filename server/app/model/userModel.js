@@ -78,7 +78,25 @@ const userSchema = new Schema({
         _id:false,
         alert: {type:Boolean},
         posta: []
-    }
+    },
+
+    //game
+    game:[{
+        _id:false,
+        pack: {type:String},
+        n: {type:Number , alias:'number'}, //partite fatte
+        win: {type:Number},
+        cat: [{
+            name: {type:String},
+            n: {type:Number , alias:'number'},
+            c: {type:Number, alias:'correct'},
+        }]
+        
+    }],
+
+    promoMy:{type:String}, //codice amico per amici
+    promoYou:{type:String},//codice amico per l'utente in questione
+    dim: {type:Number , default:0}
 
 })
 

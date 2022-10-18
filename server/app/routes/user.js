@@ -30,6 +30,8 @@ router.post('/have_msg' , userController.haveMsg)//controlla se ha qualche msg n
 router.post('/get_user_msg' , userController.getUserMsg)//prendi tutti i msg dell'utente 
 router.delete('/delete_user_msg' , userController.deleteUserMsg)
 
+router.post('/save_promo', userController.savePromo)
+
 
 router.get('/dashbord', (req, res) => {
     res.json({})

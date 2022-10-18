@@ -567,8 +567,7 @@ export default function Decks(){
                 }
                 if(retroCardimg && typeof retroCardimg === 'string') {
                     downloadFile(retroCardimg, setRetroCardimg)
-             }
-                //console.log(retroCardimg)
+                }
 
                 modifayCard.push(
                     <form onSubmit={(e) => {e.preventDefault(); saveDeck()}} key="modifica-Card">

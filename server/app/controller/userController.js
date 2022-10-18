@@ -75,7 +75,26 @@ async function userNew(req, res){
 
         //---------
 
+        //crea codice amico
+        let newCode = true;
+        let referall = ''
 
+        do{
+            let arrayC = [...user]
+            let d = [...Date.now().toString()].slice(8)
+    
+            referall = 
+                arrayC[Math.floor(Math.random()*arrayC.length)]+
+                arrayC[Math.floor(Math.random()*arrayC.length)]+
+                '_'+d+'_'+
+                arrayC[Math.floor(Math.random()*arrayC.length)]
+            //trova utente con stesso codice
+            let codeOld = await userModel.findOne({promoMy: referall}).select('_id')
+            if(!codeOld) newCode = false
+        }while(newCode)
+        
+
+     
 
         const user = new userModel({
             name:  {first : req.body.name.toLowerCase() , 
@@ -92,6 +111,7 @@ async function userNew(req, res){
                       cap: req.body.cap},
             grade: ['user'],
             idStripe: coustomer.id,
+            promoMy: referall
         })
 
 
@@ -199,6 +219,14 @@ async function payCourse(req , res){
             if(aggiorna) await user.save();
         }
 
+        //assegnare un diamante al codice amico
+        if(userCourse?.promoYou){
+            let userOfpromo = userModel.findOne({promoMy:userCourse.promoYou}).select('dim');
+            if(userOfpromo){
+                userOfpromo.dim += 1;
+                await userOfpromo.save();
+            }
+        }
         await courseModel.updateOne({_id: idCourse} , {$push: {'ven': idUser.toString()}})
         await userModel.updateOne({_id: idUser.toString()}, {$push: {CourseBuy: {courseId: idCourse , sub: idSub}}})
         
@@ -589,6 +617,26 @@ async function deleteUserMsg(req,res){
     }catch(e){console.log(e); res.json({success:'error'})}
 }
 
+async function savePromo(req,res){
+    try{
+        let user = await userModel.findById({_id: req.body.id}).select('promoMy promoYou');
+        if(!user) return res.json({success:false , msg:'utente non trovato'});
+
+        if(user.promoMy === req.body.promo) return res.json({success:false, msg:'non puoi usare il tuo codice'});
+        if(user?.promoYou) return res.json({success:false, msg:'utilizzi già un codice amico'})
+
+        //trova il possessore del codice promozionale
+        let userPromo = await userModel.findOne({promoMy: req.body.promo}).select('_id');
+        if(!userPromo) return res.json({success:false, msg:'codice amico non valido'});
+
+        user.promoYou = req.body.promo;
+        await user.save()
+
+        return res.json({success: true})
+
+    }catch(e){console.log(e); res.json({success:'error'})}
+}
+
 module.exports = {
     userNew,
     userLogin,
@@ -609,5 +657,7 @@ module.exports = {
     sendMsgCourse,
     haveMsg,
     getUserMsg,
-    deleteUserMsg
+    deleteUserMsg,
+
+    savePromo
 }

@@ -49,15 +49,15 @@ function NavBarHeadre(){
                 <nav className={'header-nav'}>
                     <button className={"x-hamburger"} onClick={() => menuActive()}>X</button>
                     <ol>
-                        <li><NavLink to='/simulazioni' onClick={() => menuActive()}>simulazioni</NavLink></li>
+                        
                         <li className='sub-nav'>
                             <a href="" onClick={e => {
                                 e.preventDefault();
                                 e.target.classList.toggle('active')
-                                } }>click</a>
+                                } }>Modalità</a>
                             <ol>
-                                <li><NavLink to='/test/test'     onClick={() => menuActive()}>test di prova</NavLink></li>
-                                <li><NavLink to='/test/test'     onClick={() => menuActive()}>test di prova2</NavLink></li>
+                                <li><NavLink to='/simulazioni'     onClick={() => menuActive()}>Simulazioni</NavLink></li>
+                                <li><NavLink to='/game'     onClick={() => menuActive()}>Game</NavLink></li>
                             </ol>
                         </li>
                         <li><NavLink to='/corsi'    onClick={() => menuActive()}>Corsi</NavLink></li>

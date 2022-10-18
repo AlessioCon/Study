@@ -19,6 +19,10 @@ router.post('/all_creatorSimulatior', masterControll.allCreatorSimulator);
 router.post('/block_creator_simulaton', masterControll.blockCreatorSimulator);
 router.post('/block_simulation', masterControll.blockSimulation);
 
+router.post('/new_gamer', masterControll.newCreatorGamer);
+router.post('/all_creator_game', masterControll.allCreatorGamer);
+router.post('/block_creator_game', masterControll.blockCreatorGame);
+
 
 router.post('/all_cardSimulator', masterControll.allCreatorCards);
 

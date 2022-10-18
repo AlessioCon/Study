@@ -273,6 +273,68 @@ async function blockSimulation(req, res){
     }catch(e){console.log(e)}
 }
 
+async function newCreatorGamer(req, res){
+    try{
+        let master = await masterRetrive(req.body.idMaster)
+        if(master.success === false) return res.json({success: false , msg: master.msg})
+
+        let user = await userModel.findOne({user: req.body.user});
+        if(!Boolean(user)) return res.json({success: false , msg:'utente non trovato'});
+
+        //se era già un venditore altrimenti...
+        if(user.grade.find(e => e === 'gamerBlock')){
+            let newGrade = user.grade.filter(e => e !== 'gamerBlock');
+            newGrade.push('gamer')
+            user.grade = newGrade;
+            await user.save();
+            return res.json({success: false, msg:'l\'utente '+ user.user + ' è di nuovo un creatore di giochi'});
+        }else{
+            let usergrade = user.grade.find(e => e === 'gamer' );
+            if(usergrade) return res.json({success: false, msg: 'l\'utente è gia un creatore di giochi'});
+
+            user.grade.push('gamer');
+            await user.save();
+            res.json({saccess: true , msg:'adesso '+ user.user + ' è un creatore di giochi'})
+        }
+
+    }catch(e){console.log(e)}
+}
+async function allCreatorGamer(req, res){
+    try{
+        let master = await masterRetrive(req.body.idMaster)
+        if(master.success === false) return res.json({success: false , msg: master.msg})
+    
+    
+        //trova tutti i venditori
+        let allCreator = await userModel.find({grade: {$in: ['gamer' , 'gamerBlock']}}).select('_id user name grade')
+        if(!Boolean(allCreator)) res.json({success: true , sellers:[]})
+
+        
+        res.json({success: true , list: allCreator})
+
+    }catch(e){console.log(e), res.json({success: 'error' , msg:'errore server'})}
+}
+async function blockCreatorGame(req, res){
+    try{
+        let master = await masterRetrive(req.body.idMaster)
+        if(master.success === false) return res.json({success: false , msg: master.msg})
+
+        let userSim = await userModel.findById({_id: req.body.idUser});
+        if(!Boolean(userSim)) return res.json({success: false , msg:'utente non trovato'});
+
+        if(userSim.grade.find(e => e === 'gamerBlock')) return res.json({success:false, msg:'l\'utente non è un creatore di giochi'})
+
+        let gradeFilter = userSim.grade.filter(e => e !== 'gamer');
+        gradeFilter.push('gamerBlock')
+
+        userSim.grade = gradeFilter
+        await userSim.save();
+        res.json({saccess: true , msg:'adesso '+ userSim.user + ' non è un creatore di giochi'})
+        
+    }catch(e){console.log(e)}
+}
+
+
 async function allCreatorCards(req, res){
     try{
         let master = await masterRetrive(req.body.idMaster)
@@ -381,6 +443,11 @@ module.exports = {
     allCreatorSimulator,
     blockCreatorSimulator,
     blockSimulation,
+
+    newCreatorGamer,
+    allCreatorGamer,
+    blockCreatorGame,
+
 
     allCreatorCards,
     blockDeck,
