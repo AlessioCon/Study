@@ -32,10 +32,13 @@ async function getSingleSimulation(req, res){
                 //cancella dati
                 simulation.table = [];
                 simulation.chapter.map((cap , capIndex) => {
-                    cap.quiz.map((dom, domIndex) => {
-                        dom.answere.map((answere , ansindex) => {
-                            simulation.chapter[capIndex].quiz[domIndex].answere[ansindex].p = 0
+                    cap?.li_ma.map((subCap, subCapIndex) => {
+                        subCap.quiz.map((dom, domIndex) => {
+                            dom.answere.map((answere , ansindex) => {
+                                simulation.chapter[capIndex].li_ma[subCapIndex].quiz[domIndex].answere[ansindex].p = 0
+                            })
                         })
+                        
                     })
                 })
                 
